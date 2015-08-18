@@ -1,0 +1,135 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r234 - branches/new-vsop-prepare/src/c/libephemeritis
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-January/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r234%20-%20branches/new-vsop-prepare/src/c/libephemeritis&In-Reply-To=%3C200601291900.k0TJ0iNh024342%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000086.html">
+   <LINK REL="Next"  HREF="000088.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r234 - branches/new-vsop-prepare/src/c/libephemeritis</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r234%20-%20branches/new-vsop-prepare/src/c/libephemeritis&In-Reply-To=%3C200601291900.k0TJ0iNh024342%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r234 - branches/new-vsop-prepare/src/c/libephemeritis">izogi at berlios.de
+       </A><BR>
+    <I>Sun Jan 29 20:00:44 CET 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000086.html">[Ephemeritis-svn] r233 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000088.html">[Ephemeritis-svn] r235 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#87">[ date ]</a>
+              <a href="thread.html#87">[ thread ]</a>
+              <a href="subject.html#87">[ subject ]</a>
+              <a href="author.html#87">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-01-29 20:00:41 +0100 (Sun, 29 Jan 2006)
+New Revision: 234
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+Log:
+Updated vsop_sph_vsop_to_fk5() to be able to convert J2000.0 coordinates (in theory, but untested.)
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-01-29 09:51:48 UTC (rev 233)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-01-29 19:00:41 UTC (rev 234)
+@@ -173,8 +173,11 @@
+  *
+  *  @return The rotated coordinates.
+  *
+- *  @todo Confirm if heliocentric rectangular coordinates of date can be rotated with this algorithm.  (Assuming they can.)
++ *  @bug Can't rotate non-J2000 coordinates.
+  *
++ *  @todo Figure out how Meeus' non-J2000 formula can be converted to
++ *  3D matrix rotation, and update.
++ *
+  *  @author Mike McGavin.
+  */
+ vsop_rec_coords vsop_rec_vsop_to_fk5(const vsop_rec_coords vrc)
+@@ -345,15 +348,11 @@
+  *
+  *  @return The rotated coordinates.
+  *
+- *  @todo It isn't clear which coordinates are rotatable (and I'm not
+- *  really enough of an expert on this).  Basically Meeus seems to
+- *  imply that VSOP87D, which is framed for the ecliptic of the date,
+- *  can be rotated to FK5 with this formula.  This seems inconsistent
+- *  with the VSOP vsop.doc.gz file, which implies that those ones
+- *  framed for the ecliptic of the date can't (or possibly shouldn't)
+- *  be rotated... at least with rectangular coordinates, which might
+- *  work differently.  This needs to be checked with someone who has a
+- *  clue about calculating ephermerides and frames of reference.
++ *  @note Meeus' formula was specifically stated as being for the
++ *  dynamical ecliptic and equinox of the date.  The same formula
++ *  should be fine to use for J2000, if it's assumed that the time is
++ *  2000.0.  (ie. The rotation for the date at 2000.0 is equivalent to
++ *  the rotation for all coordinates in J2000.0.)
+  *
+  *  @author Mike McGavin.
+  */
+@@ -369,7 +368,9 @@
+ 
+     /* Check that the incoming coordinates are spherical and of the date. */
+     if (!
+-	(output.vh.version == hel_sph_date)) {
++	(output.vh.version == hel_sph_date
++	 || output.vh.version == hel_sph_j2)
++	) {
+ 	output.error_state = -3;
+ 	return output;
+     }
+@@ -386,7 +387,12 @@
+ 	terms[2] = d_to_r(0.00031);
+     }
+ 
+-    double T = jd_to_jcent(vsc.jd) / 10.0;
++    double T = 0;
++    if(output.vh.version == hel_sph_date) {
++      T = jd_to_jcent(vsc.jd) / 10.0;
++    } else {
++      T = 0.0;
++    }
+     double L1 = vsc.sc.L - polynomial(terms, 3, T);
+     double cosL1 = cos(L1);
+     double sinL1 = sin(L1);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000086.html">[Ephemeritis-svn] r233 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000088.html">[Ephemeritis-svn] r235 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#87">[ date ]</a>
+              <a href="thread.html#87">[ thread ]</a>
+              <a href="subject.html#87">[ subject ]</a>
+              <a href="author.html#87">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

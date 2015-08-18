@@ -1,0 +1,190 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r177 - trunk/src/c/libephemeritis
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2005-December/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r177%20-%20trunk/src/c/libephemeritis&In-Reply-To=%3C200512191001.jBJA1bSQ011610%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000032.html">
+   <LINK REL="Next"  HREF="000034.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r177 - trunk/src/c/libephemeritis</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r177%20-%20trunk/src/c/libephemeritis&In-Reply-To=%3C200512191001.jBJA1bSQ011610%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r177 - trunk/src/c/libephemeritis">izogi at berlios.de
+       </A><BR>
+    <I>Mon Dec 19 11:01:37 CET 2005</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000032.html">[Ephemeritis-svn] r176 - in trunk/src/c: libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000034.html">[Ephemeritis-svn] r178 - trunk/src/c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#33">[ date ]</a>
+              <a href="thread.html#33">[ thread ]</a>
+              <a href="subject.html#33">[ subject ]</a>
+              <a href="author.html#33">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2005-12-19 11:01:31 +0100 (Mon, 19 Dec 2005)
+New Revision: 177
+
+Modified:
+   trunk/src/c/libephemeritis/elliptical.c
+   trunk/src/c/libephemeritis/ephemeritis.h
+Log:
+More tidying up of elliptical orbit code.
+
+
+Modified: trunk/src/c/libephemeritis/elliptical.c
+===================================================================
+--- trunk/src/c/libephemeritis/elliptical.c	2005-12-19 08:47:00 UTC (rev 176)
++++ trunk/src/c/libephemeritis/elliptical.c	2005-12-19 10:01:31 UTC (rev 177)
+@@ -279,16 +279,6 @@
+  *  @param[in]  jd  The time at which to calculate the position, in dynamical time.
+  *  @param[in]  obl The obliquity of the ecliptic for the epoch at which i, L and w are provided.
+  *  @param[in]  elements The known elements for the orbit to calculate.
+-
+- *  @param[in]  T   The time of passage through perihelion for the orbital element,
+- *                  expressed as a julian day in dynamical time.
+- *  @param[in]  a   The length of the semi-major axis, in AU, from the orbital element.
+- *  @param[in]  e   The orbital eccentricity, from the orbital element.
+- *  @param[in]  i   The orbital inclination, in radians.
+- *  @param[in]  w   The argument of perihelion, in radians.
+- *  @param[in]  L   Longitude of the ascending node, in radians.
+- *  @param[in]  n   Mean motion, in degrees/day.
+-
+  *
+  *  @return A pointer to the rc structure that was passed in.  This
+  *  return value is for convenience only.
+@@ -338,6 +328,15 @@
+  *  @param[out] dec  The declination of the body, in radians.
+  *  @param[out] r    The distance to the body, in astronomical units.
+  *
++ *  @warning This function calculates the geometric position of a
++ *  body, but does not take the effect of light time into account.  To
++ *  account for light time, it's necessary to calculate the distance
++ *  between the body and the Earth (ie. as returned by this function),
++ *  calculate the light time (T) for that distance, calculate the
++ *  position of the body again, at jd-T, and then call this function a
++ *  second time with the updated value.  Note that the Sun's position
++ *  should remain constant in both calculations.
++ *
+  *  @todo Update to take notice of things like the effect of light time.
+  *  @todo Write some unit tests.
+  */
+
+Modified: trunk/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- trunk/src/c/libephemeritis/ephemeritis.h	2005-12-19 08:47:00 UTC (rev 176)
++++ trunk/src/c/libephemeritis/ephemeritis.h	2005-12-19 10:01:31 UTC (rev 177)
+@@ -32,9 +32,9 @@
+  *  (used elsewhere) refers to latitude, longitude, or radius.
+  */
+ enum Coords {
+-    vL,				/*!&lt; Longitude */
+-    vB,				/*!&lt; Latitude  */
+-    vR				/*!&lt; Radius    */
++    vL,				/*!&lt; @brief Longitude */
++    vB,				/*!&lt; @brief Latitude  */
++    vR				/*!&lt; @brief Radius    */
+ };
+ 
+ 
+@@ -44,8 +44,8 @@
+  *  @sa horizon
+  */
+ enum HorizonType {
+-    hRising,			/*!&lt; Rising  */
+-    hSetting			/*!&lt; Setting */
++    hRising,			/*!&lt; @brief Rising  */
++    hSetting			/*!&lt; @brief Setting */
+ };
+ 
+ /*! @brief Contains a list of major planets.
+@@ -56,14 +56,14 @@
+  *  @todo Pluto is presently not available.
+  */
+ enum vPlanets {
+-    vMercury,			/*!&lt; Mercury */
+-    vVenus,			/*!&lt; Venus   */
+-    vEarth,			/*!&lt; Earth   */
+-    vMars,			/*!&lt; Mars    */
+-    vJupiter,			/*!&lt; Jupiter */
+-    vSaturn,			/*!&lt; Saturn  */
+-    vUranus,			/*!&lt; Uranus  */
+-    vNeptune			/*!&lt; Neptune */
++    vMercury,			/*!&lt; @brief Mercury */
++    vVenus,			/*!&lt; @brief Venus   */
++    vEarth,			/*!&lt; @brief Earth   */
++    vMars,			/*!&lt; @brief Mars    */
++    vJupiter,			/*!&lt; @brief Jupiter */
++    vSaturn,			/*!&lt; @brief Saturn  */
++    vUranus,			/*!&lt; @brief Uranus  */
++    vNeptune			/*!&lt; @brief Neptune */
+ };
+ 
+ /*! @brief Contains a list of seasons.
+@@ -72,10 +72,10 @@
+  *  referred to or requested.
+  */
+ enum Season {
+-    kMarch,			/*!&lt; March equinox (northern spring, southern autumn) */
+-    kJune,			/*!&lt; June solstice (northern summer, southern winter) */
+-    kSeptember,			/*!&lt; September equinox (northern autumn, southern spring) */
+-    kDecember			/*!&lt; December solstice (northern winter, southern summer) */
++    kMarch,			/*!&lt; @brief March equinox (northern spring, southern autumn) */
++    kJune,			/*!&lt; @brief June solstice (northern summer, southern winter) */
++    kSeptember,			/*!&lt; @brief September equinox (northern autumn, southern spring) */
++    kDecember			/*!&lt; @brief December solstice (northern winter, southern summer) */
+ };
+ 
+ /*! @brief For use where boolean values are required.
+@@ -95,9 +95,9 @@
+  *
+  */
+ typedef struct {
+-    double x;			/*!&lt; The x coordinate, in astronomical units. */
+-    double y;			/*!&lt; The y coordinate, in astronomical units. */
+-    double z;			/*!&lt; The z coordinate, in astronomical units. */
++    double x;			/*!&lt; @brief The x coordinate, in astronomical units. */
++    double y;			/*!&lt; @brief The y coordinate, in astronomical units. */
++    double z;			/*!&lt; @brief The z coordinate, in astronomical units. */
+ } rec_coords;
+ 
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000032.html">[Ephemeritis-svn] r176 - in trunk/src/c: libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000034.html">[Ephemeritis-svn] r178 - trunk/src/c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#33">[ date ]</a>
+              <a href="thread.html#33">[ thread ]</a>
+              <a href="subject.html#33">[ subject ]</a>
+              <a href="author.html#33">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

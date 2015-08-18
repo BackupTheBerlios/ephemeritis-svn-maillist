@@ -1,0 +1,415 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r258 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-July/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r258%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607240655.k6O6tbvZ016434%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000110.html">
+   <LINK REL="Next"  HREF="000112.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r258 - in branches/new-vsop-prepare/src/c:	libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r258%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607240655.k6O6tbvZ016434%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r258 - in branches/new-vsop-prepare/src/c:	libephemeritis tests">izogi at mail.berlios.de
+       </A><BR>
+    <I>Mon Jul 24 08:55:37 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000110.html">[Ephemeritis-svn] r257 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000112.html">[Ephemeritis-svn] r259 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#111">[ date ]</a>
+              <a href="thread.html#111">[ thread ]</a>
+              <a href="subject.html#111">[ subject ]</a>
+              <a href="author.html#111">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-07-24 08:55:23 +0200 (Mon, 24 Jul 2006)
+New Revision: 258
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/dynamical.c
+   branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+   branches/new-vsop-prepare/src/c/libephemeritis/elp2000.c
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+   branches/new-vsop-prepare/src/c/libephemeritis/equinox.c
+   branches/new-vsop-prepare/src/c/libephemeritis/nutation.c
+   branches/new-vsop-prepare/src/c/libephemeritis/riseset.c
+   branches/new-vsop-prepare/src/c/libephemeritis/solar.c
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+Renaming dynamical functions to have eph prefix.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/dynamical.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/dynamical.c	2006-07-24 06:37:57 UTC (rev 257)
++++ branches/new-vsop-prepare/src/c/libephemeritis/dynamical.c	2006-07-24 06:55:23 UTC (rev 258)
+@@ -282,7 +282,7 @@
+  *  @todo Yuck -- need to check that my conversion of this algorithm to C is correct - Mike.
+  *  @todo Make table search more efficient.
+  */
+-double deltaT_seconds(double jd)
++double ephDeltaTSeconds(double jd)
+ {
+     int yr;
+     int mo;
+@@ -406,9 +406,9 @@
+  *
+  *  @return           Julian Day number (universal time).
+  */
+-double dt_to_ut(double jd)
++double ephDtToUt(double jd)
+ {
+-    return jd - (deltaT_seconds(jd) / seconds_per_day);
++    return jd - (ephDeltaTSeconds(jd) / seconds_per_day);
+ }
+ 
+ 
+@@ -418,7 +418,7 @@
+  *
+  *  @return           Julian Day number (dynamical time).
+  */
+-double ut_to_dt(double jd)
++double ephUtToDt(double jd)
+ {
+-    return jd + (deltaT_seconds(jd) / seconds_per_day);
++    return jd + (ephDeltaTSeconds(jd) / seconds_per_day);
+ }
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-07-24 06:37:57 UTC (rev 257)
++++ branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-07-24 06:55:23 UTC (rev 258)
+@@ -63,7 +63,7 @@
+ /*  *  @returns             Returns  0 if successful. */
+ /*  *                       Returns -1 if bailing out as desired accuracy was unreachable within a preset number of iterations. */
+ /*  * */
+-/*  *  @sa deltaT_seconds for calculating %dynamical time offset. */
++/*  *  @sa ephDeltaTSeconds for calculating %dynamical time offset. */
+ /*  *  @sa nut_in_lon for calculating %nutation in longitude. */
+ /*  *  @sa (obliquity_low or obliquity_hi) + nut_in_obl for calculating true obliquity. */
+ /*  * */
+@@ -184,7 +184,7 @@
+  *    ecliptical coordinates are still returned, but may not be as
+  *    accurate as what was requested.
+  *
+- *  @sa deltaT_seconds for calculating %dynamical time offset.
++ *  @sa ephDeltaTSeconds for calculating %dynamical time offset.
+  *  @sa nut_in_lon for calculating %nutation in longitude.
+  *  @sa (obliquity_low or obliquity_hi) + nut_in_obl for calculating true obliquity.
+  *
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/elp2000.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/elp2000.c	2006-07-24 06:37:57 UTC (rev 257)
++++ branches/new-vsop-prepare/src/c/libephemeritis/elp2000.c	2006-07-24 06:55:23 UTC (rev 258)
+@@ -244,7 +244,7 @@
+  *  @param[out] radius    Radius in km, specifically the distance
+  *                        between the Earth's center and the Moon's center.
+  *
+- *  @sa dynamical::deltaT_seconds for calculating %dynamical time offset.
++ *  @sa ephDeltaTSeconds for calculating %dynamical time offset.
+  */
+ void elp_dimension3(double jd, double *longitude, double *latitude,
+ 		    double *radius)
+@@ -320,7 +320,7 @@
+  *                        radians), the latitude (in radians), or the distance (in km)
+  *                        between the Earth's center and the Moon's center.
+  *
+- *  @sa deltaT_seconds for calculating %dynamical time offset.
++ *  @sa ephDeltaTSeconds for calculating %dynamical time offset.
+  */
+ double elp_dimension(double jd, EPH_CoordsType dim)
+ {
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-24 06:37:57 UTC (rev 257)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-24 06:55:23 UTC (rev 258)
+@@ -186,24 +186,24 @@
+ 
+ 
+ /* calendar.c */
+-double ephCalToJd(int yr, int mo, double dy, EPH_Bool gregorian);
+-int ephCalToDayOfYear(int yr, int mo, int dy, EPH_Bool gregorian);
+-void ephDayOfYearToCal(int yr, int N, EPH_Bool gregorian, int *mo, int *dy);
+-void ephEaster(int yr, EPH_Bool gregorian, int *mo, int *dy);
++double   ephCalToJd(int yr, int mo, double dy, EPH_Bool gregorian);
++int      ephCalToDayOfYear(int yr, int mo, int dy, EPH_Bool gregorian);
++void     ephDayOfYearToCal(int yr, int N, EPH_Bool gregorian, int *mo, int *dy);
++void     ephEaster(int yr, EPH_Bool gregorian, int *mo, int *dy);
+ EPH_Bool ephIsLeapYear(int yr, EPH_Bool gregorian);
+-void ephJdToCal(double jd, EPH_Bool gregorian, int *yr, int *mo, double *day);
+-int ephJdToDayOfWeek(double jd);
+-double ephJdToJCent(double jd);
+-double ephSiderealTimeGreenwich(double jd);
+-double ephJdToBe(double jd);
+-double ephBeToJd(double be);
+-double ephJdToJe(double jd);
+-double ephJeToJd(double je);
++void     ephJdToCal(double jd, EPH_Bool gregorian, int *yr, int *mo, double *day);
++int      ephJdToDayOfWeek(double jd);
++double   ephJdToJCent(double jd);
++double   ephSiderealTimeGreenwich(double jd);
++double   ephJdToBe(double jd);
++double   ephBeToJd(double be);
++double   ephJdToJe(double jd);
++double   ephJeToJd(double je);
+ 
+ /* dynamical.c */
+-double deltaT_seconds(double jd);
+-double dt_to_ut(double jd);
+-double ut_to_dt(double jd);
++double   ephDeltaTSeconds(double jd);
++double ephDtToUt(double jd);
++double ephUtToDt(double jd);
+ 
+ /* elp2000.c */
+ void elp_dimension3(double jd, double *longitude, double *latitude,
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/equinox.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/equinox.c	2006-07-24 06:37:57 UTC (rev 257)
++++ branches/new-vsop-prepare/src/c/libephemeritis/equinox.c	2006-07-24 06:55:23 UTC (rev 258)
+@@ -146,7 +146,7 @@
+  *
+  *  @bug -1 is a bit of a risky way to return an error state.
+  *
+- *  @sa dt_to_ut
++ *  @sa ephDtToUt
+  */
+ double equinox_approx(int yr, EPH_Season season)
+ {
+@@ -232,8 +232,8 @@
+  *          the equinox_result.  Any value that might have been
+  *          returned by geocentric_sol_f could also be returned.
+  *
+- *  @sa dynamical::deltaT_seconds for calculating %dynamical time offset.
+- *  @sa dynamical::dt_to_ut
++ *  @sa ephDeltaTSeconds for calculating %dynamical time offset.
++ *  @sa ephDtToUt
+  *
+  *  @author Bill McClain, Mike McGavin.
+  */
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/nutation.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/nutation.c	2006-07-24 06:37:57 UTC (rev 257)
++++ branches/new-vsop-prepare/src/c/libephemeritis/nutation.c	2006-07-24 06:55:23 UTC (rev 258)
+@@ -236,7 +236,7 @@
+  *
+  *  @return        Nutation in longitude, in radians.
+  *
+- *  @sa dynamical::deltaT_seconds for calculating %dynamical time offset.
++ *  @sa ephDeltaTSeconds for calculating %dynamical time offset.
+  *
+  *  @todo Yuck - need to check that algorithm was ported correctly to C.
+  *  @todo Future optimization: factor the /1e5 and /1e6 adjustments into the table.
+@@ -272,7 +272,7 @@
+  *
+  *  @return        Nutation in obliquity, in radians.
+  *
+- *  @sa deltaT_seconds for calculating %dynamical time offset.
++ *  @sa ephDeltaTSeconds for calculating %dynamical time offset.
+  *
+  *  @todo Future optimization: factor the /1e5 and /1e6 adjustments into the table.
+  */
+@@ -344,7 +344,7 @@
+  *
+  *  @return        Obliquity, in radians.
+  *
+- *  @sa dynamical::deltaT_seconds for calculating %dynamical time offset.
++ *  @sa ephDeltaTSeconds for calculating %dynamical time offset.
+  *
+  *  @todo Consider removing this function in favour of the hi accuracy one below.
+  */
+@@ -379,7 +379,7 @@
+  *
+  *  @return        Obliquity, in radians.
+  *
+- *  @sa deltaT_seconds for calculating %dynamical time offset.
++ *  @sa ephDeltaTSeconds for calculating %dynamical time offset.
+  */
+ double obliquity_hi(double jd)
+ {
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/riseset.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/riseset.c	2006-07-24 06:37:57 UTC (rev 257)
++++ branches/new-vsop-prepare/src/c/libephemeritis/riseset.c	2006-07-24 06:55:23 UTC (rev 258)
+@@ -96,7 +96,7 @@
+     const double jd_ut = jd;
+ 
+     const double THETA0 = ephSiderealTimeGreenwich(jd_ut);
+-    const double deltaT_days = deltaT_seconds(jd_ut) / seconds_per_day;
++    const double deltaT_days = ephDeltaTSeconds(jd_ut) / seconds_per_day;
+     const double cosH0 =
+ 	(sin(h0) -
+ 	 sin(geo_pos.latitude) * sin(decList[1])) / (cos(geo_pos.latitude) *
+@@ -212,7 +212,7 @@
+     const double _k1 = d_to_r(360.985647);
+     const double jd_ut = jd;
+     const double THETA0 = ephSiderealTimeGreenwich(jd_ut);
+-    const double deltaT_days = deltaT_seconds(jd_ut) / seconds_per_day;
++    const double deltaT_days = ephDeltaTSeconds(jd_ut) / seconds_per_day;
+ 
+     double m = (raList[1] + geo_pos.longitude - THETA0) / pi2;
+     if (m &lt; 0) {
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/solar.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/solar.c	2006-07-24 06:37:57 UTC (rev 257)
++++ branches/new-vsop-prepare/src/c/libephemeritis/solar.c	2006-07-24 06:55:23 UTC (rev 258)
+@@ -49,7 +49,7 @@
+  *  @param[out] L         Longitude, in radians.
+  *  @param[out] R         Radius, in astronomical units.
+  *
+- *  @sa dynamical::deltaT_seconds for calculating %dynamical time offset.
++ *  @sa ephDeltaTSeconds for calculating %dynamical time offset.
+  */
+ void longitude_radius_low(double jd, double *L, double *R)
+ {
+@@ -90,7 +90,7 @@
+  *
+  *  @return               Corrected longitude, in radians.
+  *
+- *  @sa dynamical::deltaT_seconds for calculating %dynamical time offset.
++ *  @sa ephDeltaTSeconds for calculating %dynamical time offset.
+  */
+ double apparent_longitude_low(double jd, double L)
+ {
+@@ -176,7 +176,7 @@
+ /*  *  @return               Either longitude or latitude (in radians), or */
+ /*  *                        radius (in astronomical units). */
+ /*  * */
+-/*  *  @sa dynamical::deltaT_seconds for calculating %dynamical time offset. */
++/*  *  @sa ephDeltaTSeconds for calculating %dynamical time offset. */
+ /*  * */
+ /*  *  @warning This function returns the coordinates in the vsop frame */
+ /*  *  of reference, which is very slightly different from fk5.  To */
+@@ -206,7 +206,7 @@
+ /*  *  @param[out] B   Latitude, in radians. */
+ /*  *  @param[out] R   Radius, in astronomical units. */
+ /*  * */
+-/*  *  @sa dynamical::deltaT_seconds for calculating %dynamical time offset. */
++/*  *  @sa ephDeltaTSeconds for calculating %dynamical time offset. */
+ /*  * */
+ /*  *  @warning This function returns the coordinates in the vsop frame */
+ /*  *  of reference, which is very slightly different from fk5.  To */
+@@ -228,7 +228,7 @@
+ /*  *  @param[out] B   Latitude, in radians. */
+ /*  *  @param[out] R   Radius, in astronomical units. */
+ /*  * */
+-/*  *  @sa dynamical::deltaT_seconds for calculating %dynamical time offset. */
++/*  *  @sa ephDeltaTSeconds for calculating %dynamical time offset. */
+ /*  *\/ */
+ /* void sol_dimension3_fk5(double jd, double *L, double *B, double *R) */
+ /* { */
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-24 06:37:57 UTC (rev 257)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-24 06:55:23 UTC (rev 258)
+@@ -364,21 +364,21 @@
+     printf(&quot;10.a DeltaT 1990 (pg 78)\n&quot;);
+     {
+ 	const double jd = ephCalToJd(1990, 1, 27, true);
+-	const double secs = deltaT_seconds(jd);
++	const double secs = ephDeltaTSeconds(jd);
+ 	report(&quot;seconds&quot;, secs, 57, 1, &quot;seconds&quot;);
+     }
+ 
+     printf(&quot;10.a DeltaT 1977\n&quot;);
+     {
+ 	const double jd = ephCalToJd(1977, 2, 18, true);
+-	const double secs = deltaT_seconds(jd);
++	const double secs = ephDeltaTSeconds(jd);
+ 	report(&quot;seconds&quot;, secs, 48, 1, &quot;seconds&quot;);
+     }
+ 
+     printf(&quot;10.b DeltaT 333\n&quot;);
+     {
+ 	const double jd = ephCalToJd(333, 2, 6, true);
+-	const double secs = deltaT_seconds(jd);
++	const double secs = ephDeltaTSeconds(jd);
+ 	report(&quot;seconds&quot;, secs, 6146, 1, &quot;seconds&quot;);
+     }
+ 
+@@ -675,7 +675,7 @@
+ 
+     printf(&quot;23.a Apparent place of a star\n&quot;);
+     {
+-	double jd = ut_to_dt(ephCalToJd(2028, 11, 13.19, true));
++	double jd = ephUtToDt(ephCalToJd(2028, 11, 13.19, true));
+ 	double ra = hms_to_r(2, 46, 11.331);
+ 	double dec = d_to_r(dms_to_d(49, 20, 54.54));
+ 
+@@ -1178,24 +1178,24 @@
+ 	};
+ 
+ 	jd_test_values tests[] = {
+-	    {&amp;orbits[0], ut_to_dt(ephCalToJd(2005, 5, 1, true)),
++	    {&amp;orbits[0], ephUtToDt(ephCalToJd(2005, 5, 1, true)),
+ 	     hms_to_r(15, 20, 0.07 * 60.0),
+ 	     d_to_r(dms_to_d(-8.0, 33, 0.9 * 60.0)), 1.692, 2.683, 7.1},
+-	    {&amp;orbits[0], ut_to_dt(ephCalToJd(2005, 6, 10, true)),
++	    {&amp;orbits[0], ephUtToDt(ephCalToJd(2005, 6, 10, true)),
+ 	     hms_to_r(14, 47, 0.78 * 60.0),
+ 	     d_to_r(dms_to_d(-9.0, 8, 0.4 * 60.0)), 1.837, 2.715, 7.6},
+ 
+-	    {&amp;orbits[1], ut_to_dt(ephCalToJd(2005, 2, 5, true)),
++	    {&amp;orbits[1], ephUtToDt(ephCalToJd(2005, 2, 5, true)),
+ 	     hms_to_r(12, 42, 0.98 * 60.0),
+ 	     d_to_r(dms_to_d(-6.0, 39, 0.1 * 60.0)), 1.570, 2.271, 8.0},
+-	    {&amp;orbits[1], ut_to_dt(ephCalToJd(2005, 5, 1, true)),
++	    {&amp;orbits[1], ephUtToDt(ephCalToJd(2005, 5, 1, true)),
+ 	     hms_to_r(12, 07, 0.76 * 60.0),
+ 	     d_to_r(dms_to_d(19.0, 20, 0.4 * 60.0)), 1.672, 2.449, 8.2},
+ 
+-	    {&amp;orbits[2], ut_to_dt(ephCalToJd(2005, 9, 8, true)),
++	    {&amp;orbits[2], ephUtToDt(ephCalToJd(2005, 9, 8, true)),
+ 	     hms_to_r(4, 44, 0.23 * 60.0),
+ 	     d_to_r(dms_to_d(10.0, 2, 0.1 * 60.0)), 1.649, 1.997, 9.0},
+-	    {&amp;orbits[2], ut_to_dt(ephCalToJd(2005, 11, 12, true)),
++	    {&amp;orbits[2], ephUtToDt(ephCalToJd(2005, 11, 12, true)),
+ 	     hms_to_r(5, 31, 0.69 * 60.0),
+ 	     d_to_r(dms_to_d(0.0, 24, 0.1 * 60.0)), 1.115, 1.984, 7.8}
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000110.html">[Ephemeritis-svn] r257 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000112.html">[Ephemeritis-svn] r259 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#111">[ date ]</a>
+              <a href="thread.html#111">[ thread ]</a>
+              <a href="subject.html#111">[ subject ]</a>
+              <a href="author.html#111">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

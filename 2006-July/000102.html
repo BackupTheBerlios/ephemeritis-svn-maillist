@@ -1,0 +1,108 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r249 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-July/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r249%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607201137.k6KBbhPf018965%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000101.html">
+   <LINK REL="Next"  HREF="000103.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r249 - in branches/new-vsop-prepare/src/c:	libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r249%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607201137.k6KBbhPf018965%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r249 - in branches/new-vsop-prepare/src/c:	libephemeritis tests">izogi at mail.berlios.de
+       </A><BR>
+    <I>Thu Jul 20 13:37:43 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000101.html">[Ephemeritis-svn] r248 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000103.html">[Ephemeritis-svn] r250 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#102">[ date ]</a>
+              <a href="thread.html#102">[ thread ]</a>
+              <a href="subject.html#102">[ subject ]</a>
+              <a href="author.html#102">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-07-20 13:37:41 +0200 (Thu, 20 Jul 2006)
+New Revision: 249
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+Fixed a bug introduced in the previous commit (or possibly the one before that).
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-07-20 11:02:44 UTC (rev 248)
++++ branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-07-20 11:37:41 UTC (rev 249)
+@@ -231,8 +231,8 @@
+ 	/* Rectangular offset. */
+ 	const double cosB0 = cos(sc_e.ecl.ecl_lat);
+ 	const double cosB = cos(sc_p.ecl.ecl_lat);
+-	const double x = sc_p.R * cosB * cos(sc_p.ecl.ecl_lat) - sc_e.R * cosB0 * cos(sc_e.ecl.ecl_lat);
+-	const double y = sc_p.R * cosB * sin(sc_p.ecl.ecl_lat) - sc_e.R * cosB0 * sin(sc_e.ecl.ecl_lat);
++	const double x = sc_p.R * cosB * cos(sc_p.ecl.ecl_lon) - sc_e.R * cosB0 * cos(sc_e.ecl.ecl_lon);
++	const double y = sc_p.R * cosB * sin(sc_p.ecl.ecl_lon) - sc_e.R * cosB0 * sin(sc_e.ecl.ecl_lon);
+ 	const double z = sc_p.R * sin(sc_p.ecl.ecl_lat) - sc_e.R * sin(sc_e.ecl.ecl_lat);
+ 
+ 	/* Geocentric geometric ecliptic coordinates of the planet. */
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-20 11:02:44 UTC (rev 248)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-20 11:37:41 UTC (rev 249)
+@@ -1006,8 +1006,14 @@
+ 	  */
+ 	  ecl_pos.ecl_lon += nut_in_lon(jd);
+ 
++
+ 	  /* Get equatorial coordinates. */
+ 	  equatorial_coords equ_pos;
++	  /*
++	  ecliptical_coords ecl_pos;
++	  ecl_pos.ecl_lat = latitude;
++	  ecl_pos.ecl_lon = longitude;
++	  */
+ 	  ecl_to_equ(ecl_pos, obliquity_hi(jd) + nut_in_obl(jd), &amp;equ_pos);
+ 
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000101.html">[Ephemeritis-svn] r248 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000103.html">[Ephemeritis-svn] r250 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#102">[ date ]</a>
+              <a href="thread.html#102">[ thread ]</a>
+              <a href="subject.html#102">[ subject ]</a>
+              <a href="author.html#102">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

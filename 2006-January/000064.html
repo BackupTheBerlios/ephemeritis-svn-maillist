@@ -1,0 +1,268 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r211 - branches/new-vsop-prepare/src/c/libephemeritis
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-January/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r211%20-%20branches/new-vsop-prepare/src/c/libephemeritis&In-Reply-To=%3C200601142143.k0ELhnAC016721%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000063.html">
+   <LINK REL="Next"  HREF="000065.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r211 - branches/new-vsop-prepare/src/c/libephemeritis</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r211%20-%20branches/new-vsop-prepare/src/c/libephemeritis&In-Reply-To=%3C200601142143.k0ELhnAC016721%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r211 - branches/new-vsop-prepare/src/c/libephemeritis">izogi at berlios.de
+       </A><BR>
+    <I>Sat Jan 14 22:43:49 CET 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000063.html">[Ephemeritis-svn] r210 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+        <LI>Next message: <A HREF="000065.html">[Ephemeritis-svn] r212 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#64">[ date ]</a>
+              <a href="thread.html#64">[ thread ]</a>
+              <a href="subject.html#64">[ subject ]</a>
+              <a href="author.html#64">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-01-14 22:43:48 +0100 (Sat, 14 Jan 2006)
+New Revision: 211
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.c
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+Log:
+Finished re-writing spherical-to-fk5 routine (untested), and added a note pointing out that it seems unclear about exactly when it should be used.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.c	2006-01-14 10:30:16 UTC (rev 210)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.c	2006-01-14 21:43:48 UTC (rev 211)
+@@ -27,6 +27,7 @@
+ #include &quot;ephemeritis_vsop_data.h&quot;
+ #include &quot;ephemeritis.h&quot;
+ 
++#include &lt;errno.h&gt;
+ #include &lt;stdlib.h&gt;
+ #include &lt;string.h&gt;
+ #include &lt;stdio.h&gt;
+@@ -291,7 +292,7 @@
+ 
+ /* Assumes that the handle isn't already loaded, and that the data in
+    the file isn't corrupt, so use with care. */
+-static bool load_vsop_handle(const vsop_body planet, const vsop_version version, vsop_handle *vh)
++static int load_vsop_handle(const vsop_body planet, const vsop_version version, vsop_handle *vh)
+ {
+   /* Construct the filename. */
+   char filename[512];
+@@ -305,9 +306,10 @@
+ 
+   /* Try to open the file. */
+   FILE *f;
++  errno = 0;
+   if(NULL == (f = fopen(filename, &quot;rb&quot;))) {
+     /* File didn't open for some reason.  Probably not there. */
+-    return false;
++    return errno;
+   }
+ 
+   /* Attempt to read data from the file. */
+@@ -318,7 +320,11 @@
+ 
+ 
+   /* Close the file. */
+-  fclose(f);
++  errno = 0;
++  if(0 != fclose(f)) {
++    return errno;
++  }
++  
+ 
+   /* Allocate more space in the list of vsop handle wrappers. */
+   vhw_list = (vsop_handle_wrapper *)realloc(vhw_list, ++vhw_list_size * sizeof(vsop_handle_wrapper));
+@@ -329,7 +335,7 @@
+   vhw_list[vhw_list_size-1].h.version = version;
+ 
+   *vh = vhw_list[vhw_list_size-1].h;
+-  return true;
++  return 0;
+ }
+ 
+ /*! @brief Returns a handle for accessing available VSOP data.
+@@ -350,14 +356,16 @@
+  *
+  *  @param[out] vh  A location to place the vsop_handle, if it's available.
+  *
+- *  @return true if the requested data was available (and returned), false otherwise.
++ *  @return 0 if the requested data was available (and returned),
++ *  otherwise an errno value that could have been set by fopen() or
++ *  fclose() is returned.
+  */
+-bool get_vsop_data_handle(const vsop_body planet, const vsop_version version, vsop_handle *vh)
++int get_vsop_data_handle(const vsop_body planet, const vsop_version version, vsop_handle *vh)
+ {
+   /* Check to see if the data for this planet/series is already loaded. */
+   if(get_vsop_handle(planet, version, vh)) {
+     /* If so, return the handle.       */
+-    return true;
++    return 0;
+   } else {
+     /* If not, load it, then return it. */
+     return load_vsop_handle(planet, version, vh);
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h	2006-01-14 10:30:16 UTC (rev 210)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h	2006-01-14 21:43:48 UTC (rev 211)
+@@ -122,7 +122,7 @@
+ 
+ void vsop_data_init();
+ void vsop_data_cleanup();
+-bool get_vsop_data_handle(const vsop_body planet, const vsop_version version, vsop_handle *vh);
++int get_vsop_data_handle(const vsop_body planet, const vsop_version version, vsop_handle *vh);
+ vsop_rec_coords vsop_get_rectangular(const vsop_handle vh, const double jd);
+ vsop_rec_coords vsop_rec_vsop_to_fk5(const vsop_rec_coords vrc);
+ 
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-01-14 10:30:16 UTC (rev 210)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-01-14 21:43:48 UTC (rev 211)
+@@ -180,6 +180,21 @@
+ }
+ 
+ 
++/*! @brief Given a VSOP handle referencing data, and a Julian Date,
++ *  calculates spherical variables.
++ *
++ *  The referenced VSOP data must be data designed for calculating
++ *  spherical coordinates.  ie. vh.variable must be one of hel_sph_j2,
++ *  or hel_sph_date.  If it isn't, the error_state property of the
++ *  returned struct will be set to a non-zero value.
++ *
++ *  @param vh The VSOP handle referencing the data to use for the
++ *            calculation.
++ *  @param jd The Julian Date for which to
++ *            calculate coordinates, in dynamical time.
++ *
++ *  @sa vsop_sph_vsop_to_fk5
++ */
+ vsop_sph_coords vsop_get_spherical(const vsop_handle vh, const double jd)
+ {
+   vsop_sph_coords vsc;
+@@ -214,6 +229,30 @@
+ }
+ 
+ 
++/*! @brief Rotate spherical VSOP coordinates from the dynamical
++ *  ecliptic frame to the equatorial frame FK5.
++ *
++ *  The incoming coordinates must be spherical.  ie. They must have
++ *  been generated from hel_sph_j2 or hel_sph_date.  If it isn't, the
++ *  error_state property of the returned struct will be set to a
++ *  non-zero value.  If it is already a non-zero value for the
++ *  incoming data, the data will be immediately returned with no
++ *  change.
++ *
++ *  @param vsc[in] The incoming coordinates to be rotated.
++ *
++ *  @return The rotated coordinates.
++ *
++ *  @todo It isn't clear which coordinates are rotatable (and I'm not
++ *  really enough of an expert on this).  Basically Meeus seems to
++ *  imply that VSOP87D, which is framed for the ecliptic of the date,
++ *  can be rotated to FK5 with this formula.  This seems inconsistent
++ *  with the VSOP vsop.doc.gz file, which implies that those ones
++ *  framed for the ecliptic of the date can't (or possibly shouldn't)
++ *  be rotated... at least with rectangular coordinates.  This needs
++ *  to be checked with someone who has a clue about calculating
++ *  ephermerides and frames of reference.
++ */
+ vsop_sph_coords vsop_sph_vsop_to_fk5(const vsop_sph_coords vsc) {
+   /* Make a variable to return, and inialise it to the existing incoming values. */
+   vsop_sph_coords output = vsc;
+@@ -223,31 +262,32 @@
+     return output;
+   }
+ 
+-  /* Check that the incoming coordinates are of a version designed to be rotated. */
+-  /*
+-  if(! (output.vh.version == hel_rec_j2 || output.vh.version == bar_rec_j2)) {
++  /* Check that the incoming coordinates are spherical. */
++  if(! (output.vh.version == hel_sph_j2 || output.vh.version == hel_sph_date)) {
+     output.error_state = -3;
+     return output;
+   }
+-  */
+ 
+-  static double l1, l2, b1;
+-  static double vars[2];
++  static double l1, l2;
++  static double terms[3];
+   static bool static_set = false;
+   if(!static_set) {
+     static_set = true;
+     l1 = -d_to_r(dms_to_d(0,0,0.09033));
+     l2 =  d_to_r(dms_to_d(0,0,0.03916));
+-    vars[0] = d_to_r(1.397);
+-    vars[1] = d_to_r(0.00031);
++    terms[0] = 0.0;
++    terms[1] = d_to_r(1.397);
++    terms[2] = d_to_r(0.00031);
+   }
+-  /*
+-  double L1 = vsc.L - 
+ 
+-    double deltaL = 999;
+-  double deltaB;
+-  */
++  double T = jd_to_jcent(vsc.jd) / 10.0;
++  double L1 = vsc.sc.L - polynomial(terms, 3, T);
++  double cosL1 = cos(L1);
++  double sinL1 = sin(L1);
+ 
++  double deltaL = l1 + (l2 * (cosL1 + sinL1) * tan(vsc.sc.B));
++  double deltaB = l2 * (cosL1 - sinL1);
+ 
+-
++  output.sc.L += deltaL;
++  output.sc.B += deltaB;
+ }
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000063.html">[Ephemeritis-svn] r210 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+	<LI>Next message: <A HREF="000065.html">[Ephemeritis-svn] r212 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#64">[ date ]</a>
+              <a href="thread.html#64">[ thread ]</a>
+              <a href="subject.html#64">[ subject ]</a>
+              <a href="author.html#64">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

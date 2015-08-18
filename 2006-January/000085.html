@@ -1,0 +1,248 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r232 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-January/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r232%20-%20in%20branches/new-vsop-prepare/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200601290314.k0T3E0FP007464%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000084.html">
+   <LINK REL="Next"  HREF="000086.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r232 - in branches/new-vsop-prepare/src/c: libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r232%20-%20in%20branches/new-vsop-prepare/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200601290314.k0T3E0FP007464%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r232 - in branches/new-vsop-prepare/src/c: libephemeritis tests">izogi at berlios.de
+       </A><BR>
+    <I>Sun Jan 29 04:14:00 CET 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000084.html">[Ephemeritis-svn] r231 - in branches/new-vsop-prepare/src/c: libephemeritis utils
+</A></li>
+        <LI>Next message: <A HREF="000086.html">[Ephemeritis-svn] r233 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#85">[ date ]</a>
+              <a href="thread.html#85">[ thread ]</a>
+              <a href="subject.html#85">[ subject ]</a>
+              <a href="author.html#85">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-01-29 04:13:27 +0100 (Sun, 29 Jan 2006)
+New Revision: 232
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+Cleaned up routine for converting Earth VSOP coordinates to Solar VSOP coordinates.  (Rectangular only -- spherical is coming.)
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-01-28 10:03:35 UTC (rev 231)
++++ branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-01-29 03:13:27 UTC (rev 232)
+@@ -86,6 +86,8 @@
+  *
+  *  @todo Adjust parameters so that r_earth gets passed back too.
+  *
++ *  @bug Doesn't work cleanly with new VSOP routines.
++ *
+  *  @author Bill McClain, Mike McGavin.
+  */
+ int geocentric_planet(double jd,
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-01-28 10:03:35 UTC (rev 231)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-01-29 03:13:27 UTC (rev 232)
+@@ -486,6 +486,8 @@
+ 
+ /*! @brief A struct to hold rectangular coordinates from a particular
+  *  calculation, including meta information about their calculation.
++ *
++ *  @todo Make error responses an enumeration rather than constant values.
+  */
+ typedef struct {
+     vsop_handle vh;		/*!&lt; @brief The VSOP handle representing the data these coordinates were calculated from. */
+@@ -504,6 +506,8 @@
+ 				            -1 (vsop_get_rectangular) indicates a vsop_handle error.  (Data referenced by this handle wasn't found - perhaps it was unloaded.)
+ 				            -2 (vsop_get_rectangular) indicates that a vsop_handle referenced data that wasn't rectangular, or otherwise not suitable for providing rectangular coordinates.
+ 				            -3 (vsop_rec_vsop_to_fk5) indicates that supplied coordinates were unsuitable for converting to FK5.
++					    -4 (vsop_rec_sol) indicates that supplied coordinates were not Earth coordinates, and therefore unsuitable for converting to solar coordinates.  Note that even if the input planet is vsop_earth, is_inverted must be set to 0 or this error will be returned.
++					    -5 (vsop_rec_sol) indicates that supplied coordinates were not rectangular J2000 or date coordinates.
+ 				 */
+ } vsop_rec_coords;
+ 
+@@ -517,11 +521,13 @@
+ 
+ /*! @brief A struct to hold spherical coordinates from a particular
+  *  calculation, including meta information about their calculation.
++ *
++ *  @todo Make error responses an enumeration rather than constant values.
+  */
+ typedef struct {
+     vsop_handle vh;		/*!&lt; @brief The VSOP handle representing the data these coordinates were calculated from. */
+     double jd;			/*!&lt; @brief The Julian Date of these coordinates, in dynamical time.                      */
+-    sph_coords sc;		/*!&lt; @brief The spherical coordinates.                                                   */
++    sph_coords sc;		/*!&lt; @brief The spherical coordinates.                                                    */
+     int is_inverted;		/*!&lt; @brief Set to 1 if these coordinates are inverted (eg. for Solar coordinates), 0 otherwise. */
+     int error_state;		/*!&lt; @brief The state of these coordinates,
+ 				   indicating if they're okay to use.
+@@ -546,10 +552,12 @@
+ vsop_rec_coords vsop_get_rectangular(const vsop_handle vh,
+ 				     const double jd);
+ vsop_rec_coords vsop_rec_vsop_to_fk5(const vsop_rec_coords vrc);
+-vsop_rec_coords vsop_rec_invert(const vsop_rec_coords vrc);
++/* vsop_rec_coords vsop_rec_invert(const vsop_rec_coords vrc); */
++vsop_rec_coords vsop_rec_sol(const vsop_rec_coords earth_vrc);
++
+ vsop_sph_coords vsop_get_spherical(const vsop_handle vh, const double jd);
+ vsop_sph_coords vsop_sph_vsop_to_fk5(const vsop_sph_coords vsc);
+-vsop_sph_coords vsop_sph_invert(const vsop_sph_coords vsc);
++/* vsop_sph_coords vsop_sph_invert(const vsop_sph_coords vsc); */
+ 
+ 
+ #endif
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-01-28 10:03:35 UTC (rev 231)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-01-29 03:13:27 UTC (rev 232)
+@@ -221,7 +221,7 @@
+  *  @return A set of rectangular coordinates identical to those
+  *  provided, but inverted.
+  */
+-vsop_rec_coords vsop_rec_invert(const vsop_rec_coords vrc)
++static vsop_rec_coords vsop_rec_invert(const vsop_rec_coords vrc)
+ {
+     vsop_rec_coords output = vrc;
+ 
+@@ -238,18 +238,37 @@
+ }
+ 
+ 
+-/* vsop_rec_coords vsop_rec_sol(const vsop_rec_coords earth_vrc) { */
+-/*     vsop_rec_coords output = earth_vrc; */
++/*! @brief Converts rectangular Earth coordinates to rectangular Sun
++ *  coordinates.
++ *
++ *  Given a set of rectangular Earth coordinates, converts them to
++ *  rectangular Sun coordinates.  The is_inverted member variable of
++ *  the result will be set to 1 rather than 0, indicating that the
++ *  struct contains solar coordinates.
++ */
++vsop_rec_coords vsop_rec_sol(const vsop_rec_coords earth_vrc) {
++    vsop_rec_coords output = earth_vrc;
+ 
+-/*     /\* Stop right here if the incoming coordinates are in an error state. *\/ */
+-/*     if (output.error_state != 0) { */
+-/* 	return output; */
+-/*     } */
++    /* Stop right here if the incoming coordinates are in an error state. */
++    if (output.error_state != 0) {
++	return output;
++    }
+ 
+-/*     /\* Make sure that these coordinates actually are for Earth. *\/ */
++    /* Make sure that these coordinates actually are for Earth, and
++       that they're rectangular date or j2000 variables. */
++    if(output.vh.planet != vsop_earth &amp;&amp; !output.is_inverted) {
++      output.error_state = -4;
++      return output;
++    }
++    if(output.vh.version != hel_rec_j2 &amp;&amp; output.vh.version != hel_rec_date) {
++      output.error_state = -5;
++      return output;
++    }
+ 
+-/*     return vsop_rec_invert(earth_vrc); */
+-/* } */
++    /* Now invert the coordinates, and return the results. */
++    output = vsop_rec_invert(output);
++    return output;
++}
+ 
+ 
+ /*! @brief Given a VSOP handle referencing data, and a Julian Date,
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-01-28 10:03:35 UTC (rev 231)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-01-29 03:13:27 UTC (rev 232)
+@@ -1306,30 +1306,6 @@
+ 	}
+     }
+ 
+-
+-/*     printf(&quot;\n\nPlaying with new VSOP methods:\n&quot;); */
+-/*     { */
+-
+-/*       vsop_handle vh; */
+-/*       bool result; */
+-/*       result = get_vsop_data_handle(vsop_mercury, hel_rec_date, &amp;vh); */
+-/*       printf(&quot;%d\n&quot;, vh.data_id); */
+-
+-/*       result = get_vsop_data_handle(vsop_venus, hel_rec_date, &amp;vh); */
+-/*       printf(&quot;%d\n&quot;, vh.data_id); */
+-
+-/*       result = get_vsop_data_handle(vsop_earth, hel_rec_date, &amp;vh); */
+-/*       printf(&quot;%d\n&quot;, vh.data_id); */
+-
+-/*       result = get_vsop_data_handle(vsop_mercury, hel_rec_date, &amp;vh); */
+-/*       printf(&quot;%d\n&quot;, vh.data_id); */
+-
+-/*       if(result) { */
+-/* 	printf(&quot;Loaded okay\n&quot;); */
+-/*       } else { */
+-/* 	printf(&quot;File didn't load for some reason\n&quot;); */
+-/*       } */
+-/*     } */
+     {
+ 	printf(&quot;Checking new VSOP routines\n&quot;);
+ 	{
+@@ -1339,8 +1315,7 @@
+ 		printf(&quot;\t\tError loading Earth handle.\n&quot;);
+ 	    } else {
+ 		double jd = 2448170.5;
+-		vsop_rec_coords vrc = vsop_get_rectangular(vh, jd);
+-		vrc = vsop_rec_invert(vsop_rec_vsop_to_fk5(vrc));
++		vsop_rec_coords vrc = vsop_rec_sol(vsop_rec_vsop_to_fk5(vsop_get_rectangular(vh, jd)));
+ 
+ 		report(&quot;X&quot;, vrc.rc.x * km_per_au,
+ 		       -0.975673220683 * km_per_au, 1.0e-4, &quot;km&quot;);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000084.html">[Ephemeritis-svn] r231 - in branches/new-vsop-prepare/src/c: libephemeritis utils
+</A></li>
+	<LI>Next message: <A HREF="000086.html">[Ephemeritis-svn] r233 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#85">[ date ]</a>
+              <a href="thread.html#85">[ thread ]</a>
+              <a href="subject.html#85">[ subject ]</a>
+              <a href="author.html#85">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

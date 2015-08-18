@@ -1,0 +1,202 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r224 - branches/new-vsop-prepare/src/c/libephemeritis
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-January/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r224%20-%20branches/new-vsop-prepare/src/c/libephemeritis&In-Reply-To=%3C200601272022.k0RKMju9014347%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000076.html">
+   <LINK REL="Next"  HREF="000078.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r224 - branches/new-vsop-prepare/src/c/libephemeritis</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r224%20-%20branches/new-vsop-prepare/src/c/libephemeritis&In-Reply-To=%3C200601272022.k0RKMju9014347%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r224 - branches/new-vsop-prepare/src/c/libephemeritis">izogi at berlios.de
+       </A><BR>
+    <I>Fri Jan 27 21:22:45 CET 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000076.html">[Ephemeritis-svn] r223 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000078.html">[Ephemeritis-svn] r225 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#77">[ date ]</a>
+              <a href="thread.html#77">[ thread ]</a>
+              <a href="subject.html#77">[ subject ]</a>
+              <a href="author.html#77">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-01-27 21:22:42 +0100 (Fri, 27 Jan 2006)
+New Revision: 224
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c
+Log:
+Fixed a memory allocation bug, so that ephint_read_body_elements() should now clean up loose bits of partially allocated memory if it runs out of mem during the process.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c	2006-01-25 10:24:10 UTC (rev 223)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c	2006-01-27 20:22:42 UTC (rev 224)
+@@ -39,7 +39,9 @@
+  */
+ static void destroy_series(series s)
+ {
+-  free(s.terms);
++  if(NULL != s.terms) {
++    free(s.terms);
++  }
+ }
+ 
+ /*! @brief De-allocates the space that was allocated for a
+@@ -48,15 +50,30 @@
+  *  @param[in] b A pointer to a body_elements object.  This will be
+  *  free()'d, as will the entire strucutre underneath it.  Ensure that
+  *  nothing inside is referenced from elsewhere.
++ *
++ *  @note This function should also be capable of cleaning up a
++ *  malformed body_elements structure, such as one that was only
++ *  partly loaded due to running out of memory, for instance, but only
++ *  if the various allocated structures were zero'd before assigning
++ *  data and other pointers to them.
+  */
+ void ephint_free_body_elements(body_elements *b)
+ {
++  if(NULL == b) {
++    /* Ignore, because it's null. */
++    return;
++  }
++
+   int n;
+   for(n = 0; n &lt; b-&gt;meta.num_variables; n++) {
+-    int o;
+-    for(o = 0; o &lt; b-&gt;variable_list[n].meta.series_count; o++) {
+-      /* Destroy each series. */
+-      destroy_series(b-&gt;variable_list[n].series_list[o]);
++    /* Make sure the series_list was successfully allocated before
++       trying to dig into each of its series' collections. */
++    if(NULL != b-&gt;variable_list[n].series_list) {
++      int o;
++      for(o = 0; o &lt; b-&gt;variable_list[n].meta.series_count; o++) {
++	/* Destroy each series. */
++ 	destroy_series(b-&gt;variable_list[n].series_list[o]);
++      }
+     }
+ 
+     /* Free the list of series for the variable. */
+@@ -126,20 +143,32 @@
+  *                     read. The file should be set to the beginning of its data, and is
+  *                     not closed after the operation.
+  *
+- *  @return            Pointer to the body elements that have been read.
++ *  @return Pointer to the body elements that have been read.  In case
++ *          of memory allocation failure, all the bits and pieces allocated up
++ *          to that point will be released, an NULL is returned.
+  *
+- *  @bug Doesn't indicate if there was an error, such as corrupted
+- *  data or lack of memory.  What should properly happen is that the
+- *  function should clean up whatever memory mess it's caused, and
+- *  return NULL.
++ *  @bug Doesn't indicate if there was corrupted data.  What should
++ *  properly happen is that the function should clean up whatever
++ *  memory mess it's caused, and return NULL.
+  */
+ static body_elements *ephint_read_body_elements(FILE *infile)
+ {
+-  body_elements *b;
++  /* Note -- there's a goto label at the end of the function to
++     collect any memory allocation problems.  It'll deallocate
++     whatever's been created so far, and return NULL. */
+ 
++  body_elements *b = NULL;
++
+   /* Allocate memory for the body_elements. */
+   b = (body_elements *)malloc(sizeof(body_elements));
++  if(NULL == b) {
++    /* Oops, there wasn't enough memory. */
++    goto mem_cleanup;
++  }
++  /* Fill it with 0's, to make it safer to clean up if things fail later. */
++  memset(b, '\0', sizeof(*b));
+ 
++
+   /* Read the header data. */
+   fread(&amp;b-&gt;meta, sizeof(b-&gt;meta), 1, infile);
+ 
+@@ -150,7 +179,15 @@
+ 
+     /* Allocate memory to hold the list of series' for this variable. */
+     b-&gt;variable_list[v].series_list = (series *)calloc(b-&gt;variable_list[v].meta.series_count, sizeof(series));
+-
++    if(NULL == b-&gt;variable_list[v].series_list) {
++      /* Oops, there wasn't enough memory. */
++      goto mem_cleanup;
++    }
++    /* Fill it with 0's, to make it safer to clean up if things fail later. */
++    /* Note that calloc() sets memory to 0 anyway (but malloc()
++       doesn't!), so the following line is more of a safety thing. */
++    memset(b-&gt;variable_list[v].series_list, '\0', b-&gt;variable_list[v].meta.series_count * sizeof(series));
++ 
+     /* Loop through the series variables, reading data from each one. */
+     int s;
+     for(s = 0; s &lt; b-&gt;variable_list[v].meta.series_count; s++) {
+@@ -160,6 +197,12 @@
+ 
+       /* Allocate memory for the terms. */
+       ser-&gt;terms = (term_bin *)calloc(ser-&gt;meta.num_terms, sizeof(term_bin));
++      if(NULL == ser-&gt;terms) {
++	/* Oops, there wasn't enough memory. */
++	goto mem_cleanup;
++      }
++      /* Set the memory to 0's.  (Safety thing again, as above.) */
++      memset(ser-&gt;terms, '\0', ser-&gt;meta.num_terms * sizeof(term_bin));
+ 
+       /* Read the list of terms. */
+       fread(ser-&gt;terms, sizeof(*(ser-&gt;terms)), ser-&gt;meta.num_terms, infile);
+@@ -167,6 +210,10 @@
+   }
+ 
+   return b;
++
++ mem_cleanup:
++  ephint_free_body_elements(b);
++  return NULL;
+ }
+ 
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000076.html">[Ephemeritis-svn] r223 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000078.html">[Ephemeritis-svn] r225 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#77">[ date ]</a>
+              <a href="thread.html#77">[ thread ]</a>
+              <a href="subject.html#77">[ subject ]</a>
+              <a href="author.html#77">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

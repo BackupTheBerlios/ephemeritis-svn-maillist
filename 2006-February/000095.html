@@ -1,0 +1,360 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r242 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-February/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r242%20-%20in%20branches/new-vsop-prepare/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200602050951.k159p5F7029059%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000094.html">
+   <LINK REL="Next"  HREF="000096.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r242 - in branches/new-vsop-prepare/src/c: libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r242%20-%20in%20branches/new-vsop-prepare/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200602050951.k159p5F7029059%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r242 - in branches/new-vsop-prepare/src/c: libephemeritis tests">izogi at berlios.de
+       </A><BR>
+    <I>Sun Feb  5 10:51:05 CET 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000094.html">[Ephemeritis-svn] r241 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000096.html">[Ephemeritis-svn] r243 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#95">[ date ]</a>
+              <a href="thread.html#95">[ thread ]</a>
+              <a href="subject.html#95">[ subject ]</a>
+              <a href="author.html#95">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-02-05 10:50:59 +0100 (Sun, 05 Feb 2006)
+New Revision: 242
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+   branches/new-vsop-prepare/src/c/libephemeritis/equinox.c
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+Re-wrote equinox_exact() to make use of new VSOP routines.  A function pointer to the VSOP routine now needs to be passed in.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-02-03 10:23:39 UTC (rev 241)
++++ branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-02-05 09:50:59 UTC (rev 242)
+@@ -199,7 +199,7 @@
+  */
+ vsop_error_state ecliptic_planet(double jd,
+ 				 vsop_body planet,
+-				 vsop_error_state (*heliocentic_f) (double, vsop_body, sph_coords *),
++				 vsop_error_state (*heliocentric_f) (double, vsop_body, sph_coords *),
+ 				 double delta,
+ 				 double *longitude, double *latitude)
+ {
+@@ -220,12 +220,12 @@
+         sph_coords sc_e, sc_p;
+ 	vsop_error_state retval;
+ 
+-	if(ok != (retval = heliocentic_f(t, vsop_earth, &amp;sc_e))) {
++	if(ok != (retval = heliocentric_f(t, vsop_earth, &amp;sc_e))) {
+ 	  return retval;
+ 	}
+ 
+ 	/* Heliocentric geometric ecliptic coordinates of the planet. */
+-	if(ok != (retval = heliocentic_f(t, planet, &amp;sc_p))) {
++	if(ok != (retval = heliocentric_f(t, planet, &amp;sc_p))) {
+ 	  return retval;
+ 	}
+ 
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-02-03 10:23:39 UTC (rev 241)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-02-05 09:50:59 UTC (rev 242)
+@@ -185,9 +185,6 @@
+ /* equationoftime.c */
+ double equation_of_time(const double jd);
+ 
+-/* equinox.c */
+-double equinox_approx(int yr, enum Season season);
+-double equinox_exact(double jd, enum Season season, double delta);
+ 
+ /* nutation.c */
+ double nut_in_lon(double jd);
+@@ -369,10 +366,11 @@
+                         (vsop_simple_heliocentric_spherical_date) A
+                         VSOP handle couldn't be loaded for some
+                         reason. */
+-  bailout,           /*!&lt; @brief (ecliptic_planet) Indicates that the
+-                        calculation bailed out, because the desired
+-                        accuracy couldn't be reached within a
+-                        pre-programmed number of iterations. */
++  bailout,           /*!&lt; @brief (ecliptic_planet, equinox_exact)
++                        Indicates that the calculation bailed out,
++                        because the desired accuracy couldn't be
++                        reached within a pre-programmed number of
++                        iterations. */
+   vh_access_error,   /*!&lt; @brief (vsop_get_rectangular,
+ 		        vsop_get_spherical) indicates a vsop_handle
+ 		        error.  (Data referenced by this handle wasn't
+@@ -479,6 +477,7 @@
+ 
+ 
+ vsop_error_state vsop_simple_heliocentric_spherical_date_fk5(double jd, vsop_body planet, sph_coords *sc);
++vsop_error_state vsop_sol_geocentric_spherical_date_fk5(double jd, sph_coords *sc);
+ 
+ 
+ /* elliptical.c */
+@@ -563,7 +562,7 @@
+ 
+ vsop_error_state ecliptic_planet(double jd,
+ 				 vsop_body planet,
+-				 vsop_error_state (*heliocentic_f) (double, vsop_body, sph_coords *),
++				 vsop_error_state (*heliocentric_f) (double, vsop_body, sph_coords *),
+ 				 double delta,
+ 				 double *longitude, double *latitude);
+ 
+@@ -606,4 +605,17 @@
+ 					   const double K_or_G);
+ 
+ 
++/* equinox.c */
++double equinox_approx(int yr, enum Season season);
++/*
++double equinox_exact(double jd, enum Season season, double delta);
++*/
++vsop_error_state equinox_exact(double jd,
++			       enum Season season,
++			       vsop_error_state (*heliocentric_sol_f) (double, sph_coords *),
++			       double delta,
++			       double *equinox_result);
++
++
++
+ #endif
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/equinox.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/equinox.c	2006-02-03 10:23:39 UTC (rev 241)
++++ branches/new-vsop-prepare/src/c/libephemeritis/equinox.c	2006-02-05 09:50:59 UTC (rev 242)
+@@ -23,7 +23,7 @@
+  *  @brief What follows is code to calculate the times of solstice and
+  *  equinox events for Earth.
+  *
+- *  @author William McClain
++ *  @author William McClain, Mike McGavin
+  */
+ 
+ #include &quot;ephemeritis.h&quot;
+@@ -144,6 +144,8 @@
+  *  @return           Julian Day of the event in dynamical time.
+  *                    -1 if the year is out of range.
+  *
++ *  @bug -1 is a bit of a risky way to return an error state.
++ *
+  *  @sa dt_to_ut
+  */
+ double equinox_approx(int yr, enum Season season)
+@@ -211,29 +213,35 @@
+ };
+ 
+ 
+-/*! @brief Returns the precise moment of an equinox or solstice
++
++/*! @brief Calculates the precise moment of an equinox or solstice
+  *  event on Earth.
+  *
+  *  @param[in] jd     Julian Day of an approximate time of the event
+  *                    in dynamical time.
+  *  @param[in] season The season for which to calculate.
++ *  @param[in] heliocentric_sol_f A pointer to a function that, given a julian date (dynamical time) will calculate the geocentric spherical coordinates of the Sun.
+  *  @param[in] delta  The required precision in days.  Times
+  *                    accurate to a second are reasonable when using the VSOP
+  *                    model.
++ *  @param[out] equinox_result    The date of the equinox, in julian days, dynamical time.
+  *
+- *  @return           Julian Day of the event in dynamical time.
+- *                    Returns -5 if too much accuracy was required.
++ *  @return The success state of the function.  bailout may be
++ *          returned if too much accuracy was requested, in which case
++ *          the most accurate available value will still be placed in
++ *          the equinox_result.  Any value that might have been
++ *          returned by geocentric_sol_f could also be returned.
+  *
+- *  @todo Make it work with new VSOP routines.  (Note that it needs to
+- *  fit elegantly with vsop_data_init() and vsop_data_cleanup().
+- *
+- *  @bug -5 is a BAD way to return an error when it might be confused
+- *  with a Julian Date.
+- *
+  *  @sa dynamical::deltaT_seconds for calculating %dynamical time offset.
+  *  @sa dynamical::dt_to_ut
++ *
++ *  @author Bill McClain, Mike McGavin.
+  */
+-double equinox_exact(double jd, enum Season season, double delta)
++vsop_error_state equinox_exact(double jd,
++			       enum Season season,
++			       vsop_error_state (*geocentric_sol_f) (double, sph_coords *),
++			       double delta,
++			       double *equinox_result)
+ {
+     /*
+      * If we knew that the starting approximate time was close enough
+@@ -263,16 +271,20 @@
+     for (i = 0; i &lt; 20; i++) {
+ 	const double jd0 = jd;
+ 
+-	double L, B, R;
+-	sol_dimension3_vsop(jd, &amp;L, &amp;B, &amp;R);
+-	L += nut_in_lon(jd) + aberration_low(R);
+-	vsop_to_fk5(jd, &amp;L, &amp;B);
++	sph_coords sc_s;
++	vsop_error_state result;
++	if(ok != (result = geocentric_sol_f(jd, &amp;sc_s))) {
++  	    *equinox_result = jd;
++  	    return result;
++	}
++	sc_s.L += nut_in_lon(jd) + aberration_low(sc_s.R);
+ 
+ 	/* Meeus uses jd + 58 * sin(diff(...)) */
+-	jd += diff_angle(L, circ) * _k_sun_motion;
++	jd += diff_angle(sc_s.L, circ) * _k_sun_motion;
+ 	if (fabs(jd - jd0) &lt; delta) {
+-	    return jd;
++	    *equinox_result = jd;
++	    return ok;
+ 	}
+     }
+-    return -5;
++    return bailout;
+ }
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-02-03 10:23:39 UTC (rev 241)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-02-05 09:50:59 UTC (rev 242)
+@@ -545,11 +545,12 @@
+ }
+ 
+ 
+-/*! @brief Calculates the spherical coordinates for a specified planet
+- *  at a given date, using VSOP methods.
++/*! @brief Calculates the heliocentric spherical coordinates for a
++ *  specified planet at a given date, using VSOP methods.
+  *
+  *  vsop_data_init() must have been called, or this will fail.
+  *
++ *  @todo Finish documenting.
+  */
+ vsop_error_state vsop_simple_heliocentric_spherical_date_fk5(double jd, vsop_body planet, sph_coords *sc)
+ {
+@@ -567,3 +568,27 @@
+       return ok;
+   }
+ }
++
++/*! @brief Calculates the geocentric spherical coordinates for the Sun
++ *  at a given date, using VSOP methods.
++ *
++ *  vsop_data_init() must have been called, or this will fail.
++ *
++ *  @todo Finish documenting.
++ */
++vsop_error_state vsop_sol_geocentric_spherical_date_fk5(double jd, sph_coords *sc)
++{
++  vsop_handle vh_earth;
++  int result = get_vsop_data_handle(vsop_earth, hel_sph_date, &amp;vh_earth);
++  if(0 != result) {
++      return vh_load_error;
++  }
++
++  vsop_sph_coords vsc = vsop_sph_sol(vsop_sph_to_fk5(vsop_get_spherical(vh_earth, jd)));
++  if(ok != vsc.error_state) {
++      return vsc.error_state;
++  } else {
++      *sc = vsc.sc;
++      return ok;
++  }
++}
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-02-03 10:23:39 UTC (rev 241)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-02-05 09:50:59 UTC (rev 242)
+@@ -835,11 +835,19 @@
+ 
+     printf(&quot;27.b Exact solstice\n&quot;);
+     {
++      /*
+ 	const double jd =
+ 	    equinox_exact(2437837.38589, kJune, days_per_second);
+-	report(&quot;julian day&quot;, jd,
+-	       cal_to_jd(1962, 6, 21, true) + hms_to_fday(21, 24, 42),
+-	       1e-5, &quot;days&quot;);
++      */
++	double jd;
++	vsop_error_state e_state = equinox_exact(2437837.38589, kJune, vsop_sol_geocentric_spherical_date_fk5, days_per_second, &amp;jd);
++	if(ok != e_state) {
++	  printf(&quot;There was some kind of problem calculating the equinox: %d\n&quot;, e_state);
++	} else {
++	  report(&quot;julian day&quot;, jd,
++		 cal_to_jd(1962, 6, 21, true) + hms_to_fday(21, 24, 42),
++		 1e-5, &quot;days&quot;);
++	}
+     }
+ 
+     printf(&quot;27(pg 182) Exact solstice (40 times)\n&quot;);
+@@ -900,8 +908,14 @@
+ 	for (n = 0; n &lt; tbl_size; n++) {
+ 	    const struct Data_27_Solstice *p = &amp;(_tbl[n]);
+ 	    const double approx = equinox_approx(p-&gt;yr, p-&gt;season);
+-	    const double jd =
+-		equinox_exact(approx, p-&gt;season, days_per_second);
++
++	    double jd;
++	    vsop_error_state e_state = equinox_exact(approx, p-&gt;season, vsop_sol_geocentric_spherical_date_fk5, days_per_second, &amp;jd);
++	    if(ok != e_state) {
++	      printf(&quot;There was some kind of problem calculating the equinox: %d\n&quot;, e_state);
++	      continue;
++	    }
++
+ 	    char str_buf[1000];
+ 
+ 	    /* Commenting out snprintf(), as it's not guaranteed until C99 -- ie. not in C90.) */
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000094.html">[Ephemeritis-svn] r241 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000096.html">[Ephemeritis-svn] r243 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#95">[ date ]</a>
+              <a href="thread.html#95">[ thread ]</a>
+              <a href="subject.html#95">[ subject ]</a>
+              <a href="author.html#95">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

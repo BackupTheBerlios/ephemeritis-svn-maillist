@@ -1,0 +1,361 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r187 - in trunk/src/c: libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2005-December/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r187%20-%20in%20trunk/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200512231056.jBNAuqQC016073%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000039.html">
+   <LINK REL="Next"  HREF="000041.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r187 - in trunk/src/c: libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r187%20-%20in%20trunk/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200512231056.jBNAuqQC016073%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r187 - in trunk/src/c: libephemeritis tests">izogi at berlios.de
+       </A><BR>
+    <I>Fri Dec 23 11:56:52 CET 2005</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000039.html">[Ephemeritis-svn] r186 - in trunk/src/c: libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000041.html">[Ephemeritis-svn] r188 - trunk/src/c/tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#40">[ date ]</a>
+              <a href="thread.html#40">[ thread ]</a>
+              <a href="subject.html#40">[ subject ]</a>
+              <a href="author.html#40">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2005-12-23 11:56:50 +0100 (Fri, 23 Dec 2005)
+New Revision: 187
+
+Modified:
+   trunk/src/c/libephemeritis/elliptical.c
+   trunk/src/c/libephemeritis/ephemeritis.h
+   trunk/src/c/tests/validate_meeus.c
+Log:
+More adjustments of elliptical calculation code.  It's still not working nicely, and it's presently unclear (to me) exactly how some of Meeus' explanations relate to data that's available from places like IBAT.
+
+
+Modified: trunk/src/c/libephemeritis/elliptical.c
+===================================================================
+--- trunk/src/c/libephemeritis/elliptical.c	2005-12-23 07:30:28 UTC (rev 186)
++++ trunk/src/c/libephemeritis/elliptical.c	2005-12-23 10:56:50 UTC (rev 187)
+@@ -292,6 +292,40 @@
+ }
+ 
+ 
++
++void get_element_mag_constants(const double obl,
++			       const orbital_elements * elements,
++			       const int iterations,
++			       element_mag_constants * emc)
++{
++  double cosW = cos(elements-&gt;w);
++  double sinW = sin(elements-&gt;w);
++  double cosO = cos(obl);
++  double sinO = sin(obl);
++  double sinL = sin(elements-&gt;L);
++  double cosL = cos(elements-&gt;L);
++  double cosi = cos(elements-&gt;i);
++  double sini = sin(elements-&gt;i);
++
++  double a1 = (cosW * sinL) + (sinW * cosL * cosi);
++  double a2 = sinW * sini;
++  emc-&gt;Px = (cosW * cosL) - (sinW * sinL * cosi);
++  emc-&gt;Py = (cosO * a1) - (sinO * a2);
++  emc-&gt;Pz = (sinO * a1) + (cosO * a2);
++
++  double b1 = (cosW * cosL * cosi) - (sinW * sinL);
++  double b2 = cosW * sini;
++
++  emc-&gt;Qx = (-1 * sinW * cosL) - (cosW * sinL * cosi);
++  emc-&gt;Qy = (cosO * b1) - (sinO * b2);
++  emc-&gt;Qz = (sinO * b1) + (cosO * b2);
++
++  emc-&gt;E = eccentricity_anomoly(elements-&gt;M, elements-&gt;e, iterations);
++  emc-&gt;a = elements-&gt;a;
++  emc-&gt;e = elements-&gt;e;
++}
++
++
+ /*! @brief Calculates the rectangular coordinates of a body, and its
+  *  distance from the Sun, given appropriate orbital elements.
+  *
+@@ -312,19 +346,22 @@
+ element_constants *get_element_constants(const double obl,
+ 					 const orbital_elements * elements,
+ 					 const int iterations,
+-					 element_constants *ec)
++					 element_constants * ec)
+ {
+-    double F = cos(elements-&gt;L);
+-    double G = sin(elements-&gt;L) * cos(obl);
+-    double H = sin(elements-&gt;L) * sin(obl);
+-    double P = -1 * sin(elements-&gt;L) * cos(elements-&gt;i);
+-    double Q =
+-	(cos(elements-&gt;L) * cos(elements-&gt;i) * cos(obl)) -
+-	(sin(elements-&gt;i) * sin(obl));
+-    double R =
+-	(cos(elements-&gt;L) * cos(elements-&gt;i) * sin(obl)) +
+-	(sin(elements-&gt;i) * cos(obl));
++    double cosL = cos(elements-&gt;L);
++    double sinL = sin(elements-&gt;L);
++    double cosO = cos(obl);
++    double sinO = sin(obl);
++    double cosi = cos(elements-&gt;i);
++    double sini = sin(elements-&gt;i);
+ 
++    double F = cosL;
++    double G = sinL * cosO;
++    double H = sinL * sinO;
++    double P = -1 * sinL * cosi;
++    double Q = (cosL * cosi * cosO) - (sini * sinO);
++    double R = (cosL * cosi * sinO) + (sini * cosO);
++
+     /* Note that at this point, F^2 + G^2 + H^2 should == 1, and P^2 + Q^2 + R^2 == 1. */
+ 
+     ec-&gt;_A = atan2(F, P);
+@@ -348,7 +385,11 @@
+ /*! @brief Calculates the rectangular coordinates of a body, and its
+  *  distance from the Sun, given appropriate orbital elements.
+  *
++
++
+  *  @param[in]  jd  The time at which to calculate the position, in dynamical time.
++
++
+  *  @param[in]  ec  The calculated constants that apply for the orbit
+  *                  being calculated.  Use get_element_constants to generate this
+  *                  data.
+@@ -364,16 +405,9 @@
+  *
+  *  @author Mike McGavin.
+  */
+-rec_coords *elliptical_orbit_rectangular(const double jd,
+-					 const element_constants *ec,
+-					 rec_coords * rc,
+-					 double * r_sun)
++rec_coords *elliptical_orbit_rectangular(const element_constants * ec,
++					 rec_coords * rc, double *r_sun)
+ {
+-  /*
+-    element_constants ec;
+-    get_element_constants(obl, elements, 53, &amp;ec);
+-  */
+-
+     double v = true_anomoly(ec-&gt;e, ec-&gt;E);
+     double r = radius_vector(ec-&gt;a, ec-&gt;e, ec-&gt;E);
+ 
+@@ -472,9 +506,37 @@
+     double n = sol-&gt;y + body-&gt;y;
+     double t = sol-&gt;z + body-&gt;z;
+ 
+-    /* Note: r_earth is the distance to the Earth, in astronomical units. */
+     *r_earth = sqrt(s * s + n * n + t * t);
+ 
+     *ra = modpi2(atan2(n, s));
+     *dec = asin(t / *r_earth);
+ }
++
++
++
++void elliptical_body_angles(const rec_coords * sol,
++			    const element_mag_constants * emc,
++			    double * elongation,
++			    double * phase_angle)
++{
++  double x;
++  double y;
++  double z;
++  double v = true_anomoly(emc-&gt;e, emc-&gt;E);
++  double r = radius_vector(emc-&gt;a, emc-&gt;e, emc-&gt;E);
++  double cosv = cos(v);
++  double sinv = sin(v);
++
++  x = r * ((emc-&gt;Px * cosv) + (emc-&gt;Qx * sinv));
++  y = r * ((emc-&gt;Py * cosv) + (emc-&gt;Qy * sinv));
++  z = r * ((emc-&gt;Pz * cosv) + (emc-&gt;Qz * sinv));
++
++  double s = sol-&gt;x + x;
++  double n = sol-&gt;y + y;
++  double t = sol-&gt;z + z;
++  double r_earth = sqrt(s * s + n * n + t * t);
++  double R = sqrt(sol-&gt;x*sol-&gt;x + sol-&gt;y*sol-&gt;y + sol-&gt;x*sol-&gt;x);
++
++  *elongation = acos((R*R + r_earth*r_earth - r*r) / (2 * R * r_earth));
++  *phase_angle = acos((r*r + r_earth*r_earth - R*R) / (2 * r * r_earth));
++}
+
+Modified: trunk/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- trunk/src/c/libephemeritis/ephemeritis.h	2005-12-23 07:30:28 UTC (rev 186)
++++ trunk/src/c/libephemeritis/ephemeritis.h	2005-12-23 10:56:50 UTC (rev 187)
+@@ -289,7 +289,7 @@
+ /*! @brief Struct to contain orbital elements.
+  */
+ typedef struct {
+-    double M;                   /*!&lt; @brief The Mean anonomy.
++    double M;			/*!&lt; @brief The Mean anonomy.
+ 				 *
+ 				 *   @sa mean_anomoly, for calculating the mean anomoly if it's unknown.
+ 				 */
+@@ -333,15 +333,24 @@
+  *  structure.
+  */
+ typedef struct {
+-  double _A, _B, _C;
+-  double _a, _b, _c;
++    double _A, _B, _C;
++    double _a, _b, _c;
+ 
+-  double E;                     /*!&lt; @brief The eccentricity anomoly, in radians. */
+-  double w;                     /*!&lt; @brief The argument of perihelion, in radians. */
+-  double M;                     /*!&lt; @brief The Mean anonomy. */
++    double E;			/*!&lt; @brief The eccentricity anomoly, in radians. */
++    double w;			/*!&lt; @brief The argument of perihelion, in radians. */
++    double M;			/*!&lt; @brief The Mean anonomy. */
++    double a;			/*!&lt; @brief The length of the semi-major axis, in astronomical units. */
++    double e;			/*!&lt; @brief The orbital eccentricity. */
++} element_constants;
++
++
++typedef struct {
++  double Px, Py, Pz;
++  double Qx, Qy, Qz;
++  double E;			/*!&lt; @brief The eccentricity anomoly, in radians. */
+   double a;			/*!&lt; @brief The length of the semi-major axis, in astronomical units. */
+   double e;			/*!&lt; @brief The orbital eccentricity. */
+-} element_constants;
++} element_mag_constants;
+ 
+ double eccentricity_anomoly(double M, double e, int iterations);
+ int geocentric_planet(double jd,
+@@ -355,12 +364,14 @@
+ element_constants *get_element_constants(const double obl,
+ 					 const orbital_elements * elements,
+ 					 const int iterations,
+-					 element_constants *ec);
++					 element_constants * ec);
+ 
+-rec_coords *elliptical_orbit_rectangular(const double jd,
+-					 const element_constants *ec,
+-					 rec_coords * rc,
+-					 double * r_sun);
++rec_coords *elliptical_orbit_rectangular(
++					 /*
++const double jd,
++					 */
++					 const element_constants * ec,
++					 rec_coords * rc, double *r_sun);
+ 
+ double mean_anomoly(double jd, double T, double n);
+ void elliptical_orbit_ecliptical(const rec_coords * sol,
+
+Modified: trunk/src/c/tests/validate_meeus.c
+===================================================================
+--- trunk/src/c/tests/validate_meeus.c	2005-12-23 07:30:28 UTC (rev 186)
++++ trunk/src/c/tests/validate_meeus.c	2005-12-23 10:56:50 UTC (rev 187)
+@@ -820,7 +820,7 @@
+       rec_coords rc;
+       double r_sun;
+       element_constants ec;
+-      elliptical_orbit_rectangular(jd, get_element_constants(obliquity_hi(je_to_jd(2000.0)), &amp;el, 53, &amp;ec), &amp;rc, &amp;r_sun);
++      elliptical_orbit_rectangular(get_element_constants(obliquity_hi(je_to_jd(2000.0)), &amp;el, 53, &amp;ec), &amp;rc, &amp;r_sun);
+ 
+       report(&quot;x&quot;, rc.x, 0.2508066, 0.0000001, &quot;AU&quot;);
+       report(&quot;y&quot;, rc.y, 0.4849175, 0.0000001, &quot;AU&quot;);
+@@ -855,7 +855,38 @@
+     {
+       /* Ceres data. */
+       orbital_elements cd;
+-      cd.M = d_to_r(108.509);
++      double jd = cal_to_jd(2005, 5, 1, true);
++
++      double ep = cal_to_jd(2005, 1, 30, true);
++      cd.a = 2.7673017;
++      cd.e = 0.0800887;
++      cd.i = d_to_r(10.58276);
++      cd.w = d_to_r(73.72889);
++      cd.L = d_to_r(80.42334);
++      cd.magdatatype = iau_s;
++      cd.magdata._iau.H = 3.34;
++      cd.magdata._iau.G = 0.12;
++
++      double n = 0.21410131;
++      cd.M = d_to_r(43.77971) + n * (jd - ep);
++
++      /*
++      double ep = cal_to_jd(2000, 1, 1, true);
++      cd.a = 2.765813553515125;
++      cd.e = 0.07856100887229889;
++      cd.i = d_to_r(10.60695970203233);
++      cd.w = d_to_r(73.11847897505739);
++      cd.L = d_to_r(153.5582335);
++      cd.magdatatype = iau_s;
++      cd.magdata._iau.H = 3.34;
++      cd.magdata._iau.G = 0.12;
++
++      double n = 0.9856076686 / cd.a*sqrt(cd.a);
++      cd.M = d_to_r(170.3210030302993) + n * (jd - ep);
++      */
++
++      /*
++      double ep = cal_to_jd(2005, 11, 26, true);
+       cd.a = 2.766;
+       cd.e = 0.080;
+       cd.i = d_to_r(10.587);
+@@ -864,13 +895,16 @@
+       cd.magdatatype = iau_s;
+       cd.magdata._iau.H = 3.34;
+       cd.magdata._iau.G = 0.12;
++      double n = 0.9856076686 / cd.a*sqrt(cd.a);
++      cd.M = d_to_r(108.509) + n * (jd - ep);
++      */
+ 
+-      double jd = cal_to_jd(2005, 12, 22, true);
+ 
++
+       rec_coords ceres_rec;
+       double ceres_r_sun;
+       element_constants ec;
+-      elliptical_orbit_rectangular(jd, get_element_constants(obliquity_hi(jd), &amp;cd, 53, &amp;ec), &amp;ceres_rec, &amp;ceres_r_sun);
++      elliptical_orbit_rectangular(get_element_constants(obliquity_hi(jd), &amp;cd, 53, &amp;ec), &amp;ceres_rec, &amp;ceres_r_sun);
+       
+       rec_coords sun_rec;
+       double L, B, R;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000039.html">[Ephemeritis-svn] r186 - in trunk/src/c: libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000041.html">[Ephemeritis-svn] r188 - trunk/src/c/tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#40">[ date ]</a>
+              <a href="thread.html#40">[ thread ]</a>
+              <a href="subject.html#40">[ subject ]</a>
+              <a href="author.html#40">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

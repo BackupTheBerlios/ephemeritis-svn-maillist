@@ -1,0 +1,431 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r168 - in trunk/src/c: libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2005-December/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r168%20-%20in%20trunk/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200512170754.jBH7sTrq010585%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000023.html">
+   <LINK REL="Next"  HREF="000025.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r168 - in trunk/src/c: libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r168%20-%20in%20trunk/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200512170754.jBH7sTrq010585%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r168 - in trunk/src/c: libephemeritis tests">izogi at berlios.de
+       </A><BR>
+    <I>Sat Dec 17 08:54:29 CET 2005</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000023.html">[Ephemeritis-svn] r167 - trunk/src/c/libephemeritis
+</A></li>
+        <LI>Next message: <A HREF="000025.html">[Ephemeritis-svn] r169 - trunk/src/c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#24">[ date ]</a>
+              <a href="thread.html#24">[ thread ]</a>
+              <a href="subject.html#24">[ subject ]</a>
+              <a href="author.html#24">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2005-12-17 08:54:19 +0100 (Sat, 17 Dec 2005)
+New Revision: 168
+
+Modified:
+   trunk/src/c/libephemeritis/elliptical.c
+   trunk/src/c/libephemeritis/ephemeritis.h
+   trunk/src/c/libephemeritis/solar.c
+   trunk/src/c/libephemeritis/vsop87d.c
+   trunk/src/c/tests/validate_meeus.c
+Log:
+Moved fk5 conversion code directly into the VSOP code, to loosen the dependencies between VSOP code and geocentric coordinate calculation code.
+More playing with what files should contain what code.
+Added a 'vsop' or 'fk5' suffix to several function names, to indicate what frame of reference they were returning.
+
+
+Modified: trunk/src/c/libephemeritis/elliptical.c
+===================================================================
+--- trunk/src/c/libephemeritis/elliptical.c	2005-12-17 05:57:34 UTC (rev 167)
++++ trunk/src/c/libephemeritis/elliptical.c	2005-12-17 07:54:19 UTC (rev 168)
+@@ -40,45 +40,7 @@
+ #include &lt;stdlib.h&gt;
+ 
+ 
+-/*! @brief Converts VSOP to FK5 coordinates. 
+- *
+- *  This is required only when using the full precision of the
+- *  VSOP model. [Meeus-1998: pg 219]
+- *
+- *  @param[in]  jd      Julian Day, in dynamical time.
+- *
+- *  @param[out] L       Corrected longitude, in radians.
+- *  @param[out] B       Corrected latitude, in radians.
+- *
+- *  @sa dynamical::deltaT_seconds for calculating %dynamical time offset.
+- *
+- *  @todo Figure out where this function belongs... it's presently in
+- *  elliptical.c, but may belong in vsop87d.c.  If the latter, however,
+- *  there could be problems with how the geocentric_planet_f() function
+- *  knows to call it without it being properly independent.
+- */
+-void vsop_to_fk5(double jd, double *L, double *B)
+-{
+-    /*
+-     * Constant terms
+-     */
+-    const double _k0 = d_to_r(-1.397);
+-    const double _k1 = d_to_r(-0.00031);
+-    const double _k2 = d_to_r(dms_to_d(0, 0, -0.09033));
+-    const double _k3 = d_to_r(dms_to_d(0, 0, 0.03916));
+ 
+-    const double T = jd_to_jcent(jd);
+-    double poly[] = { *L, _k0, _k1 };
+-    const double L1 = polynomial(poly, 3, T);
+-    const double cosL1 = cos(L1);
+-    const double sinL1 = sin(L1);
+-    const double deltaL = _k2 + _k3 * (cosL1 + sinL1) * tan(*B);
+-    const double deltaB = _k3 * (cosL1 - sinL1);
+-    *L = modpi2(*L + deltaL);
+-    *B += deltaB;
+-}
+-
+-
+ /*! @brief Calculates the equatorial coordinates of a planet.
+  *
+  *  The results will be geocentric, corrected for light-time and
+@@ -88,7 +50,7 @@
+  *                        in dynamical time.
+  *  @param[in]  basePlanet      The planet from which the observation takes place.
+  *  @param[in]  targetPlanet    The planet for which the position should be calculated.
+- *  @param[in]  heliocentric_f  A function to calculate three heliocentric dimensions.
++ *  @param[in]  heliocentric_f  A function to calculate three heliocentric dimensions, returning the results in fk5 coordinates.
+  *  @param[in]  deltaPsi  Nutation in longitude, in radians.
+  *  @param[in]  epsilon   True obliquity (corrected for nutation), in radians.
+  *  @param[in]  delta     Desired accuracy, in days.
+@@ -102,15 +64,21 @@
+  *  @sa deltaT_seconds for calculating %dynamical time offset.
+  *  @sa nut_in_lon for calculating %nutation in longitude.
+  *  @sa (obliquity or obliquity_hi) + nut_in_obl for calculating true obliquity.
++ *
++ *  @todo Audit code and confirm that it's not breaking the algorithm
++ *  to move the fk5 conversion back into the vsop coordinate
++ *  calculations.  If it's a simple translation of coordinates (as I
++ *  think it should be), then I think it should be okay.  Meeus
++ *  doesn't clearly state if it's okay to do this, however.
+  */
+-int geocentric_planet_f(double jd,
+-			enum vPlanets basePlanet,
+-			enum vPlanets targetPlanet,
+-			void (*heliocentic_f)(double, enum vPlanets, double*, double*, double*),
+-			double deltaPsi,
+-			double epsilon,
+-			double delta,
+-			double *ra, double *dec)
++int geocentric_planet(double jd,
++		      enum vPlanets basePlanet,
++		      enum vPlanets targetPlanet,
++		      void (*heliocentic_f)(double, enum vPlanets, double*, double*, double*),
++		      double deltaPsi,
++		      double epsilon,
++		      double delta,
++		      double *ra, double *dec)
+ {
+     double t = jd;
+     double l0 = -100.0;		/* Impossible value. */
+@@ -172,7 +140,12 @@
+     }
+ 
+     /* Transform to FK5 ecliptic and equinox. */
++    /*
++      --- This is now done within the vsop function.  It's probably slightly less efficient that
++      --- way, but it keeps all the vsop code bundled together, allowing for the layer of abstraction
++      --- between the geocentric and heliocentric coordinate calculations.
+     vsop_to_fk5(jd, &amp;l, &amp;b);
++    */
+ 
+     /* Nutation in longitude. */
+     l += deltaPsi;
+@@ -208,19 +181,20 @@
+  *  @sa nut_in_lon for calculating %nutation in longitude.
+  *  @sa (obliquity or obliquity_hi) + nut_in_obl for calculating true obliquity.
+  */
+-int geocentric_planet(double jd,
++/*
++int geocentric_planet_old(double jd,
+ 		      enum vPlanets planet,
+ 		      double deltaPsi,
+ 		      double epsilon,
+ 		      double delta, double *ra, double *dec)
+ {
+-  return geocentric_planet_f(jd, vEarth, planet, vsop_dimension3, deltaPsi, epsilon, delta, ra, dec);
++  return geocentric_planet_f(jd, vEarth, planet, vsop_dimension3_fk5, deltaPsi, epsilon, delta, ra, dec);
+ }
++*/
+ 
+ 
+ 
+ 
+-
+ /*! @brief A private helper function to return the sign of a variable.
+  *
+  *  The main reason this function exists is because ANSI C doesn't
+
+Modified: trunk/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- trunk/src/c/libephemeritis/ephemeritis.h	2005-12-17 05:57:34 UTC (rev 167)
++++ trunk/src/c/libephemeritis/ephemeritis.h	2005-12-17 07:54:19 UTC (rev 168)
+@@ -267,21 +267,26 @@
+ double polynomial(const double terms[], const int len, double x);
+ 
+ /* vsop87d.c */
+-double vsop_dimension(double jd, enum vPlanets planet, enum Coords dim);
+-void vsop_dimension3(double jd,
+-		     enum vPlanets planet,
+-		     double *longitude, double *latitude, double *radius);
++double vsop_dimension_vsop(double jd, enum vPlanets planet, enum Coords dim);
++void vsop_dimension3_vsop(double jd,
++			  enum vPlanets planet,
++			  double *longitude, double *latitude, double *radius);
++void vsop_dimension3_fk5(double jd,
++			 enum vPlanets planet,
++			 double *longitude, double *latitude, double *radius);
++void vsop_to_fk5(double jd, double *L, double *B);
+ 
+ 
+ /* elliptical.c */
+ double equation_of_kepler(double M, double e, int iterations);
+-void vsop_to_fk5(double jd, double *L, double *B);
++/*
+ int geocentric_planet(double jd,
+ 		      enum vPlanets planet,
+ 		      double deltaPsi,
+ 		      double epsilon,
+ 		      double delta, double *ra, double *dec);
+-int geocentric_planet_f(double jd,
++*/
++int geocentric_planet(double jd,
+ 			enum vPlanets basePlanet,
+ 			enum vPlanets targetPlanet,
+ 			void (*heliocentic_f)(double, enum vPlanets, double*, double*, double*),
+
+Modified: trunk/src/c/libephemeritis/solar.c
+===================================================================
+--- trunk/src/c/libephemeritis/solar.c	2005-12-17 05:57:34 UTC (rev 167)
++++ trunk/src/c/libephemeritis/solar.c	2005-12-17 07:54:19 UTC (rev 168)
+@@ -53,7 +53,7 @@
+  */
+ double sol_dimension(double jd, enum Coords dim)
+ {
+-    double X = vsop_dimension(jd, vEarth, dim);
++    double X = vsop_dimension_vsop(jd, vEarth, dim);
+     if (dim == vL) {
+ 	X = modpi2(X + pi);
+     } else if (dim == vB) {
+
+Modified: trunk/src/c/libephemeritis/vsop87d.c
+===================================================================
+--- trunk/src/c/libephemeritis/vsop87d.c	2005-12-17 05:57:34 UTC (rev 167)
++++ trunk/src/c/libephemeritis/vsop87d.c	2005-12-17 07:54:19 UTC (rev 168)
+@@ -32,8 +32,8 @@
+ extern struct TermList _vsop87d_term_lists[];
+ extern const int _vsop87d_term_lists_len;
+ 
+-/*! @brief Returns one of heliocentric ecliptic longitude,
+- *  latitude and radius.
++/*! @brief Returns one of heliocentric ecliptic longitude, latitude
++ *  and radius in the vsop frame of reference.
+  *
+  *  [Meeus-1998: pg 218]
+  *
+@@ -46,13 +46,21 @@
+  *                        radians), or radius (in astronomical units).
+  *
+  *  @sa deltaT_seconds for calculating %dynamical time offset.
++ *  @sa vsop_dimension3_fk5
++ *  @sa vsop_to_fk5
+  *
++ *  @warning This function returns the coordinates in the vsop frame
++ *  of reference, which is very slightly different from fk5.  To
++ *  convert the longitude and latitude to fk5 coordinates, it's
++ *  necessary to calculate both longitude and latitude and then use
++ *  vsop_to_fk5.  Alternatively, call vsop_dimension3_fk5.
++ *
+  *  @todo Add an option for the calling code to request that less
+  *  detail be calculated if less accuracy is required, to save
+  *  processing time.  According to Meeus, much fewer than available
+  *  elements are actually required unless great accuracy is wanted.
+  */
+-double vsop_dimension(double jd, enum vPlanets planet, enum Coords dim)
++double vsop_dimension_vsop(double jd, enum vPlanets planet, enum Coords dim)
+ {
+     /* The idea here is to sum the results of A*cos(B+(C*tau)) for
+      * each series, combine the result for each series together in
+@@ -92,7 +100,8 @@
+     return X;
+ }
+ 
+-/*! @brief Returns heliocentric ecliptic longitude, latitude and radius.
++/*! @brief Returns heliocentric ecliptic longitude, latitude and
++    radius in the vsop frame of reference.
+  *
+  *  The code in this function very simply calls vsop_dimension for
+  *  each value, so it is no more efficient to call this.  It's
+@@ -105,13 +114,90 @@
+  *  @param[out] radius    The ecliptic radius of the planet, in astronomical units.
+  *
+  *  @sa deltaT_seconds for calculating %dynamical time offset.
++ *  @sa vsop_dimension3_fk5
++ *  @sa vsop_to_fk5
++ *
++ *  @warning This function returns the coordinates in the vsop frame
++ *  of reference, which is very slightly different from fk5.  To
++ *  convert the longitude and latitude to fk5 coordinates, use
++ *  vsop_to_fk5.  Alternatively, call vsop_dimension3_fk5.
+  */
+-void vsop_dimension3(double jd,
+-		     enum vPlanets planet,
+-		     double *longitude, double *latitude, double *radius)
++void vsop_dimension3_vsop(double jd,
++			  enum vPlanets planet,
++			  double *longitude, double *latitude, double *radius)
+ {
+-    *longitude = vsop_dimension(jd, planet, vL);
+-    *latitude = vsop_dimension(jd, planet, vB);
+-    *radius = vsop_dimension(jd, planet, vR);
++    *longitude = vsop_dimension_vsop(jd, planet, vL);
++    *latitude = vsop_dimension_vsop(jd, planet, vB);
++    *radius = vsop_dimension_vsop(jd, planet, vR);
+ }
+ 
++/*! @brief Returns heliocentric ecliptic longitude, latitude and
++    radius in hte fk5 frame of reference.
++ *
++ *  The code in this function very simply calls vsop_dimension for
++ *  each value, so it is no more efficient to call this.  It's
++ *  provided for convenience only.
++ *
++ *  @param[in]  jd        Julian Day, in dynamical time.
++ *  @param[in]  planet    The planet for which to calculate.
++ *  @param[out] longitude The ecliptic longitude of the planet, in radians.
++ *  @param[out] latitude  The ecliptic latitude of the planet, in radians.
++ *  @param[out] radius    The ecliptic radius of the planet, in astronomical units.
++ *
++ *  @sa deltaT_seconds for calculating %dynamical time offset.
++ *  @sa vsop_dimension3_fk5
++ *  @sa vsop_to_fk5
++ *
++ *  @warning This function returns the coordinates in the vsop frame
++ *  of reference, which is very slightly different from fk5.  To
++ *  convert the longitude and latitude to fk5 coordinates, use
++ *  vsop_to_fk5.  Alternatively, call vsop_dimension3_fk5.
++ */
++void vsop_dimension3_fk5(double jd,
++			 enum vPlanets planet,
++			 double *longitude, double *latitude, double *radius)
++{
++  vsop_dimension3_vsop(jd, planet, longitude, latitude, radius);
++
++  /* Transform to FK5 ecliptic and equinox. */
++  vsop_to_fk5(jd, longitude, latitude);
++}
++
++
++/*! @brief Converts VSOP to FK5 coordinates. 
++ *
++ *  This is required only when using the full precision of the
++ *  VSOP model. [Meeus-1998: pg 219]
++ *
++ *  @param[in]  jd      Julian Day, in dynamical time.
++ *
++ *  @param[out] L       Corrected longitude, in radians.
++ *  @param[out] B       Corrected latitude, in radians.
++ *
++ *  @sa dynamical::deltaT_seconds for calculating %dynamical time offset.
++ *
++ *  @todo Figure out where this function belongs... it's presently in
++ *  elliptical.c, but may belong in vsop87d.c.  If the latter, however,
++ *  there could be problems with how the geocentric_planet_f() function
++ *  knows to call it without it being properly independent.
++ */
++void vsop_to_fk5(double jd, double *L, double *B)
++{
++    /*
++     * Constant terms
++     */
++    const double _k0 = d_to_r(-1.397);
++    const double _k1 = d_to_r(-0.00031);
++    const double _k2 = d_to_r(dms_to_d(0, 0, -0.09033));
++    const double _k3 = d_to_r(dms_to_d(0, 0, 0.03916));
++
++    const double T = jd_to_jcent(jd);
++    double poly[] = { *L, _k0, _k1 };
++    const double L1 = polynomial(poly, 3, T);
++    const double cosL1 = cos(L1);
++    const double sinL1 = sin(L1);
++    const double deltaL = _k2 + _k3 * (cosL1 + sinL1) * tan(*B);
++    const double deltaB = _k3 * (cosL1 - sinL1);
++    *L = modpi2(*L + deltaL);
++    *B += deltaB;
++}
+
+Modified: trunk/src/c/tests/validate_meeus.c
+===================================================================
+--- trunk/src/c/tests/validate_meeus.c	2005-12-17 05:57:34 UTC (rev 167)
++++ trunk/src/c/tests/validate_meeus.c	2005-12-17 07:54:19 UTC (rev 168)
+@@ -765,7 +765,7 @@
+     printf(&quot;32.a Planet position\n&quot;);
+     {
+ 	double L, B, R;
+-	vsop_dimension3(2448976.5, vVenus, &amp;L, &amp;B, &amp;R);
++	vsop_dimension3_vsop(2448976.5, vVenus, &amp;L, &amp;B, &amp;R);
+ 	report_diff(&quot;longitude&quot;, r_to_d(L) * 3600, 26.11428 * 3600,
+ 		    &quot;arc-seconds&quot;);
+ 	report_diff(&quot;latitude&quot;, r_to_d(B) * 3600, -2.62070 * 3600,
+@@ -776,9 +776,14 @@
+     printf(&quot;33.a Apparent position\n&quot;);
+     {
+ 	double ra, dec;
++	/*
+ 	geocentric_planet(2448976.5, vVenus,
+ 			  d_to_r(dms_to_d(0, 0, 16.749)),
+ 			  d_to_r(23.439669), days_per_second, &amp;ra, &amp;dec);
++	*/
++	geocentric_planet(2448976.5, vEarth, vVenus, vsop_dimension3_fk5,
++			  d_to_r(dms_to_d(0, 0, 16.749)),
++			  d_to_r(23.439669), days_per_second, &amp;ra, &amp;dec);
+ 	report(&quot;ra&quot;, r_to_d(ra), r_to_d(hms_to_fday(21, 4, 41.454) * pi2),
+ 	       1e-5, &quot;degrees&quot;);
+ 	report(&quot;dec&quot;, r_to_d(dec), dms_to_d(-18, 53, 16.84), 1e-5,
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000023.html">[Ephemeritis-svn] r167 - trunk/src/c/libephemeritis
+</A></li>
+	<LI>Next message: <A HREF="000025.html">[Ephemeritis-svn] r169 - trunk/src/c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#24">[ date ]</a>
+              <a href="thread.html#24">[ thread ]</a>
+              <a href="subject.html#24">[ subject ]</a>
+              <a href="author.html#24">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

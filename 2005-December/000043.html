@@ -1,0 +1,404 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r190 - in trunk/src/c: libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2005-December/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r190%20-%20in%20trunk/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200512250243.jBP2hjuT014066%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000042.html">
+   
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r190 - in trunk/src/c: libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r190%20-%20in%20trunk/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200512250243.jBP2hjuT014066%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r190 - in trunk/src/c: libephemeritis tests">izogi at berlios.de
+       </A><BR>
+    <I>Sun Dec 25 03:43:45 CET 2005</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000042.html">[Ephemeritis-svn] r189 - trunk/src/c/tests
+</A></li>
+        
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#43">[ date ]</a>
+              <a href="thread.html#43">[ thread ]</a>
+              <a href="subject.html#43">[ subject ]</a>
+              <a href="author.html#43">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2005-12-25 03:43:38 +0100 (Sun, 25 Dec 2005)
+New Revision: 190
+
+Modified:
+   trunk/src/c/libephemeritis/elliptical.c
+   trunk/src/c/libephemeritis/ephemeritis.h
+   trunk/src/c/tests/validate_meeus.c
+Log:
+Adjusted to allow calculation of phase angle and elongation.  (validate_meeus now calculates magnitude correctly, in theory, although un-tested).
+Re-ran 'indent -kr'.
+
+
+Modified: trunk/src/c/libephemeritis/elliptical.c
+===================================================================
+--- trunk/src/c/libephemeritis/elliptical.c	2005-12-23 19:12:45 UTC (rev 189)
++++ trunk/src/c/libephemeritis/elliptical.c	2005-12-25 02:43:38 UTC (rev 190)
+@@ -292,7 +292,7 @@
+ }
+ 
+ 
+-
++/*
+ void get_element_mag_constants(const double obl,
+ 			       const orbital_elements * elements,
+ 			       const int iterations,
+@@ -324,12 +324,12 @@
+   emc-&gt;a = elements-&gt;a;
+   emc-&gt;e = elements-&gt;e;
+ }
++*/
+ 
+-
+ /*! @brief Calculates the rectangular coordinates of a body, and its
+  *  distance from the Sun, given appropriate orbital elements.
+  *
+- *  @param[in]  obl The obliquity of the ecliptic for the epoch at which i, L and w are provided.
++ *  @param[in]  obl The obliquity of the ecliptic for the epoch at which i, L and w are provided.  This ir probably the obliquity at J2000.0.
+  *  @param[in]  elements The known elements for the orbit to calculate.
+  *  @param[in]  iterations Iterations of calculation to use (for accuracy).
+  *                         33 iterations should be sufficient for 10 digit
+@@ -462,8 +462,9 @@
+ 	(2.5 * log10(((1 - G) * z1) + (G * z2)));
+ }
+ 
+-/*! Calculates the RA and Dec of a body in an elliptical orbit, given
+- *  rectangular coordinates of the Sun and the body.
++/*! Calculates the RA, Dec, elongation, phase angle, and distance from
++ *  Earth of a body in an elliptical orbit, given rectangular
++ *  coordinates of the Sun and the body.
+  *
+  *  The values returned by this function are appropriate for the
+  *  standard equinox that applies to the rectangular coordinates that
+@@ -471,8 +472,11 @@
+  *
+  *  @param[in]  sol  Rectangular coordinates of the Sun.
+  *  @param[in]  body Rectangular coordinates of the body in question.
++ *  @param[in]  r_sun The distance between the body and the Sun, in AU.
+  *  @param[out] ra   The right ascension of the body, in radians.
+  *  @param[out] dec  The declination of the body, in radians.
++ *  @param[out] elongation The elongation to the Sun.
++ *  @param[out] phase_angle The phase angle (Sun-body-Earth).
+  *  @param[out] r_earth The distance to the body from Earth, in astronomical units.
+  *
+  *  @warning This function calculates the geometric position of a
+@@ -496,24 +500,38 @@
+  *
+  *  @todo Write some unit tests.
+  *
++ *  @todo Adjust so that r_sun is calculated, or passed in more
++ *  elegantly.
++ *
+  *  @author Mike McGavin.
+  */
+ void elliptical_orbit_ecliptical(const rec_coords * sol,
+-				 const rec_coords * body, double *ra,
+-				 double *dec, double *r_earth)
++				 const rec_coords * body,
++				 const double r_sun,
++				 double *ra,
++				 double *dec,
++				 double *elongation,
++				 double *phase_angle, double *r_earth)
+ {
+     double s = sol-&gt;x + body-&gt;x;
+     double n = sol-&gt;y + body-&gt;y;
+     double t = sol-&gt;z + body-&gt;z;
+ 
+-    *r_earth = sqrt(s * s + n * n + t * t);
++    double r_e = sqrt(s * s + n * n + t * t);
++    *r_earth = r_e;
+ 
+     *ra = modpi2(atan2(n, s));
+     *dec = asin(t / *r_earth);
++
++    double R = sqrt(sol-&gt;x * sol-&gt;x + sol-&gt;y * sol-&gt;y + sol-&gt;x * sol-&gt;x);
++    *elongation =
++	acos((R * R + r_e * r_e - r_sun * r_sun) / (2 * R * r_e));
++    *phase_angle =
++	acos((r_sun * r_sun + r_e * r_e - R * R) / (2 * r_sun * r_e));
+ }
+ 
+ 
+-
++/*
+ void elliptical_body_angles(const rec_coords * sol,
+ 			    const element_mag_constants * emc,
+ 			    double * elongation,
+@@ -540,3 +558,4 @@
+   *elongation = acos((R*R + r_earth*r_earth - r*r) / (2 * R * r_earth));
+   *phase_angle = acos((r*r + r_earth*r_earth - R*R) / (2 * r * r_earth));
+ }
++*/
+
+Modified: trunk/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- trunk/src/c/libephemeritis/ephemeritis.h	2005-12-23 19:12:45 UTC (rev 189)
++++ trunk/src/c/libephemeritis/ephemeritis.h	2005-12-25 02:43:38 UTC (rev 190)
+@@ -343,15 +343,6 @@
+     double e;			/*!&lt; @brief The orbital eccentricity. */
+ } element_constants;
+ 
+-
+-typedef struct {
+-  double Px, Py, Pz;
+-  double Qx, Qy, Qz;
+-  double E;			/*!&lt; @brief The eccentricity anomoly, in radians. */
+-  double a;			/*!&lt; @brief The length of the semi-major axis, in astronomical units. */
+-  double e;			/*!&lt; @brief The orbital eccentricity. */
+-} element_mag_constants;
+-
+ double eccentricity_anomoly(double M, double e, int iterations);
+ int geocentric_planet(double jd,
+ 		      enum vPlanets basePlanet,
+@@ -366,17 +357,17 @@
+ 					 const int iterations,
+ 					 element_constants * ec);
+ 
+-rec_coords *elliptical_orbit_rectangular(
+-					 /*
+-const double jd,
+-					 */
+-					 const element_constants * ec,
++rec_coords *elliptical_orbit_rectangular(const element_constants * ec,
+ 					 rec_coords * rc, double *r_sun);
+ 
+ double mean_anomoly(double jd, double T, double n);
+ void elliptical_orbit_ecliptical(const rec_coords * sol,
+-				 const rec_coords * body, double *ra,
+-				 double *dec, double *r_earth);
++				 const rec_coords * body,
++				 const double r_sun,
++				 double *ra,
++				 double *dec,
++				 double *elongation,
++				 double *phase_angle, double *r_earth);
+ 
+ double mag_abs(const double g, const double k, const double r_sun,
+ 	       const double r_earth);
+
+Modified: trunk/src/c/tests/validate_meeus.c
+===================================================================
+--- trunk/src/c/tests/validate_meeus.c	2005-12-23 19:12:45 UTC (rev 189)
++++ trunk/src/c/tests/validate_meeus.c	2005-12-25 02:43:38 UTC (rev 190)
+@@ -648,7 +648,8 @@
+ 	report(&quot;aberration&quot;, r_to_d(aberration) * 3600, -20.539, 0.001,
+ 	       &quot;arc-seconds&quot;);
+ 
+-	printf(&quot;25.b Sun position, high precision (complete theory pg 165)\n&quot;);
++	printf
++	    (&quot;25.b Sun position, high precision (complete theory pg 165)\n&quot;);
+ 	report(&quot;longitude&quot;, r_to_d(L) * 3600 * 100,
+ 	       dms_to_d(199, 54, 26.18) * 3600 * 100, 1,
+ 	       &quot;arc-seconds/100&quot;);
+@@ -659,7 +660,7 @@
+ 
+     printf(&quot;26.a Rectangular coordinates of the Sun\n&quot;);
+     {
+-        double jd = 2448908.5;
++	double jd = 2448908.5;
+ 	double L, B, R;
+ 	sol_dimension3_fk5(jd, &amp;L, &amp;B, &amp;R);
+ 
+@@ -667,7 +668,7 @@
+ 	   L, B and R will, here, be overridden from those stated on
+ 	   p172. */
+ 	L = d_to_r(199.907347);
+-	B = d_to_r(dms_to_d(0,0,0.62));
++	B = d_to_r(dms_to_d(0, 0, 0.62));
+ 	R = 0.99760775;
+ 	double E = obliquity_hi(jd);
+ 	rec_coords rc;
+@@ -768,17 +769,20 @@
+ 
+     printf(&quot;28.a Equation of time\n&quot;);
+     {
+-      double jd = 2448908.5;
+-      double eot_result = equation_of_time(jd);
+-      report(&quot;Equation of time&quot;, eot_result, fday_to_r(hms_to_fday(0.0,13.0,42.6)), 0.000001, &quot;radians&quot;);
++	double jd = 2448908.5;
++	double eot_result = equation_of_time(jd);
++	report(&quot;Equation of time&quot;, eot_result,
++	       fday_to_r(hms_to_fday(0.0, 13.0, 42.6)), 0.000001,
++	       &quot;radians&quot;);
+     }
+ 
+     printf(&quot;30.a Eccentricity anomoly (Equation of Kepler)\n&quot;);
+     {
+-      double e = 0.100;
+-      double M = d_to_r(5.0);
+-      double eok_result = eccentricity_anomoly(M, e, 33);
+-      report(&quot;Eccentricity anoomly&quot;, eok_result, d_to_r(5.554589), 0.0000001, &quot;radians&quot;);
++	double e = 0.100;
++	double M = d_to_r(5.0);
++	double eok_result = eccentricity_anomoly(M, e, 33);
++	report(&quot;Eccentricity anoomly&quot;, eok_result, d_to_r(5.554589),
++	       0.0000001, &quot;radians&quot;);
+     }
+ 
+     printf(&quot;32.a Planet position\n&quot;);
+@@ -806,25 +810,27 @@
+ 
+     printf(&quot;33.b Apparent position (elements)\n&quot;);
+     {
+-      orbital_elements el;
+-      double T = cal_to_jd(1990, 10, 28.54502, true);
+-      double jd = cal_to_jd(1990, 10, 6, true);
+-      el.a = 2.2091404;
+-      el.e = 0.8502196;
+-      el.i = d_to_r(11.94524);
+-      el.L = d_to_r(334.75006);
+-      el.w = d_to_r(186.23352);
+-      el.n = 0.01720209895 / (el.a*sqrt(el.a));
+-      el.M = mean_anomoly(jd, T, el.n);
++	orbital_elements el;
++	double T = cal_to_jd(1990, 10, 28.54502, true);
++	double jd = cal_to_jd(1990, 10, 6, true);
++	el.a = 2.2091404;
++	el.e = 0.8502196;
++	el.i = d_to_r(11.94524);
++	el.L = d_to_r(334.75006);
++	el.w = d_to_r(186.23352);
++	el.n = 0.01720209895 / (el.a * sqrt(el.a));
++	el.M = mean_anomoly(jd, T, el.n);
+ 
+-      rec_coords rc;
+-      double r_sun;
+-      element_constants ec;
+-      elliptical_orbit_rectangular(get_element_constants(obliquity_hi(je_to_jd(2000.0)), &amp;el, 53, &amp;ec), &amp;rc, &amp;r_sun);
++	rec_coords rc;
++	double r_sun;
++	element_constants ec;
++	elliptical_orbit_rectangular(get_element_constants
++				     (obliquity_hi(je_to_jd(2000.0)), &amp;el,
++				      53, &amp;ec), &amp;rc, &amp;r_sun);
+ 
+-      report(&quot;x&quot;, rc.x, 0.2508066, 0.0000001, &quot;AU&quot;);
+-      report(&quot;y&quot;, rc.y, 0.4849175, 0.0000001, &quot;AU&quot;);
+-      report(&quot;z&quot;, rc.z, 0.3573373, 0.0000001, &quot;AU&quot;);
++	report(&quot;x&quot;, rc.x, 0.2508066, 0.0000001, &quot;AU&quot;);
++	report(&quot;y&quot;, rc.y, 0.4849175, 0.0000001, &quot;AU&quot;);
++	report(&quot;z&quot;, rc.z, 0.3573373, 0.0000001, &quot;AU&quot;);
+     }
+ 
+     printf(&quot;47.a Moon position\n&quot;);
+@@ -853,40 +859,49 @@
+ 
+     printf(&quot;Additional tests - NOT DONE YET\n&quot;);
+     {
+-      /* Ceres data. */
+-      double jd = cal_to_jd(2005, 5, 1, true);
+-      double ep = cal_to_jd(2005, 1, 30, true);
+-      orbital_elements cd;
+-      cd.a = 2.7673017;
+-      cd.e = 0.0800887;
+-      cd.i = d_to_r(10.58276);
+-      cd.w = d_to_r(73.72889);
+-      cd.L = d_to_r(80.42334);
+-      cd.magdatatype = iau_s;
+-      cd.magdata._iau.H = 3.34;
+-      cd.magdata._iau.G = 0.12;
++	/* Ceres data. */
++	double jd = cal_to_jd(2005, 5, 1, true);
++	double ep = cal_to_jd(2005, 1, 30, true);
++	orbital_elements cd;
++	cd.a = 2.7673017;
++	cd.e = 0.0800887;
++	cd.i = d_to_r(10.58276);
++	cd.w = d_to_r(73.72889);
++	cd.L = d_to_r(80.42334);
++	cd.magdatatype = iau_s;
++	cd.magdata._iau.H = 3.34;
++	cd.magdata._iau.G = 0.12;
+ 
+-      double n = d_to_r(0.21410131);
+-      cd.M = d_to_r(43.77971) + n * (jd - ep);
++	double n = d_to_r(0.21410131);
++	cd.M = d_to_r(43.77971) + n * (jd - ep);
+ 
+-      rec_coords ceres_rec;
+-      double ceres_r_sun;
+-      element_constants ec;
+-      elliptical_orbit_rectangular(get_element_constants(obliquity_hi(jd), &amp;cd, 53, &amp;ec), &amp;ceres_rec, &amp;ceres_r_sun);
+-      
+-      rec_coords sun_rec;
+-      double L, B, R;
+-      sol_dimension3_fk5(jd, &amp;L, &amp;B, &amp;R);
+-      sol_rectangular(L, B, R, obliquity_hi(jd), &amp;sun_rec);
++	rec_coords ceres_rec;
++	double ceres_r_sun;
++	element_constants ec;
++	elliptical_orbit_rectangular(get_element_constants
++				     (obliquity_hi(je_to_jd(2000)), &amp;cd,
++				      53, &amp;ec), &amp;ceres_rec, &amp;ceres_r_sun);
+ 
+-      double ra;
+-      double dec;
+-      double r_earth;
+-      elliptical_orbit_ecliptical(&amp;sun_rec, &amp;ceres_rec, &amp;ra, &amp;dec, &amp;r_earth);
++	rec_coords sun_rec;
++	double L, B, R;
++	sol_dimension3_fk5(jd, &amp;L, &amp;B, &amp;R);
++	sol_rectangular(L, B, R, obliquity_hi(je_to_jd(2000)), &amp;sun_rec);
+ 
+-      double mag = mag_iau(cd.magdata._iau.H, cd.magdata._iau.G, ceres_r_sun, r_earth, 999999999999999999);
++	double ra;
++	double dec;
++	double elongation;
++	double phase_angle;
++	double r_earth;
++	elliptical_orbit_ecliptical(&amp;sun_rec, &amp;ceres_rec, ceres_r_sun, &amp;ra,
++				    &amp;dec, &amp;elongation, &amp;phase_angle,
++				    &amp;r_earth);
+ 
+-      printf(&quot;Ceres -- RA=%f, Dec=%f, Distance=%fAU, Mag=%f\n&quot;, r_to_d(modpi2(ra)), r_to_d(modpi2(dec)), r_earth, mag);
++	double mag =
++	    mag_iau(cd.magdata._iau.H, cd.magdata._iau.G, ceres_r_sun,
++		    r_earth, phase_angle);
++
++	printf(&quot;Ceres -- RA=%f, Dec=%f, Distance=%fAU, Mag=%f\n&quot;,
++	       r_to_d(modpi2(ra)), r_to_d(modpi2(dec)), r_earth, mag);
+     }
+ }
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000042.html">[Ephemeritis-svn] r189 - trunk/src/c/tests
+</A></li>
+	
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#43">[ date ]</a>
+              <a href="thread.html#43">[ thread ]</a>
+              <a href="subject.html#43">[ subject ]</a>
+              <a href="author.html#43">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

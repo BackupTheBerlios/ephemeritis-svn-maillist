@@ -1,0 +1,534 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r259 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-July/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r259%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607240722.k6O7MWKa024134%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000111.html">
+   <LINK REL="Next"  HREF="000113.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r259 - in branches/new-vsop-prepare/src/c:	libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r259%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607240722.k6O7MWKa024134%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r259 - in branches/new-vsop-prepare/src/c:	libephemeritis tests">izogi at mail.berlios.de
+       </A><BR>
+    <I>Mon Jul 24 09:22:32 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000111.html">[Ephemeritis-svn] r258 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000113.html">[Ephemeritis-svn] r260 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#112">[ date ]</a>
+              <a href="thread.html#112">[ thread ]</a>
+              <a href="subject.html#112">[ subject ]</a>
+              <a href="author.html#112">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-07-24 09:22:03 +0200 (Mon, 24 Jul 2006)
+New Revision: 259
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/conversions.c
+   branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+   branches/new-vsop-prepare/src/c/libephemeritis/elp2000.c
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+   branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c
+   branches/new-vsop-prepare/src/c/libephemeritis/equinox.c
+   branches/new-vsop-prepare/src/c/libephemeritis/nutation.c
+   branches/new-vsop-prepare/src/c/libephemeritis/solar.c
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+Adding eph prefix to more functions.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/conversions.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/conversions.c	2006-07-24 06:55:23 UTC (rev 258)
++++ branches/new-vsop-prepare/src/c/libephemeritis/conversions.c	2006-07-24 07:22:03 UTC (rev 259)
+@@ -135,7 +135,7 @@
+  *
+  *  @param[out] equ_pos    Right ascension and declination.
+  *
+- *  @sa obliquity_hi + nut_in_obl for calculating true obliquity.
++ *  @sa ephObliquityHi + ephNutInObl for calculating true obliquity.
+  */
+ void ecl_to_equ(EPH_EclipticalCoords ecl_pos, double obliquity,
+ 		EPH_EquatorialCoords *equ_pos)
+@@ -213,7 +213,7 @@
+  *
+  *  @param[out] ecl_pos    The ecliptic coordinates, in radians.
+  *
+- *  @sa obliquity_hi + nut_in_obl for calculating true obliquity.
++ *  @sa ephObliquityHi + ephNutInObl for calculating true obliquity.
+  */
+ void equ_to_ecl(EPH_EquatorialCoords equ_pos, double obliquity, EPH_EclipticalCoords *ecl_pos)
+ {
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-07-24 06:55:23 UTC (rev 258)
++++ branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-07-24 07:22:03 UTC (rev 259)
+@@ -64,8 +64,8 @@
+ /*  *                       Returns -1 if bailing out as desired accuracy was unreachable within a preset number of iterations. */
+ /*  * */
+ /*  *  @sa ephDeltaTSeconds for calculating %dynamical time offset. */
+-/*  *  @sa nut_in_lon for calculating %nutation in longitude. */
+-/*  *  @sa (obliquity_low or obliquity_hi) + nut_in_obl for calculating true obliquity. */
++/*  *  @sa ephNutInLon for calculating %nutation in longitude. */
++/*  *  @sa (ephObliquityLow or ephObliquityHi) + ephNutInObl for calculating true obliquity. */
+ /*  * */
+ /*  *  @todo Check if this code actually &lt;em&gt;does&lt;/em&gt; take aberration */
+ /*  *  into account.  The original description says it does, but it */
+@@ -185,8 +185,8 @@
+  *    accurate as what was requested.
+  *
+  *  @sa ephDeltaTSeconds for calculating %dynamical time offset.
+- *  @sa nut_in_lon for calculating %nutation in longitude.
+- *  @sa (obliquity_low or obliquity_hi) + nut_in_obl for calculating true obliquity.
++ *  @sa ephNutInLon for calculating %nutation in longitude.
++ *  @sa (ephObliquityLow or ephObliquityHi) + ephNutInObl for calculating true obliquity.
+  *
+  *  @todo Check if this code actually &lt;em&gt;does&lt;/em&gt; take aberration
+  *  into account.  The original description says it does, but it
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/elp2000.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/elp2000.c	2006-07-24 06:55:23 UTC (rev 258)
++++ branches/new-vsop-prepare/src/c/libephemeritis/elp2000.c	2006-07-24 07:22:03 UTC (rev 259)
+@@ -246,7 +246,7 @@
+  *
+  *  @sa ephDeltaTSeconds for calculating %dynamical time offset.
+  */
+-void elp_dimension3(double jd, double *longitude, double *latitude,
++void ephElpDimension3(double jd, double *longitude, double *latitude,
+ 		    double *radius)
+ {
+     const double T = ephJdToJCent(jd);
+@@ -322,7 +322,7 @@
+  *
+  *  @sa ephDeltaTSeconds for calculating %dynamical time offset.
+  */
+-double elp_dimension(double jd, EPH_CoordsType dim)
++double ephElpDimension(double jd, EPH_CoordsType dim)
+ {
+     if (dim == vL) {
+ 	return elp_longitude(jd);
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-24 06:55:23 UTC (rev 258)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-24 07:22:03 UTC (rev 259)
+@@ -202,21 +202,20 @@
+ 
+ /* dynamical.c */
+ double   ephDeltaTSeconds(double jd);
+-double ephDtToUt(double jd);
+-double ephUtToDt(double jd);
++double   ephDtToUt(double jd);
++double   ephUtToDt(double jd);
+ 
+ /* elp2000.c */
+-void elp_dimension3(double jd, double *longitude, double *latitude,
+-		    double *radius);
+-double elp_dimension(double jd, EPH_CoordsType dim);
++void     ephElpDimension3(double jd, double *longitude, double *latitude, double *radius);
++double   ephElpDimension(double jd, EPH_CoordsType dim);
+ 
+ /* nutation.c */
+-double nut_in_lon(double jd);
+-double nut_in_obl(double jd);
+-void nut_in_ra_dec(double ra, double dec, double obl, double n_in_l,
+-		   double n_in_o, double *n_in_ra, double *n_in_dec);
+-double obliquity_low(double jd);
+-double obliquity_hi(double jd);
++double ephNutInLon(double jd);
++double ephNutInObl(double jd);
++void   ephNutInRaDec(double ra, double dec, double obl, double n_in_l,
++		     double n_in_o, double *n_in_ra, double *n_in_dec);
++double ephObliquityLow(double jd);
++double ephObliquityHi(double jd);
+ 
+ /* precession.c */
+ typedef struct {
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c	2006-07-24 06:55:23 UTC (rev 258)
++++ branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c	2006-07-24 07:22:03 UTC (rev 259)
+@@ -70,16 +70,16 @@
+     double aberration = aberration_low(s_sc.R);
+ 
+     /* Correct the longitude for nutation and aberration. */
+-    s_sc.ecl.longitude = s_sc.ecl.longitude - nut_in_lon(jd) + aberration;
++    s_sc.ecl.longitude = s_sc.ecl.longitude - ephNutInLon(jd) + aberration;
+ 
+     /* Solar ra and dec. */
+-    double obl = obliquity_hi(jd) + nut_in_obl(jd);
++    double obl = ephObliquityHi(jd) + ephNutInObl(jd);
+ 
+     EPH_EquatorialCoords equ_pos;
+     ecl_to_equ(s_sc.ecl, obl, &amp;equ_pos);
+ 
+     /* Do the final calculation, and return it. */
+     *eot_result =
+-	L0 - d_to_r(0.0057183) - equ_pos.ra + nut_in_lon(jd) * cos(d_to_r(obl));
++            L0 - d_to_r(0.0057183) - equ_pos.ra + ephNutInLon(jd) * cos(d_to_r(obl));
+     return ok;
+ }
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/equinox.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/equinox.c	2006-07-24 06:55:23 UTC (rev 258)
++++ branches/new-vsop-prepare/src/c/libephemeritis/equinox.c	2006-07-24 07:22:03 UTC (rev 259)
+@@ -245,7 +245,7 @@
+ {
+     /*
+      * If we knew that the starting approximate time was close enough
+-     * to the actual time, we could pull nut_in_lon() and the aberration
++     * to the actual time, we could pull ephNutInLon() and the aberration
+      * out of the loop and save some calculating.
+      */
+ 
+@@ -277,7 +277,7 @@
+   	    *equinox_result = jd;
+   	    return result;
+ 	}
+-	sc_s.ecl.longitude += nut_in_lon(jd) + aberration_low(sc_s.R);
++        sc_s.ecl.longitude += ephNutInLon(jd) + aberration_low(sc_s.R);
+ 
+ 	/* Meeus uses jd + 58 * sin(diff(...)) */
+ 	jd += diff_angle(sc_s.ecl.longitude, circ) * _k_sun_motion;
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/nutation.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/nutation.c	2006-07-24 06:55:23 UTC (rev 258)
++++ branches/new-vsop-prepare/src/c/libephemeritis/nutation.c	2006-07-24 07:22:03 UTC (rev 259)
+@@ -178,7 +178,7 @@
+ 		double *omega)
+ {
+     /*
+-     * Return some values needed for both nut_in_lon() and nut_in_obl()
++     * Return some values needed for both ephNutInLon() and ephNutInObl()
+      *
+      * Constant terms.
+      */
+@@ -241,7 +241,7 @@
+  *  @todo Yuck - need to check that algorithm was ported correctly to C.
+  *  @todo Future optimization: factor the /1e5 and /1e6 adjustments into the table.
+  */
+-double nut_in_lon(double jd)
++double ephNutInLon(double jd)
+ {
+     const double T = ephJdToJCent(jd);
+     double D, M, M1, F, omega;
+@@ -276,7 +276,7 @@
+  *
+  *  @todo Future optimization: factor the /1e5 and /1e6 adjustments into the table.
+  */
+-double nut_in_obl(double jd)
++double ephNutInObl(double jd)
+ {
+     const double T = ephJdToJCent(jd);
+     double D, M, M1, F, omega;
+@@ -324,7 +324,7 @@
+  *
+  *  @author Mike McGavin.
+  */
+-void nut_in_ra_dec(double ra, double dec, double obl, double n_in_l,
++void ephNutInRaDec(double ra, double dec, double obl, double n_in_l,
+ 		   double n_in_o, double *n_in_ra, double *n_in_dec)
+ {
+     *n_in_ra =
+@@ -348,7 +348,7 @@
+  *
+  *  @todo Consider removing this function in favour of the hi accuracy one below.
+  */
+-double obliquity_low(double jd)
++double ephObliquityLow(double jd)
+ {
+     /*
+      * Constant terms:
+@@ -381,7 +381,7 @@
+  *
+  *  @sa ephDeltaTSeconds for calculating %dynamical time offset.
+  */
+-double obliquity_hi(double jd)
++double ephObliquityHi(double jd)
+ {
+     /*
+      * Constant terms:
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/solar.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/solar.c	2006-07-24 06:55:23 UTC (rev 258)
++++ branches/new-vsop-prepare/src/c/libephemeritis/solar.c	2006-07-24 07:22:03 UTC (rev 259)
+@@ -133,7 +133,7 @@
+  *  To use this function, it's necessary to provide the geometric
+  *  coordinates of the Sun in the fk5 system, and the obliquity of the
+  *  ecliptic, at the time in question.  These can be calculated using
+- *  sol_dimension3_fk5 and obliquity_hi.
++ *  sol_dimension3_fk5 and ephObliquityHi.
+  *
+  *  @param[in]  L    Geometric longitude of the Sun, in radians/fk5.
+  *  @param[in]  B    Geometric latitude of the Sun, in radians/fk5.
+@@ -143,8 +143,8 @@
+  *  @return The x, y and z coordinates, in astronomical units.
+  *
+  *  @sa sol_dimension3_fk5
+- *  @sa obliquity_low
+- *  @sa obliquity_hi
++ *  @sa ephObliquityLow
++ *  @sa ephObliquityHi
+  *
+  *  @bug Doesn't calculate coordinates for J2000.0 equinox, as with
+  *  equation 26.2 and required for some things (such as ex 33.b).
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-07-24 06:55:23 UTC (rev 258)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-07-24 07:22:03 UTC (rev 259)
+@@ -484,7 +484,7 @@
+  *  Sun.  These can be provided for either the ecliptic and equinox of
+  *  J2000, or for the ecliptic and equinox of the date.  When provided
+  *  for the date, the obliquity of the ecliptic for that date is
+- *  calculated using high precision (obliquity_hi).
++ *  calculated using high precision (ephObliquityHi).
+  *
+  *  @param[in]  vsc  Geometric spherical coordinates of the Sun.
+  *
+@@ -530,7 +530,7 @@
+     return vrc;
+   }
+ 
+-  double obl = vrc.vh.version == hel_sph_j2 ? obliquity_hi(ephJeToJd(2000.0)) : obliquity_hi(vrc.jd);
++  double obl = vrc.vh.version == hel_sph_j2 ? ephObliquityHi(ephJeToJd(2000.0)) : ephObliquityHi(vrc.jd);
+ 
+   double cosL = cos(vsc.sc.ecl.longitude);
+   double cosB = cos(vsc.sc.ecl.latitude);
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-24 06:55:23 UTC (rev 258)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-24 07:22:03 UTC (rev 259)
+@@ -424,7 +424,7 @@
+        {
+        double A, h;
+        const double jd = ephCalToJd(1987, 4, 10, true) + ((19*3600+21*60) / seconds_per_day);
+-       const double gw_sidereal = ephSiderealTimeGreenwich(jd) + nut_in_lon(jd) / ;
++    const double gw_sidereal = ephSiderealTimeGreenwich(jd) + ephNutInLon(jd) / ;
+        printf(&quot;Test not done yet.&quot;);
+        }
+      */
+@@ -633,7 +633,7 @@
+ 
+     printf(&quot;22.a Nutation (delta psi)\n&quot;);
+     {
+-	const double deltaPsi = nut_in_lon(2446895.5);
++        const double deltaPsi = ephNutInLon(2446895.5);
+ 	int d, m;
+ 	double s;
+ 	d_to_dms(r_to_d(deltaPsi), &amp;d, &amp;m, &amp;s);
+@@ -644,7 +644,7 @@
+ 
+     printf(&quot;22.a Nutation (delta epsilon)\n&quot;);
+     {
+-	const double deltaEps = nut_in_obl(2446895.5);
++        const double deltaEps = ephNutInObl(2446895.5);
+ 	int d, m;
+ 	double s;
+ 	d_to_dms(r_to_d(deltaEps), &amp;d, &amp;m, &amp;s);
+@@ -654,7 +654,7 @@
+     }
+     printf(&quot;22.a Nutation (epsilon)\n&quot;);
+     {
+-	const double eps = obliquity_low(2446895.5);
++        const double eps = ephObliquityLow(2446895.5);
+ 	int d, m;
+ 	double s;
+ 	d_to_dms(r_to_d(eps), &amp;d, &amp;m, &amp;s);
+@@ -664,7 +664,7 @@
+     }
+     printf(&quot;22.a Nutation (epsilon - high precision)\n&quot;);
+     {
+-	const double eps = obliquity_hi(2446895.5);
++        const double eps = ephObliquityHi(2446895.5);
+ 	int d, m;
+ 	double s;
+ 	d_to_dms(r_to_d(eps), &amp;d, &amp;m, &amp;s);
+@@ -679,17 +679,17 @@
+ 	double ra = hms_to_r(2, 46, 11.331);
+ 	double dec = d_to_r(dms_to_d(49, 20, 54.54));
+ 
+-	double n_in_l = nut_in_lon(jd);
++        double n_in_l = ephNutInLon(jd);
+ 	/*
+ 	   d_to_r(dms_to_d(0,0,14.861));
+ 	 */
+ 
+-	double n_in_o = nut_in_obl(jd);
++        double n_in_o = ephNutInObl(jd);
+ 	/*
+ 	   d_to_r(dms_to_d(0,0,2.705));
+ 	 */
+ 
+-	double obl = obliquity_hi(jd);
++        double obl = ephObliquityHi(jd);
+ 	/*
+ 	   d_to_r(23.436);
+ 	 */
+@@ -701,7 +701,7 @@
+ 	 */
+ 
+ 	double n_in_ra, n_in_dec;
+-	nut_in_ra_dec(ra, dec, obl, n_in_l, n_in_o, &amp;n_in_ra, &amp;n_in_dec);
++        ephNutInRaDec(ra, dec, obl, n_in_l, n_in_o, &amp;n_in_ra, &amp;n_in_dec);
+ 
+ 	double a_in_ra, a_in_dec;
+ 	aberration_in_ra_dec_low(jd, ra, dec, obl, sol_lon, &amp;a_in_ra,
+@@ -776,9 +776,9 @@
+ 	  printf
+ 	    (&quot;25.b Sun position, high precision (complete theory pg 165)\n&quot;);
+ 
+-	  const double n_in_l = nut_in_lon(jd);
+-	  const double n_in_o = nut_in_obl(jd);
+-	  const double obl = obliquity_hi(jd) + n_in_o;
++          const double n_in_l = ephNutInLon(jd);
++          const double n_in_o = ephNutInObl(jd);
++          const double obl = ephObliquityHi(jd) + n_in_o;
+ 	  const double aberration = aberration_low(vsc.sc.R);
+ 
+ 	  report(&quot;nutation in lon&quot;, r_to_d(n_in_l) * 3600, 15.908, 0.001,
+@@ -823,7 +823,7 @@
+ 	    vsc = vsop_sph_to_fk5(vsc);
+ 	    vsc = vsop_sph_sol(vsc);
+ 	    /*
+-	    double obl = obliquity_hi(jd);
++            double obl = ephObliquityHi(jd);
+ 	    */
+ 	    report_diff(&quot;L&quot;, r_to_d(vsc.sc.ecl.longitude) * 3600.0, 199.907347 * 3600.0, &quot;arc-seconds&quot;);
+ 	    report_diff(&quot;B&quot;, r_to_d(vsc.sc.ecl.latitude) * 3600.0, dms_to_d(0,0,0.62) * 3600.0, &quot;arc-seconds&quot;);
+@@ -1010,12 +1010,12 @@
+ 	  /*
+ 	    longitude += d_to_r(dms_to_d(0, 0, 16.749));
+ 	  */
+-	  ecl_pos.longitude += nut_in_lon(jd);
++          ecl_pos.longitude += ephNutInLon(jd);
+ 
+ 
+ 	  /* Get equatorial coordinates. */
+ 	  EPH_EquatorialCoords equ_pos;
+-	  ecl_to_equ(ecl_pos, obliquity_hi(jd) + nut_in_obl(jd), &amp;equ_pos);
++          ecl_to_equ(ecl_pos, ephObliquityHi(jd) + ephNutInObl(jd), &amp;equ_pos);
+ 
+ 
+ 	  report(&quot;ra&quot;, r_to_d(equ_pos.ra), r_to_d(hms_to_fday(21, 4, 41.454) * pi2),
+@@ -1039,7 +1039,7 @@
+ 	el.M = mean_anomoly(jd, T, el.n);
+ 
+ 	double r_sun;
+-	double obl2000 = obliquity_hi(ephJeToJd(2000.0));
++        double obl2000 = ephObliquityHi(ephJeToJd(2000.0));
+ 	EPH_ElementConstants ec = get_element_constants(obl2000, el, 53);
+ 	r_sun = get_r_sun(ec);
+ 	EPH_RecCoords rc = elliptical_orbit_rectangular(ec, r_sun);
+@@ -1057,7 +1057,7 @@
+ 	} else {
+ /* 	    EPH_VsopRecCoords vrc = vsop_rec_to_fk5(vsop_rec_sol(vsop_get_rectangular(vh, jd))); */
+ /* 	    /\* */
+-/* 	    double E = obliquity_hi(jd); */
++            /* 	    double E = ephObliquityHi(jd); */
+ /* 	    *\/ */
+ /* 	    EPH_RecCoords src = vrc.rc; */
+ 
+@@ -1108,20 +1108,20 @@
+     printf(&quot;47.a Moon position\n&quot;);
+     {
+ 	double L, B, R;
+-	elp_dimension3(2448724.5, &amp;L, &amp;B, &amp;R);
++        ephElpDimension3(2448724.5, &amp;L, &amp;B, &amp;R);
+ 	report_diff(&quot;longitude&quot;, r_to_d(L) * 3600 * 1000,
+ 		    133.162655 * 3600 * 1000, &quot;arc-seconds/1000&quot;);
+ 	report(&quot;latitude&quot;, r_to_d(B), -3.229126, 1e-6, &quot;degrees&quot;);
+ 	report(&quot;radius&quot;, R, 368409.7, 0.1, &quot;km&quot;);
+ 
+-	L = elp_dimension(2448724.5, vL);
++        L = ephElpDimension(2448724.5, vL);
+ 	report_diff(&quot;longitude(1)&quot;, r_to_d(L) * 3600 * 1000,
+ 		    133.162655 * 3600 * 1000, &quot;arc-seconds/1000&quot;);
+ 
+-	B = elp_dimension(2448724.5, vB);
++        B = ephElpDimension(2448724.5, vB);
+ 	report(&quot;latitude(1)&quot;, r_to_d(B), -3.229126, 1e-6, &quot;degrees&quot;);
+ 
+-	R = elp_dimension(2448724.5, vR);
++        R = ephElpDimension(2448724.5, vR);
+ 	report(&quot;radius(1)&quot;, R, 368409.7, 0.1, &quot;km&quot;);
+     }
+ 
+@@ -1239,8 +1239,7 @@
+ 					       or-&gt;G);
+ 
+ 		EPH_ElementConstants ec =
+-		    get_element_constants(obliquity_hi(ephJeToJd(2000)), cd,
+-					  53);
++                        get_element_constants(ephObliquityHi(ephJeToJd(2000)), cd, 53);
+ 		body_r_sun = get_r_sun(ec);
+ 		EPH_RecCoords body_rec =
+ 		    elliptical_orbit_rectangular(ec, body_r_sun);
+@@ -1278,15 +1277,15 @@
+ 			  &amp;dec);
+ 
+ 	    double n_in_ra, n_in_dec;
+-	    nut_in_ra_dec(ra, dec, obliquity_hi(test-&gt;jd),
+-			  nut_in_lon(test-&gt;jd), nut_in_obl(test-&gt;jd),
++            ephNutInRaDec(ra, dec, ephObliquityHi(test-&gt;jd),
++                          ephNutInLon(test-&gt;jd), ephNutInObl(test-&gt;jd),
+ 			  &amp;n_in_ra, &amp;n_in_dec);
+ 	    ra += n_in_ra;
+ 	    dec += n_in_dec;
+ 
+ 	    double a_in_ra, a_in_dec;
+ 	    aberration_in_ra_dec_low(test-&gt;jd, ra, dec,
+-				     obliquity_hi(test-&gt;jd), vsc.sc.L,
++                                     ephObliquityHi(test-&gt;jd), vsc.sc.L,
+ 				     &amp;a_in_ra, &amp;a_in_dec);
+ 	    ra += a_in_ra;
+ 	    dec += a_in_dec;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000111.html">[Ephemeritis-svn] r258 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000113.html">[Ephemeritis-svn] r260 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#112">[ date ]</a>
+              <a href="thread.html#112">[ thread ]</a>
+              <a href="subject.html#112">[ subject ]</a>
+              <a href="author.html#112">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

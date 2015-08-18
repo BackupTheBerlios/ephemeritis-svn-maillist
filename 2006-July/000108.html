@@ -1,0 +1,1173 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r252 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-July/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r252%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607230800.k6N80l7q021052%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000104.html">
+   <LINK REL="Next"  HREF="000105.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r252 - in branches/new-vsop-prepare/src/c:	libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r252%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607230800.k6N80l7q021052%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r252 - in branches/new-vsop-prepare/src/c:	libephemeritis tests">izogi at mail.berlios.de
+       </A><BR>
+    <I>Sun Jul 23 10:00:47 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000104.html">[Ephemeritis-svn] r251 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000105.html">[Ephemeritis-svn] r253 - branches/new-vsop-prepare
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#108">[ date ]</a>
+              <a href="thread.html#108">[ thread ]</a>
+              <a href="subject.html#108">[ subject ]</a>
+              <a href="author.html#108">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-07-23 10:00:44 +0200 (Sun, 23 Jul 2006)
+New Revision: 252
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/calendar.c
+   branches/new-vsop-prepare/src/c/libephemeritis/conversions.c
+   branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+   branches/new-vsop-prepare/src/c/libephemeritis/elp2000.c
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+   branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c
+   branches/new-vsop-prepare/src/c/libephemeritis/equinox.c
+   branches/new-vsop-prepare/src/c/libephemeritis/nutation.c
+   branches/new-vsop-prepare/src/c/libephemeritis/precession.c
+   branches/new-vsop-prepare/src/c/libephemeritis/riseset.c
+   branches/new-vsop-prepare/src/c/libephemeritis/solar.c
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+Began renaming several typedefs, to prefix them with EPH_.
+Also renaming ecl_lat and ecl_lon to latitude and longitude.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/calendar.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/calendar.c	2006-07-23 07:20:46 UTC (rev 251)
++++ branches/new-vsop-prepare/src/c/libephemeritis/calendar.c	2006-07-23 08:00:44 UTC (rev 252)
+@@ -53,7 +53,7 @@
+  *  @return              The julian day number that matches the calendar
+  *                       date provided.
+  */
+-double cal_to_jd(int yr, int mo, double dy, bool gregorian)
++double cal_to_jd(int yr, int mo, double dy, EPH_Bool gregorian)
+ {
+     if (mo &lt;= 2) {
+ 	yr--;
+@@ -85,7 +85,7 @@
+  *  @return              The day number, 1 = Jan 1...365 (or 366 for leap
+  *                       years) = Dec 31.
+  */
+-int cal_to_day_of_year(int yr, int mo, int dy, bool gregorian)
++int cal_to_day_of_year(int yr, int mo, int dy, EPH_Bool gregorian)
+ {
+     int K;
+     if (is_leap_year(yr, gregorian)) {
+@@ -108,7 +108,7 @@
+  *  @param[out] mo       Month, with January being 1, February 2, etc.
+  *  @param[out] dy       Day.  1 is the first day of the month.
+  */
+-void day_of_year_to_cal(int yr, int N, bool gregorian, int *mo, int *dy)
++void day_of_year_to_cal(int yr, int N, EPH_Bool gregorian, int *mo, int *dy)
+ {
+     int K;
+     if (is_leap_year(yr, gregorian)) {
+@@ -136,7 +136,7 @@
+  *  @param[out] mo       Month, with January being 1, February 2, etc.
+  *  @param[out] dy       Day.  1 is the first day of the month.
+  */
+-void easter(int yr, bool gregorian, int *mo, int *dy)
++void easter(int yr, EPH_Bool gregorian, int *mo, int *dy)
+ {
+     int tmp;
+     if (gregorian) {
+@@ -174,7 +174,7 @@
+  *
+  *  @return              True if this is a leap year, else false.
+  */
+-bool is_leap_year(int yr, bool gregorian)
++EPH_Bool is_leap_year(int yr, EPH_Bool gregorian)
+ {
+     if (gregorian) {
+ 	return (yr % 4 == 0) &amp;&amp; ((yr % 100 != 0) || (yr % 400 == 0));
+@@ -194,7 +194,7 @@
+  *  @param[out] mo       Month, with January being 1, February 2, etc.
+  *  @param[out] day      Day (may be fractional).  1 is the first day of the month.
+  */
+-void jd_to_cal(double jd, bool gregorian, int *yr, int *mo, double *day)
++void jd_to_cal(double jd, EPH_Bool gregorian, int *yr, int *mo, double *day)
+ {
+     double Z;
+     const double F = modf(jd + 0.5, &amp;Z);
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/conversions.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/conversions.c	2006-07-23 07:20:46 UTC (rev 251)
++++ branches/new-vsop-prepare/src/c/libephemeritis/conversions.c	2006-07-23 08:00:44 UTC (rev 252)
+@@ -46,7 +46,7 @@
+  */
+ void d_to_dms(double x, int *deg, int *mn, double *sec)
+ {
+-    const bool negative = (x &lt; 0.0);
++    const EPH_Bool negative = (x &lt; 0.0);
+     x = fabs(x);
+     *deg = (int) x;
+     x -= *deg;
+@@ -137,15 +137,15 @@
+  *
+  *  @sa obliquity_hi + nut_in_obl for calculating true obliquity.
+  */
+-void ecl_to_equ(ecliptical_coords ecl_pos, double obliquity,
+-		equatorial_coords *equ_pos)
++void ecl_to_equ(EPH_EclipticalCoords ecl_pos, double obliquity,
++		EPH_EquatorialCoords *equ_pos)
+ {
+     const double cose = cos(obliquity);
+     const double sine = sin(obliquity);
+-    const double sinl = sin(ecl_pos.ecl_lon);
++    const double sinl = sin(ecl_pos.longitude);
+     equ_pos-&gt;ra =
+-	modpi2(atan2(sinl * cose - tan(ecl_pos.ecl_lat) * sine, cos(ecl_pos.ecl_lon)));
+-    equ_pos-&gt;dec = asin(sin(ecl_pos.ecl_lat) * cose + cos(ecl_pos.ecl_lat) * sine * sinl);
++	modpi2(atan2(sinl * cose - tan(ecl_pos.latitude) * sine, cos(ecl_pos.longitude)));
++    equ_pos-&gt;dec = asin(sin(ecl_pos.latitude) * cose + cos(ecl_pos.latitude) * sine * sinl);
+ }
+ 
+ /*! @brief Converts equitorial to horizontal coordinates.
+@@ -164,7 +164,7 @@
+  *  @todo Write unit tests.
+  */
+ void equ_to_horiz(geographic_coords geo_pos,
+-		  equatorial_coords equ_pos,
++		  EPH_EquatorialCoords equ_pos,
+ 		  horizon_coords *hor_pos
+ 		  )
+ {
+@@ -194,7 +194,7 @@
+  */
+ void horiz_to_equ(geographic_coords geo_pos,
+ 		  horizon_coords hor_pos,
+-		  equatorial_coords *equ_pos)
++		  EPH_EquatorialCoords *equ_pos)
+ {
+     const double cosA = cos(hor_pos.azimuth);
+     const double sinLat = sin(geo_pos.latitude);
+@@ -215,13 +215,13 @@
+  *
+  *  @sa obliquity_hi + nut_in_obl for calculating true obliquity.
+  */
+-void equ_to_ecl(equatorial_coords equ_pos, double obliquity, ecliptical_coords *ecl_pos)
++void equ_to_ecl(EPH_EquatorialCoords equ_pos, double obliquity, EPH_EclipticalCoords *ecl_pos)
+ {
+     const double cose = cos(obliquity);
+     const double sine = sin(obliquity);
+     const double sina = sin(equ_pos.ra);
+-    ecl_pos-&gt;ecl_lon = modpi2(atan2(sina * cose + tan(equ_pos.dec) * sine, cos(equ_pos.ra)));
+-    ecl_pos-&gt;ecl_lat = modpi2(asin(sin(equ_pos.dec) * cose - cos(equ_pos.dec) * sine * sina));
++    ecl_pos-&gt;longitude = modpi2(atan2(sina * cose + tan(equ_pos.dec) * sine, cos(equ_pos.ra)));
++    ecl_pos-&gt;latitude = modpi2(asin(sin(equ_pos.dec) * cose - cos(equ_pos.dec) * sine * sina));
+ }
+ 
+ /*! @brief Converts a fractional day (0.0..1.0) to integral
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-07-23 07:20:46 UTC (rev 251)
++++ branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-07-23 08:00:44 UTC (rev 252)
+@@ -85,9 +85,9 @@
+ /*  *  @author Bill McClain, Mike McGavin. */
+ /*  *\/ */
+ /* int geocentric_planet(double jd, */
+-/* 		      enum vPlanets basePlanet, */
+-/* 		      enum vPlanets targetPlanet, */
+-/* 		      void (*heliocentic_f) (double, enum vPlanets, */
++/* 		      EPH_Planets basePlanet, */
++/* 		      EPH_Planets targetPlanet, */
++/* 		      void (*heliocentic_f) (double, EPH_Planets, */
+ /* 					     double *, double *, double *), */
+ /* 		      double n_in_l, double epsilon, double delta, */
+ /* 		      double *ra, double *dec) */
+@@ -101,7 +101,7 @@
+ /*      *    the iteration. */
+ /*      *\/ */
+ /*     double l, b; */
+-/*     bool ok = false; */
++/*     EPH_Bool ok = false; */
+ /*     int bailout = 0; */
+ /*     for (bailout = 0; bailout &lt; 20; bailout++) { */
+ /* 	/\* Heliocentric geometric ecliptic coordinates of the Earth. *\/ */
+@@ -200,7 +200,7 @@
+ 				 vsop_body planet,
+ 				 vsop_error_state (*heliocentric_f) (double, vsop_body, sph_coords *),
+ 				 double delta,
+-				 ecliptical_coords *ecl_pos)
++				 EPH_EclipticalCoords *ecl_pos)
+ {
+     double t = jd;
+     double l0 = -100.0;		/* Impossible value. */
+@@ -211,7 +211,7 @@
+      *    the iteration.
+      */
+     double l, b;
+-    bool worked = false;
++    EPH_Bool worked = false;
+     int bailout = 0;
+     for (bailout = 0; bailout &lt; 20; bailout++) {
+ 	/* Heliocentric geometric ecliptic coordinates of the Earth. */
+@@ -229,11 +229,11 @@
+ 	}
+ 
+ 	/* Rectangular offset. */
+-	const double cosB0 = cos(sc_e.ecl.ecl_lat);
+-	const double cosB = cos(sc_p.ecl.ecl_lat);
+-	const double x = sc_p.R * cosB * cos(sc_p.ecl.ecl_lon) - sc_e.R * cosB0 * cos(sc_e.ecl.ecl_lon);
+-	const double y = sc_p.R * cosB * sin(sc_p.ecl.ecl_lon) - sc_e.R * cosB0 * sin(sc_e.ecl.ecl_lon);
+-	const double z = sc_p.R * sin(sc_p.ecl.ecl_lat) - sc_e.R * sin(sc_e.ecl.ecl_lat);
++	const double cosB0 = cos(sc_e.ecl.latitude);
++	const double cosB = cos(sc_p.ecl.latitude);
++	const double x = sc_p.R * cosB * cos(sc_p.ecl.longitude) - sc_e.R * cosB0 * cos(sc_e.ecl.longitude);
++	const double y = sc_p.R * cosB * sin(sc_p.ecl.longitude) - sc_e.R * cosB0 * sin(sc_e.ecl.longitude);
++	const double z = sc_p.R * sin(sc_p.ecl.latitude) - sc_e.R * sin(sc_e.ecl.latitude);
+ 
+ 	/* Geocentric geometric ecliptic coordinates of the planet. */
+ 	const double x2 = x * x;
+@@ -263,8 +263,8 @@
+ 	t = jd - tau;
+     }
+ 
+-    ecl_pos-&gt;ecl_lon = l;
+-    ecl_pos-&gt;ecl_lat = b;
++    ecl_pos-&gt;longitude = l;
++    ecl_pos-&gt;latitude = b;
+ 
+     if (!worked) {
+ 	/* Bail out. */
+@@ -508,12 +508,12 @@
+  *
+  *  @author Mike McGavin.
+  */
+-rec_coords elliptical_orbit_rectangular(const element_constants ec,
++EPH_RecCoords elliptical_orbit_rectangular(const element_constants ec,
+ 					const double r_sun)
+ {
+     double v = true_anomoly(ec.e, ec.E);
+ 
+-    rec_coords rc;
++    EPH_RecCoords rc;
+     rc.x = r_sun * ec._a * sin(ec._A + ec.w + v);
+     rc.y = r_sun * ec._b * sin(ec._B + ec.w + v);
+     rc.z = r_sun * ec._c * sin(ec._C + ec.w + v);
+@@ -627,10 +627,10 @@
+  *
+  *  @author Mike McGavin.
+  */
+-void elliptical_orbit_ecliptical(const rec_coords sol,
+-				 const rec_coords body,
++void elliptical_orbit_ecliptical(const EPH_RecCoords sol,
++				 const EPH_RecCoords body,
+ 				 const double r_sun,
+-				 equatorial_coords *equ_pos,
++				 EPH_EquatorialCoords *equ_pos,
+ 				 double *elongation,
+ 				 double *phase_angle, double *r_earth)
+ {
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/elp2000.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/elp2000.c	2006-07-23 07:20:46 UTC (rev 251)
++++ branches/new-vsop-prepare/src/c/libephemeritis/elp2000.c	2006-07-23 08:00:44 UTC (rev 252)
+@@ -322,7 +322,7 @@
+  *
+  *  @sa deltaT_seconds for calculating %dynamical time offset.
+  */
+-double elp_dimension(double jd, enum Coords dim)
++double elp_dimension(double jd, EPH_CoordsType dim)
+ {
+     if (dim == vL) {
+ 	return elp_longitude(jd);
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-23 07:20:46 UTC (rev 251)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-23 08:00:44 UTC (rev 252)
+@@ -28,14 +28,14 @@
+ 
+ /*! @brief Defines a type of coordinate being used.
+  *
+- *  The Coords type is used to define whether a particular value
++ *  Used to define whether a particular value
+  *  (used elsewhere) refers to latitude, longitude, or radius.
+  */
+-enum Coords {
++typedef enum {
+     vL,				/*!&lt; @brief Longitude */
+     vB,				/*!&lt; @brief Latitude  */
+     vR				/*!&lt; @brief Radius    */
+-};
++} EPH_CoordsType;
+ 
+ 
+ /*! @brief Used with the horizon function to specify if a rising
+@@ -43,50 +43,30 @@
+  *
+  *  @sa horizon
+  */
+-enum HorizonType {
++typedef enum {
+     hRising,			/*!&lt; @brief Rising  */
+     hSetting			/*!&lt; @brief Setting */
+-};
++} EPH_HorizonType;
+ 
+-/*! @brief Contains a list of major planets.
+- *
+- *  The vPlanets type is used to specify which major planet is
+- *  being referred to or requested.
+- *
+- *  @todo Pluto is presently not available.
+- */
+-enum vPlanets {
+-    vMercury,			/*!&lt; @brief Mercury */
+-    vVenus,			/*!&lt; @brief Venus   */
+-    vEarth,			/*!&lt; @brief Earth   */
+-    vMars,			/*!&lt; @brief Mars    */
+-    vJupiter,			/*!&lt; @brief Jupiter */
+-    vSaturn,			/*!&lt; @brief Saturn  */
+-    vUranus,			/*!&lt; @brief Uranus  */
+-    vNeptune,			/*!&lt; @brief Neptune */
+ 
+-    vSun,			/*!&lt; @brief Sun                   */
+-    vEMB			/*!&lt; @brief Earth-Moon barycentre */
+-};
+-
+ /*! @brief Contains a list of seasons.
+  *
+- *  The Season type is used to specify which season is being
++ *  Used to specify which season is being
+  *  referred to or requested.
+  */
+-enum Season {
++typedef enum {
+     kMarch,			/*!&lt; @brief March equinox (northern spring, southern autumn) */
+     kJune,			/*!&lt; @brief June solstice (northern summer, southern winter) */
+     kSeptember,			/*!&lt; @brief September equinox (northern autumn, southern spring) */
+     kDecember			/*!&lt; @brief December solstice (northern winter, southern summer) */
+-};
++} EPH_Season;
+ 
+ /*! @brief For use where boolean values are required.
+  */
+ typedef enum {
+     false = 0,
+     true = 1
+-} bool;
++} EPH_Bool;
+ 
+ /*! @brief Struct for holding rectangular coordinates.
+  *
+@@ -101,7 +81,7 @@
+     double x;			/*!&lt; @brief The x coordinate, in astronomical units. */
+     double y;			/*!&lt; @brief The y coordinate, in astronomical units. */
+     double z;			/*!&lt; @brief The z coordinate, in astronomical units. */
+-} rec_coords;
++} EPH_RecCoords;
+ 
+ 
+ /*! @brief Struct for holding equatorial coordinates.
+@@ -112,7 +92,7 @@
+ typedef struct {
+     double ra;                 /*!&lt; @brief The right ascension, in radians. */
+     double dec;                /*!&lt; @brief The declination, in radians. */
+-} equatorial_coords;
++} EPH_EquatorialCoords;
+ 
+ /*! @brief Struct for holding ecliptical coordinates.
+  *
+@@ -121,9 +101,9 @@
+  *  to the plane of the ecliptic.
+  */
+ typedef struct {
+-    double ecl_lat;            /*!&lt; @brief The ecliptical latitude, in radians.  */
+-    double ecl_lon;            /*!&lt; @brief The ecliptical longitude, in radians. */
+-} ecliptical_coords;
++    double latitude;            /*!&lt; @brief The ecliptical latitude, in radians.  */
++    double longitude;           /*!&lt; @brief The ecliptical longitude, in radians. */
++} EPH_EclipticalCoords;
+ 
+ 
+ /*! @brief Struct for holding horizon coordinates.
+@@ -203,12 +183,12 @@
+ extern const double sun_rst_altitude;	/* -0.8333 degrees */
+ 
+ /* calendar.c */
+-double cal_to_jd(int yr, int mo, double dy, bool gregorian);
+-int cal_to_day_of_year(int yr, int mo, int dy, bool gregorian);
+-void day_of_year_to_cal(int yr, int N, bool gregorian, int *mo, int *dy);
+-void easter(int yr, bool gregorian, int *mo, int *dy);
+-bool is_leap_year(int yr, bool gregorian);
+-void jd_to_cal(double jd, bool gregorian, int *yr, int *mo, double *day);
++double cal_to_jd(int yr, int mo, double dy, EPH_Bool gregorian);
++int cal_to_day_of_year(int yr, int mo, int dy, EPH_Bool gregorian);
++void day_of_year_to_cal(int yr, int N, EPH_Bool gregorian, int *mo, int *dy);
++void easter(int yr, EPH_Bool gregorian, int *mo, int *dy);
++EPH_Bool is_leap_year(int yr, EPH_Bool gregorian);
++void jd_to_cal(double jd, EPH_Bool gregorian, int *yr, int *mo, double *day);
+ int jd_to_day_of_week(double jd);
+ double jd_to_jcent(double jd);
+ double sidereal_time_greenwich(double jd);
+@@ -225,7 +205,7 @@
+ /* elp2000.c */
+ void elp_dimension3(double jd, double *longitude, double *latitude,
+ 		    double *radius);
+-double elp_dimension(double jd, enum Coords dim);
++double elp_dimension(double jd, EPH_CoordsType dim);
+ 
+ /* nutation.c */
+ double nut_in_lon(double jd);
+@@ -252,15 +232,15 @@
+ 						  const double JDfinal);
+ 
+ void precession_eq(const precession_elements_eq pceq,
+-		   const equatorial_coords eqInitial,
+-		   equatorial_coords *eqFinal);
++		   const EPH_EquatorialCoords eqInitial,
++		   EPH_EquatorialCoords *eqFinal);
+ 
+ precession_elements_ecl precession_get_elements_ecl(const double JDinitial,
+ 						    const double JDfinal);
+ 
+ void precession_ecl(const precession_elements_ecl pcecl,
+-		    const ecliptical_coords eclInitial,
+-		    ecliptical_coords *eclFinal);
++		    const EPH_EclipticalCoords eclInitial,
++		    EPH_EclipticalCoords *eclFinal);
+ /*
+ 		    const double longInitial,
+ 		    const double latInitial,
+@@ -268,7 +248,7 @@
+ */
+ 
+ /* riseset.c */
+-double horizon(const enum HorizonType hType,
++double horizon(const EPH_HorizonType hType,
+ 	       const double jd,
+ 	       const geographic_coords geo_pos,
+ 	       const double *raList,
+@@ -287,10 +267,10 @@
+ double d_to_r(double d);
+ double diff_angle(double a, double b);
+ double dms_to_d(int deg, int min, double sec);
+-void ecl_to_equ(ecliptical_coords ecl_pos, double obliquity, equatorial_coords *equ_pos);
+-void equ_to_horiz(geographic_coords geo_pos, equatorial_coords equ_pos, horizon_coords *hor_pos);
+-void horiz_to_equ(geographic_coords geo_pos, horizon_coords hor_pos, equatorial_coords *equ_pos);
+-void equ_to_ecl(equatorial_coords equ_pos, double obliquity, ecliptical_coords *ecl_pos);
++void ecl_to_equ(EPH_EclipticalCoords ecl_pos, double obliquity, EPH_EquatorialCoords *equ_pos);
++void equ_to_horiz(geographic_coords geo_pos, EPH_EquatorialCoords equ_pos, horizon_coords *hor_pos);
++void horiz_to_equ(geographic_coords geo_pos, horizon_coords hor_pos, EPH_EquatorialCoords *equ_pos);
++void equ_to_ecl(EPH_EquatorialCoords equ_pos, double obliquity, EPH_EclipticalCoords *ecl_pos);
+ void fday_to_hms(double day, int *hour, int *min, double *sec);
+ double hms_to_fday(int hr, int mn, double sec);
+ double fday_to_r(const double fday);
+@@ -318,12 +298,12 @@
+ 
+ /* vsop87d.c */
+ /*
+-double vsop_dimension_vsop(double jd, enum vPlanets planet,
+-			   enum Coords dim);
+-void vsop_dimension3_vsop(double jd, enum vPlanets planet,
++double vsop_dimension_vsop(double jd, EPH_Planets planet,
++			   EPH_CoordsType dim);
++void vsop_dimension3_vsop(double jd, EPH_Planets planet,
+ 			  double *longitude, double *latitude,
+ 			  double *radius);
+-void vsop_dimension3_fk5(double jd, enum vPlanets planet,
++void vsop_dimension3_fk5(double jd, EPH_Planets planet,
+ 			 double *longitude, double *latitude,
+ 			 double *radius);
+ void vsop_to_fk5(double jd, double *L, double *B);
+@@ -340,7 +320,7 @@
+ 
+ 
+ /* solar.c */
+-/* double sol_dimension_vsop(double jd, enum Coords dim); */
++/* double sol_dimension_vsop(double jd, EPH_CoordsType dim); */
+ /* void sol_dimension3_vsop(double jd, double *longitude, double *latitude, */
+ /* 			 double *radius); */
+ /* void sol_dimension3_fk5(double jd, double *L, double *B, double *R); */
+@@ -348,7 +328,7 @@
+ void longitude_radius_low(double jd, double *L, double *R);
+ double apparent_longitude_low(double jd, double L);
+ double aberration_low(double R);
+-/* rec_coords sol_rectangular(double L, double B, double R, double obl); */
++/* EPH_RecCoords sol_rectangular(double L, double B, double R, double obl); */
+ 
+ 
+ /* constellations.c */
+@@ -461,7 +441,7 @@
+ typedef struct {
+     vsop_handle vh;		/*!&lt; @brief The VSOP handle representing the data these coordinates were calculated from. */
+     double jd;			/*!&lt; @brief The Julian Date of these coordinates, in dynamical time.                      */
+-    rec_coords rc;		/*!&lt; @brief The XYZ coordinates.                                                          */
++    EPH_RecCoords rc;		/*!&lt; @brief The XYZ coordinates.                                                          */
+     int is_inverted;		/*!&lt; @brief Set to 1 if these coordinates are inverted (eg. for Solar coordinates), 0 otherwise. */
+     vsop_error_state error_state; /*!&lt; @brief The state of these
+ 				            coordinates, indicating if
+@@ -476,7 +456,7 @@
+ /*! @brief Struct for holding spherical coordinates.
+  */
+ typedef struct {
+-    ecliptical_coords ecl;      /*!&lt; @brief Heliocentric ecliptical coordinates, in radians. */
++    EPH_EclipticalCoords ecl;   /*!&lt; @brief Heliocentric ecliptical coordinates, in radians. */
+     double R;			/*!&lt; @brief The radius vector (distance to the Sun). */
+ } sph_coords;
+ 
+@@ -594,9 +574,9 @@
+ 
+ /*
+ int geocentric_planet(double jd,
+-		      enum vPlanets basePlanet,
+-		      enum vPlanets targetPlanet,
+-		      void (*heliocentic_f) (double, enum vPlanets,
++		      EPH_Planets basePlanet,
++		      EPH_Planets targetPlanet,
++		      void (*heliocentic_f) (double, EPH_Planets,
+ 					     double *, double *, double *),
+ 		      double n_in_l, double epsilon, double delta,
+ 		      double *ra, double *dec);
+@@ -606,7 +586,7 @@
+ 				 vsop_body planet,
+ 				 vsop_error_state (*heliocentric_f) (double, vsop_body, sph_coords *),
+ 				 double delta,
+-				 ecliptical_coords *ecl_pos);
++				 EPH_EclipticalCoords *ecl_pos);
+ 
+ 
+ 
+@@ -615,14 +595,14 @@
+ 					const int iterations);
+ double get_r_sun(const element_constants ec);
+ 
+-rec_coords elliptical_orbit_rectangular(const element_constants ec,
++EPH_RecCoords elliptical_orbit_rectangular(const element_constants ec,
+ 					const double r_sun);
+ 
+ double mean_anomoly(double jd, double T, double n);
+-void elliptical_orbit_ecliptical(const rec_coords sol,
+-				 const rec_coords body,
++void elliptical_orbit_ecliptical(const EPH_RecCoords sol,
++				 const EPH_RecCoords body,
+ 				 const double r_sun,
+-				 equatorial_coords *equ_pos,
++				 EPH_EquatorialCoords *equ_pos,
+ 				 double *elongation,
+ 				 double *phase_angle,
+ 				 double *r_earth);
+@@ -648,9 +628,9 @@
+ 
+ 
+ /* equinox.c */
+-double equinox_approx(int yr, enum Season season);
++double equinox_approx(int yr, EPH_Season season);
+ vsop_error_state equinox_exact(double jd,
+-			       enum Season season,
++			       EPH_Season season,
+ 			       vsop_error_state (*heliocentric_sol_f) (double, sph_coords *),
+ 			       double delta,
+ 			       double *equinox_result);
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c	2006-07-23 07:20:46 UTC (rev 251)
++++ branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c	2006-07-23 08:00:44 UTC (rev 252)
+@@ -70,12 +70,12 @@
+     double aberration = aberration_low(s_sc.R);
+ 
+     /* Correct the longitude for nutation and aberration. */
+-    s_sc.ecl.ecl_lon = s_sc.ecl.ecl_lon - nut_in_lon(jd) + aberration;
++    s_sc.ecl.longitude = s_sc.ecl.longitude - nut_in_lon(jd) + aberration;
+ 
+     /* Solar ra and dec. */
+     double obl = obliquity_hi(jd) + nut_in_obl(jd);
+ 
+-    equatorial_coords equ_pos;
++    EPH_EquatorialCoords equ_pos;
+     ecl_to_equ(s_sc.ecl, obl, &amp;equ_pos);
+ 
+     /* Do the final calculation, and return it. */
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/equinox.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/equinox.c	2006-07-23 07:20:46 UTC (rev 251)
++++ branches/new-vsop-prepare/src/c/libephemeritis/equinox.c	2006-07-23 08:00:44 UTC (rev 252)
+@@ -32,14 +32,14 @@
+ #include &lt;stdlib.h&gt;
+ #include &lt;math.h&gt;
+ 
+-enum Epoch {
++typedef enum {
+     pre1000,
+     post1000
+-};
++} Epoch;
+ 
+ struct Data {
+-    enum Epoch epoch;
+-    enum Season season;
++    Epoch epoch;
++    EPH_Season season;
+     double series[5];
+ };
+ 
+@@ -148,7 +148,7 @@
+  *
+  *  @sa dt_to_ut
+  */
+-double equinox_approx(int yr, enum Season season)
++double equinox_approx(int yr, EPH_Season season)
+ {
+     if (yr &lt; -1000 || yr &gt; 3000) {
+ 	return -1;
+@@ -161,7 +161,7 @@
+      */
+ 
+     double Y;
+-    enum Epoch epoch;
++    Epoch epoch;
+     if (-1000 &lt;= yr &amp;&amp; yr &lt;= 1000) {
+ 	Y = yr / 1000.0;
+ 	epoch = pre1000;
+@@ -208,7 +208,7 @@
+  * Its only purpose is to map each season to an angle of a circle.
+  */
+ struct season_circle_data {
+-    enum Season season;
++    EPH_Season season;
+     double circle;
+ };
+ 
+@@ -238,7 +238,7 @@
+  *  @author Bill McClain, Mike McGavin.
+  */
+ vsop_error_state equinox_exact(double jd,
+-			       enum Season season,
++			       EPH_Season season,
+ 			       vsop_error_state (*geocentric_sol_f) (double, sph_coords *),
+ 			       double delta,
+ 			       double *equinox_result)
+@@ -277,10 +277,10 @@
+   	    *equinox_result = jd;
+   	    return result;
+ 	}
+-	sc_s.ecl.ecl_lon += nut_in_lon(jd) + aberration_low(sc_s.R);
++	sc_s.ecl.longitude += nut_in_lon(jd) + aberration_low(sc_s.R);
+ 
+ 	/* Meeus uses jd + 58 * sin(diff(...)) */
+-	jd += diff_angle(sc_s.ecl.ecl_lon, circ) * _k_sun_motion;
++	jd += diff_angle(sc_s.ecl.longitude, circ) * _k_sun_motion;
+ 	if (fabs(jd - jd0) &lt; delta) {
+ 	    *equinox_result = jd;
+ 	    return ok;
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/nutation.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/nutation.c	2006-07-23 07:20:46 UTC (rev 251)
++++ branches/new-vsop-prepare/src/c/libephemeritis/nutation.c	2006-07-23 08:00:44 UTC (rev 252)
+@@ -184,7 +184,7 @@
+      */
+ 
+     /* Initialise the arrays if this is the first time the function's been called. */
+-    static bool initialised = false;
++    static EPH_Bool initialised = false;
+     static double _kD[4];
+     static double _kM[4];
+     static double _kM1[4];
+@@ -356,7 +356,7 @@
+ 
+     /* Initialise the array on the first call. */
+     static double _el0[4];
+-    static bool initialised = false;
++    static EPH_Bool initialised = false;
+     if (!initialised) {
+ 	initialised = true;
+ 	_el0[0] = d_to_r(dms_to_d(23, 26, 21.448));
+@@ -389,7 +389,7 @@
+ 
+     /* Initialise the array on the first call. */
+     static double _el1[11];
+-    static bool initialised = false;
++    static EPH_Bool initialised = false;
+     if (!initialised) {
+ 	_el1[0] = d_to_r(dms_to_d(23, 26, 21.448));
+ 	_el1[1] = d_to_r(dms_to_d(0, 0, -4680.93));
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/precession.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/precession.c	2006-07-23 07:20:46 UTC (rev 251)
++++ branches/new-vsop-prepare/src/c/libephemeritis/precession.c	2006-07-23 08:00:44 UTC (rev 252)
+@@ -122,8 +122,8 @@
+  *  @author Mike McGavin.
+  */
+ void precession_eq(const precession_elements_eq pceq,
+-		   const equatorial_coords eqInitial,
+-		   equatorial_coords *eqFinal)
++		   const EPH_EquatorialCoords eqInitial,
++		   EPH_EquatorialCoords *eqFinal)
+ {
+     double A = cos(eqInitial.dec) * sin(eqInitial.ra + pceq.zeta_rad);
+     double B =
+@@ -223,22 +223,22 @@
+  *  @author Mike McGavin.
+  */
+ void precession_ecl(const precession_elements_ecl pcecl,
+-		    const ecliptical_coords eclInitial,
+-		    ecliptical_coords *eclFinal)
++		    const EPH_EclipticalCoords eclInitial,
++		    EPH_EclipticalCoords *eclFinal)
+ {
+ 
+     double A =
+-	(cos(pcecl.n_rad) * cos(eclInitial.ecl_lat) *
+-	 sin(pcecl.II_rad - eclInitial.ecl_lon)) -
+-	(sin(pcecl.n_rad) * sin(eclInitial.ecl_lat));
+-    double B = cos(eclInitial.ecl_lat) * cos(pcecl.II_rad - eclInitial.ecl_lon);
++	(cos(pcecl.n_rad) * cos(eclInitial.latitude) *
++	 sin(pcecl.II_rad - eclInitial.longitude)) -
++	(sin(pcecl.n_rad) * sin(eclInitial.latitude));
++    double B = cos(eclInitial.latitude) * cos(pcecl.II_rad - eclInitial.longitude);
+     double C =
+-	((cos(pcecl.n_rad) * sin(eclInitial.ecl_lat))) +
+-	(sin(pcecl.n_rad) * cos(eclInitial.ecl_lat) *
+-	 sin(pcecl.II_rad - eclInitial.ecl_lon));
++	((cos(pcecl.n_rad) * sin(eclInitial.latitude))) +
++	(sin(pcecl.n_rad) * cos(eclInitial.latitude) *
++	 sin(pcecl.II_rad - eclInitial.longitude));
+ 
+-    eclFinal-&gt;ecl_lon = modpi2(-1 * (atan2(A, B) - pcecl.p_rad - pcecl.II_rad));
+-    eclFinal-&gt;ecl_lat = circumpi(asin(C));
++    eclFinal-&gt;longitude = modpi2(-1 * (atan2(A, B) - pcecl.p_rad - pcecl.II_rad));
++    eclFinal-&gt;latitude = circumpi(asin(C));
+ }
+ 
+ /*! @brief Calculates proper motion in ecliptical coordinates, given
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/riseset.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/riseset.c	2006-07-23 07:20:46 UTC (rev 251)
++++ branches/new-vsop-prepare/src/c/libephemeritis/riseset.c	2006-07-23 08:00:44 UTC (rev 252)
+@@ -78,7 +78,7 @@
+  *  @todo Make it so altitude of observer is taken into consideration.
+  *  @bug  Some events are dropped at the moment.  (See code.)
+  */
+-double horizon(const enum HorizonType hType,
++double horizon(const EPH_HorizonType hType,
+ 	       const double jd,
+ 	       const geographic_coords geo_pos,
+ 	       const double *raList,
+@@ -159,7 +159,7 @@
+ 	double H = theta0 - geo_pos.longitude - ra;
+ 	H = diff_angle(0.0, H);
+ 
+-	equatorial_coords equ_pos;
++	EPH_EquatorialCoords equ_pos;
+ 	equ_pos.ra = H;
+ 	equ_pos.dec = dec;
+ 
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/solar.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/solar.c	2006-07-23 07:20:46 UTC (rev 251)
++++ branches/new-vsop-prepare/src/c/libephemeritis/solar.c	2006-07-23 08:00:44 UTC (rev 252)
+@@ -151,7 +151,7 @@
+  *
+  *  @author Mike McGavin.
+  */
+-/* rec_coords sol_rectangular(double L, double B, double R, double obl) */
++/* EPH_RecCoords sol_rectangular(double L, double B, double R, double obl) */
+ /* { */
+ /*     double cosL = cos(L); */
+ /*     double cosB = cos(B); */
+@@ -159,7 +159,7 @@
+ /*     double sinB = sin(B); */
+ /*     double sinobl = sin(obl); */
+ /*     double cosobl = cos(obl); */
+-/*     rec_coords rc; */
++/*     EPH_RecCoords rc; */
+ /*     rc.x = R * (cosB * cosL); */
+ /*     rc.y = R * ((cosB * sinL * cosobl) - (sinB * sinobl)); */
+ /*     rc.z = R * ((cosB * sinL * sinobl) + (sinB * cosobl)); */
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-07-23 07:20:46 UTC (rev 251)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-07-23 08:00:44 UTC (rev 252)
+@@ -327,8 +327,8 @@
+ 
+     /* Now return L, B and R.                                 */
+     /* L, B and R come from varibles 0, 1 and 2 respectively. */
+-    vsc.sc.ecl.ecl_lon = modpi2(internal_vsop_dimension_calc(be, 0, jd));
+-    vsc.sc.ecl.ecl_lat = internal_vsop_dimension_calc(be, 1, jd);
++    vsc.sc.ecl.longitude = modpi2(internal_vsop_dimension_calc(be, 0, jd));
++    vsc.sc.ecl.latitude = internal_vsop_dimension_calc(be, 1, jd);
+     vsc.sc.R = internal_vsop_dimension_calc(be, 2, jd);
+ 
+     /* Return 0 for success. */
+@@ -381,7 +381,7 @@
+ 
+     static double l1, l2;
+     static double terms[3];
+-    static bool static_set = false;
++    static EPH_Bool static_set = false;
+     if (!static_set) {
+ 	static_set = true;
+ 	l1 = -d_to_r(dms_to_d(0, 0, 0.09033));
+@@ -393,15 +393,15 @@
+     }
+ 
+     double T = (output.vh.version == hel_sph_date) ? (jd_to_jcent(output.jd) / 10.0) : 0.0;
+-    double L1 = vsc.sc.ecl.ecl_lon - polynomial(terms, 3, T);
++    double L1 = vsc.sc.ecl.longitude - polynomial(terms, 3, T);
+     double cosL1 = cos(L1);
+     double sinL1 = sin(L1);
+ 
+-    double deltaL = l1 + (l2 * (cosL1 + sinL1) * tan(output.sc.ecl.ecl_lat));
++    double deltaL = l1 + (l2 * (cosL1 + sinL1) * tan(output.sc.ecl.latitude));
+     double deltaB = l2 * (cosL1 - sinL1);
+ 
+-    output.sc.ecl.ecl_lon += deltaL;
+-    output.sc.ecl.ecl_lat += deltaB;
++    output.sc.ecl.longitude += deltaL;
++    output.sc.ecl.latitude += deltaB;
+ 
+     return output;
+ }
+@@ -429,8 +429,8 @@
+ 	return output;
+     }
+ 
+-    output.sc.ecl.ecl_lon = modpi2(output.sc.ecl.ecl_lon + pi);
+-    output.sc.ecl.ecl_lat = -output.sc.ecl.ecl_lat;
++    output.sc.ecl.longitude = modpi2(output.sc.ecl.longitude + pi);
++    output.sc.ecl.latitude = -output.sc.ecl.latitude;
+     output.is_inverted = output.is_inverted ^ 0x01;
+     return output;
+ }
+@@ -532,10 +532,10 @@
+ 
+   double obl = vrc.vh.version == hel_sph_j2 ? obliquity_hi(je_to_jd(2000.0)) : obliquity_hi(vrc.jd);
+ 
+-  double cosL = cos(vsc.sc.ecl.ecl_lon);
+-  double cosB = cos(vsc.sc.ecl.ecl_lat);
+-  double sinL = sin(vsc.sc.ecl.ecl_lon);
+-  double sinB = sin(vsc.sc.ecl.ecl_lat);
++  double cosL = cos(vsc.sc.ecl.longitude);
++  double cosB = cos(vsc.sc.ecl.latitude);
++  double sinL = sin(vsc.sc.ecl.longitude);
++  double sinB = sin(vsc.sc.ecl.latitude);
+   double sinobl = sin(obl);
+   double cosobl = cos(obl);
+ 
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c	2006-07-23 07:20:46 UTC (rev 251)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c	2006-07-23 08:00:44 UTC (rev 252)
+@@ -317,7 +317,7 @@
+  *
+  *  @return true if the data was loaded and returned, otherwise false.
+  */
+-static bool get_vsop_handle(const vsop_body planet,
++static EPH_Bool get_vsop_handle(const vsop_body planet,
+ 			    const vsop_version version, vsop_handle * h)
+ {
+     int n;
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-23 07:20:46 UTC (rev 251)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-23 08:00:44 UTC (rev 252)
+@@ -97,8 +97,8 @@
+ 		   vsc.error_state);
+ 	    return 0;
+ 	}
+-	*longitude = vsc.sc.ecl.ecl_lon;
+-	*latitude = vsc.sc.ecl.ecl_lat;
++	*longitude = vsc.sc.ecl.longitude;
++	*latitude = vsc.sc.ecl.latitude;
+ 	*radius = vsc.sc.R;
+ 	return 1;
+     } else {
+@@ -121,8 +121,8 @@
+ 		   vsc.error_state);
+ 	    return 0;
+ 	}
+-	*longitude = vsc.sc.ecl.ecl_lon;
+-	*latitude = vsc.sc.ecl.ecl_lat;
++	*longitude = vsc.sc.ecl.longitude;
++	*latitude = vsc.sc.ecl.latitude;
+ 	*radius = vsc.sc.R;
+ 	return 1;
+     } else {
+@@ -141,7 +141,7 @@
+ 
+ struct Data_27_Solstice {
+     int yr;
+-    enum Season season;
++    EPH_Season season;
+     int day;
+     double fday;
+ };
+@@ -151,7 +151,7 @@
+     int mo;
+     double day;
+     double jd;
+-    bool gregorian;
++    EPH_Bool gregorian;
+ };
+ 
+ 
+@@ -399,21 +399,21 @@
+ 
+     printf(&quot;13.a Equitorial to ecliptical coordinates\n&quot;);
+     {
+-	ecliptical_coords ecl_pos;
+-	equatorial_coords equ_pos;
++	EPH_EclipticalCoords ecl_pos;
++	EPH_EquatorialCoords equ_pos;
+ 	equ_pos.ra = d_to_r(116.328942);
+ 	equ_pos.dec = d_to_r(28.026183);
+ 	equ_to_ecl(equ_pos, d_to_r(23.4392911), &amp;ecl_pos);
+-	report(&quot;longitude&quot;, r_to_d(ecl_pos.ecl_lon), 113.215630, 1e-6, &quot;degrees&quot;);
+-	report(&quot;latitude&quot;, r_to_d(ecl_pos.ecl_lat), 6.684170, 1e-6, &quot;degrees&quot;);
++	report(&quot;longitude&quot;, r_to_d(ecl_pos.longitude), 113.215630, 1e-6, &quot;degrees&quot;);
++	report(&quot;latitude&quot;, r_to_d(ecl_pos.latitude), 6.684170, 1e-6, &quot;degrees&quot;);
+     }
+ 
+     printf(&quot;13.a Ecliptical to equatorial coordinates\n&quot;);
+     {
+-	equatorial_coords equ_pos;
+-	ecliptical_coords ecl_pos;
+-	ecl_pos.ecl_lon = d_to_r(113.215630);
+-	ecl_pos.ecl_lat = d_to_r(6.684170);
++	EPH_EquatorialCoords equ_pos;
++	EPH_EclipticalCoords ecl_pos;
++	ecl_pos.longitude = d_to_r(113.215630);
++	ecl_pos.latitude = d_to_r(6.684170);
+ 	ecl_to_equ(ecl_pos, d_to_r(23.4392911), &amp;equ_pos);
+ 	report(&quot;right accension&quot;, r_to_d(equ_pos.ra), 116.328942, 1e-6, &quot;degrees&quot;);
+ 	report(&quot;declination&quot;, r_to_d(equ_pos.dec), 28.026183, 1e-6, &quot;degrees&quot;);
+@@ -602,7 +602,7 @@
+ 
+     printf(&quot;21.b Precession (equatorial)\n&quot;);
+     {
+-	equatorial_coords eqInitial, eqFinal;
++	EPH_EquatorialCoords eqInitial, eqFinal;
+ 	eqInitial.ra = 
+ 	    fday_to_r(hms_to_fday(2, 44, 11.986) +
+ 		      hms_to_fday(0.0, 0.0, 0.03425) * 28.86705);
+@@ -619,14 +619,14 @@
+     }
+     printf(&quot;21.c Precession (ecliptical)\n&quot;);
+     {
+-	ecliptical_coords eclInitial, eclFinal;
+-	eclInitial.ecl_lon = d_to_r(149.48194);
+-	eclInitial.ecl_lat = d_to_r(1.76549);
++	EPH_EclipticalCoords eclInitial, eclFinal;
++	eclInitial.longitude = d_to_r(149.48194);
++	eclInitial.latitude = d_to_r(1.76549);
+ 	precession_ecl(precession_get_elements_ecl(je_to_jd(2000.0), 1643074.5),
+ 		eclInitial, &amp;eclFinal);
+ 
+-	report(&quot;Longitude&quot;, eclFinal.ecl_lon, d_to_r(118.704), 0.00001, &quot;radians&quot;);
+-	report(&quot;Latitude&quot;, eclFinal.ecl_lat, d_to_r(1.615), 0.0001, &quot;radians&quot;);
++	report(&quot;Longitude&quot;, eclFinal.longitude, d_to_r(118.704), 0.00001, &quot;radians&quot;);
++	report(&quot;Latitude&quot;, eclFinal.latitude, d_to_r(1.615), 0.0001, &quot;radians&quot;);
+     }
+ 
+     printf(&quot;22.a Nutation (delta psi)\n&quot;);
+@@ -756,19 +756,19 @@
+ 	vsop_sph_coords vsc;
+ 	if(0 == get_vsop_data_handle(vsop_earth, hel_sph_date, &amp;vh)) {
+ 	  vsc = vsop_sph_sol(vsop_get_spherical(vh, jd));
+-	  report(&quot;longitude&quot;, r_to_d(vsc.sc.ecl.ecl_lon) * 3600, 199.907372 * 3600, 1.0,
++	  report(&quot;longitude&quot;, r_to_d(vsc.sc.ecl.longitude) * 3600, 199.907372 * 3600, 1.0,
+ 		 &quot;arc-seconds&quot;);
+-	  report(&quot;latitude&quot;, r_to_d(vsc.sc.ecl.ecl_lat) * 3600, 0.644, 1.0, &quot;arc-seconds&quot;);
++	  report(&quot;latitude&quot;, r_to_d(vsc.sc.ecl.latitude) * 3600, 0.644, 1.0, &quot;arc-seconds&quot;);
+ 	  report(&quot;radius&quot;, vsc.sc.R * km_per_au, 0.99760775 * km_per_au, 150.0,
+ 		 &quot;km&quot;);
+ 
+ 	  vsc = vsop_sph_to_fk5(vsc);
+ 
+-	  report(&quot;corrected fk5 longitude&quot;, r_to_d(vsc.sc.ecl.ecl_lon) * 3600,
++	  report(&quot;corrected fk5 longitude&quot;, r_to_d(vsc.sc.ecl.longitude) * 3600,
+ 		 199.907347 * 3600, 0.5, &quot;arc-seconds&quot;);
+-	  report(&quot;corrected fk5 latitude&quot;, r_to_d(vsc.sc.ecl.ecl_lat) * 3600, 0.644 - 0.023,
++	  report(&quot;corrected fk5 latitude&quot;, r_to_d(vsc.sc.ecl.latitude) * 3600, 0.644 - 0.023,
+ 		 0.5, &quot;arc-seconds&quot;);
+-	  printf(&quot;%.10f %.10f %.10f\n&quot;, r_to_d(vsc.sc.ecl.ecl_lon), r_to_d(vsc.sc.ecl.ecl_lat) * 3600.0, vsc.sc.R);
++	  printf(&quot;%.10f %.10f %.10f\n&quot;, r_to_d(vsc.sc.ecl.latitude), r_to_d(vsc.sc.ecl.latitude) * 3600.0, vsc.sc.R);
+ 
+ 
+ 	  printf
+@@ -787,14 +787,14 @@
+ 	  report(&quot;aberration&quot;, r_to_d(aberration) * 3600, -20.539, 0.001,
+ 		 &quot;arc-seconds&quot;);
+ 
+-	  double app_lon = vsc.sc.ecl.ecl_lon + n_in_l + aberration;
++	  double app_lon = vsc.sc.ecl.longitude + n_in_l + aberration;
+ 	  report(&quot;apparent longitude&quot;, r_to_d(app_lon) * 3600.0,
+ 		 dms_to_d(199, 54, 21.818) * 3600.0, 1, &quot;arc-seconds&quot;);
+ 
+-	  report(&quot;longitude&quot;, r_to_d(vsc.sc.ecl.ecl_lon) * 3600 * 100,
++	  report(&quot;longitude&quot;, r_to_d(vsc.sc.ecl.longitude) * 3600 * 100,
+ 		 dms_to_d(199, 54, 26.18) * 3600 * 100, 1,
+ 		 &quot;arc-seconds/100&quot;);
+-	  report(&quot;latitude&quot;, r_to_d(vsc.sc.ecl.ecl_lat) * 3600 * 100, 0.72 * 100, 1,
++	  report(&quot;latitude&quot;, r_to_d(vsc.sc.ecl.latitude) * 3600 * 100, 0.72 * 100, 1,
+ 		 &quot;arc-seconds/100&quot;);
+ 	  report(&quot;radius&quot;, vsc.sc.R, 0.99760853, 1e-8, &quot;au&quot;);
+ 
+@@ -823,8 +823,8 @@
+ 	    /*
+ 	    double obl = obliquity_hi(jd);
+ 	    */
+-	    report_diff(&quot;L&quot;, r_to_d(vsc.sc.ecl.ecl_lon) * 3600.0, 199.907347 * 3600.0, &quot;arc-seconds&quot;);
+-	    report_diff(&quot;B&quot;, r_to_d(vsc.sc.ecl.ecl_lat) * 3600.0, dms_to_d(0,0,0.62) * 3600.0, &quot;arc-seconds&quot;);
++	    report_diff(&quot;L&quot;, r_to_d(vsc.sc.ecl.longitude) * 3600.0, 199.907347 * 3600.0, &quot;arc-seconds&quot;);
++	    report_diff(&quot;B&quot;, r_to_d(vsc.sc.ecl.latitude) * 3600.0, dms_to_d(0,0,0.62) * 3600.0, &quot;arc-seconds&quot;);
+ 	    report_diff(&quot;R&quot;, vsc.sc.R * km_per_au, 0.99760775 * km_per_au, &quot;km&quot;);
+ 
+ 	    vsop_rec_coords vrc = sol_sph_to_rec(vsc);
+@@ -979,7 +979,7 @@
+ 
+     printf(&quot;33.a Apparent position (vsop)\n&quot;);
+     {
+-      ecliptical_coords ecl_pos;
++      EPH_EclipticalCoords ecl_pos;
+       double jd = 2448976.5;
+ 	/*
+ 	   geocentric_planet(jd, vEarth, vVenus, vsop_dimension3_fk5,
+@@ -1008,16 +1008,11 @@
+ 	  /*
+ 	    longitude += d_to_r(dms_to_d(0, 0, 16.749));
+ 	  */
+-	  ecl_pos.ecl_lon += nut_in_lon(jd);
++	  ecl_pos.longitude += nut_in_lon(jd);
+ 
+ 
+ 	  /* Get equatorial coordinates. */
+-	  equatorial_coords equ_pos;
+-	  /*
+-	  ecliptical_coords ecl_pos;
+-	  ecl_pos.ecl_lat = latitude;
+-	  ecl_pos.ecl_lon = longitude;
+-	  */
++	  EPH_EquatorialCoords equ_pos;
+ 	  ecl_to_equ(ecl_pos, obliquity_hi(jd) + nut_in_obl(jd), &amp;equ_pos);
+ 
+ 
+@@ -1045,7 +1040,7 @@
+ 	double obl2000 = obliquity_hi(je_to_jd(2000.0));
+ 	element_constants ec = get_element_constants(obl2000, el, 53);
+ 	r_sun = get_r_sun(ec);
+-	rec_coords rc = elliptical_orbit_rectangular(ec, r_sun);
++	EPH_RecCoords rc = elliptical_orbit_rectangular(ec, r_sun);
+ 
+ 	report(&quot;x&quot;, rc.x, 0.2508066, 0.0000001, &quot;AU&quot;);
+ 	report(&quot;y&quot;, rc.y, 0.4849175, 0.0000001, &quot;AU&quot;);
+@@ -1062,11 +1057,11 @@
+ /* 	    /\* */
+ /* 	    double E = obliquity_hi(jd); */
+ /* 	    *\/ */
+-/* 	    rec_coords src = vrc.rc; */
++/* 	    EPH_RecCoords src = vrc.rc; */
+ 
+ 	    vsop_sph_coords vsc = vsop_sph_to_fk5(vsop_sph_sol(vsop_get_spherical(vh, jd)));
+ 	    vsop_rec_coords vrc = sol_sph_to_rec(vsc);
+-	    rec_coords src = vrc.rc;
++	    EPH_RecCoords src = vrc.rc;
+ 
+ 	    report(&quot;solar x&quot;, src.x * km_per_au, -0.9756732 * km_per_au, 0.0000001 * km_per_au,
+ 		   &quot;km&quot;);
+@@ -1075,7 +1070,7 @@
+ 	    report(&quot;solar z&quot;, src.z * km_per_au, -0.0868566 * km_per_au, 0.0000001 * km_per_au,
+ 		   &quot;km&quot;);
+ 
+-	    equatorial_coords equ_pos;
++	    EPH_EquatorialCoords equ_pos;
+ 	    double elongation, phase_angle, body_r_earth;
+ 	    elliptical_orbit_ecliptical(src, rc, r_sun, &amp;equ_pos,
+ 					&amp;elongation, &amp;phase_angle,
+@@ -1216,17 +1211,17 @@
+ 	    vsop_sph_coords vsc =
+ 	      vsop_sph_sol(vsop_sph_to_fk5(vsop_get_spherical(vh, test-&gt;jd)));
+ 	    vsop_rec_coords vrc = sol_sph_to_rec(vsc);
+-	    rec_coords sun_rec = vrc.rc;
++	    EPH_RecCoords sun_rec = vrc.rc;
+ 
+ 	    /*
+ 	    vsop_handle vh2;
+ 	    get_vsop_data_handle(vsop_earth, hel_rec_j2, &amp;vh2);
+ 	    vsop_rec_coords vrc =
+ 	      vsop_rec_to_fk5(vsop_rec_sol(vsop_get_rectangular(vh2, test-&gt;jd)));
+-	    rec_coords sun_rec = vrc.rc;
++	    EPH_RecCoords sun_rec = vrc.rc;
+ 	    */
+ 
+-	    equatorial_coords equ_pos;
++	    EPH_EquatorialCoords equ_pos;
+ 	    double elongation;
+ 	    double phase_angle;
+ 	    double body_r_earth;
+@@ -1245,7 +1240,7 @@
+ 		    get_element_constants(obliquity_hi(je_to_jd(2000)), cd,
+ 					  53);
+ 		body_r_sun = get_r_sun(ec);
+-		rec_coords body_rec =
++		EPH_RecCoords body_rec =
+ 		    elliptical_orbit_rectangular(ec, body_r_sun);
+ 
+ 		elliptical_orbit_ecliptical(sun_rec, body_rec, body_r_sun,
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000104.html">[Ephemeritis-svn] r251 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000105.html">[Ephemeritis-svn] r253 - branches/new-vsop-prepare
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#108">[ date ]</a>
+              <a href="thread.html#108">[ thread ]</a>
+              <a href="subject.html#108">[ subject ]</a>
+              <a href="author.html#108">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

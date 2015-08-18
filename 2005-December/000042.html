@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r189 - trunk/src/c/tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2005-December/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r189%20-%20trunk/src/c/tests&In-Reply-To=%3C200512231912.jBNJCkVi025803%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000041.html">
+   <LINK REL="Next"  HREF="000043.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r189 - trunk/src/c/tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r189%20-%20trunk/src/c/tests&In-Reply-To=%3C200512231912.jBNJCkVi025803%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r189 - trunk/src/c/tests">izogi at berlios.de
+       </A><BR>
+    <I>Fri Dec 23 20:12:46 CET 2005</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000041.html">[Ephemeritis-svn] r188 - trunk/src/c/tests
+</A></li>
+        <LI>Next message: <A HREF="000043.html">[Ephemeritis-svn] r190 - in trunk/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#42">[ date ]</a>
+              <a href="thread.html#42">[ thread ]</a>
+              <a href="subject.html#42">[ subject ]</a>
+              <a href="author.html#42">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2005-12-23 20:12:45 +0100 (Fri, 23 Dec 2005)
+New Revision: 189
+
+Modified:
+   trunk/src/c/tests/validate_meeus.c
+Log:
+Saved validate_meeus.c and committing again.
+
+
+Modified: trunk/src/c/tests/validate_meeus.c
+===================================================================
+--- trunk/src/c/tests/validate_meeus.c	2005-12-23 19:12:11 UTC (rev 188)
++++ trunk/src/c/tests/validate_meeus.c	2005-12-23 19:12:45 UTC (rev 189)
+@@ -854,10 +854,9 @@
+     printf(&quot;Additional tests - NOT DONE YET\n&quot;);
+     {
+       /* Ceres data. */
+-      orbital_elements cd;
+       double jd = cal_to_jd(2005, 5, 1, true);
+-
+       double ep = cal_to_jd(2005, 1, 30, true);
++      orbital_elements cd;
+       cd.a = 2.7673017;
+       cd.e = 0.0800887;
+       cd.i = d_to_r(10.58276);
+@@ -870,37 +869,6 @@
+       double n = d_to_r(0.21410131);
+       cd.M = d_to_r(43.77971) + n * (jd - ep);
+ 
+-      /*
+-      double ep = cal_to_jd(2000, 1, 1, true);
+-      cd.a = 2.765813553515125;
+-      cd.e = 0.07856100887229889;
+-      cd.i = d_to_r(10.60695970203233);
+-      cd.w = d_to_r(73.11847897505739);
+-      cd.L = d_to_r(153.5582335);
+-      cd.magdatatype = iau_s;
+-      cd.magdata._iau.H = 3.34;
+-      cd.magdata._iau.G = 0.12;
+-
+-      double n = 0.9856076686 / cd.a*sqrt(cd.a);
+-      cd.M = d_to_r(170.3210030302993) + n * (jd - ep);
+-      */
+-
+-      /*
+-      double ep = cal_to_jd(2005, 11, 26, true);
+-      cd.a = 2.766;
+-      cd.e = 0.080;
+-      cd.i = d_to_r(10.587);
+-      cd.w = d_to_r(73.271);
+-      cd.L = d_to_r(80.410);
+-      cd.magdatatype = iau_s;
+-      cd.magdata._iau.H = 3.34;
+-      cd.magdata._iau.G = 0.12;
+-      double n = 0.9856076686 / cd.a*sqrt(cd.a);
+-      cd.M = d_to_r(108.509) + n * (jd - ep);
+-      */
+-
+-
+-
+       rec_coords ceres_rec;
+       double ceres_r_sun;
+       element_constants ec;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000041.html">[Ephemeritis-svn] r188 - trunk/src/c/tests
+</A></li>
+	<LI>Next message: <A HREF="000043.html">[Ephemeritis-svn] r190 - in trunk/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#42">[ date ]</a>
+              <a href="thread.html#42">[ thread ]</a>
+              <a href="subject.html#42">[ subject ]</a>
+              <a href="author.html#42">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

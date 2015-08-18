@@ -1,0 +1,424 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r250 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-July/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r250%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607211054.k6LAsD2P009085%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000102.html">
+   <LINK REL="Next"  HREF="000104.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r250 - in branches/new-vsop-prepare/src/c:	libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r250%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607211054.k6LAsD2P009085%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r250 - in branches/new-vsop-prepare/src/c:	libephemeritis tests">izogi at mail.berlios.de
+       </A><BR>
+    <I>Fri Jul 21 12:54:13 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000102.html">[Ephemeritis-svn] r249 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000104.html">[Ephemeritis-svn] r251 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#103">[ date ]</a>
+              <a href="thread.html#103">[ thread ]</a>
+              <a href="subject.html#103">[ subject ]</a>
+              <a href="author.html#103">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-07-21 12:54:06 +0200 (Fri, 21 Jul 2006)
+New Revision: 250
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/conversions.c
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+   branches/new-vsop-prepare/src/c/libephemeritis/riseset.c
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+Converting more functions to use structs for geographic and horizontal coordinates.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/conversions.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/conversions.c	2006-07-20 11:37:41 UTC (rev 249)
++++ branches/new-vsop-prepare/src/c/libephemeritis/conversions.c	2006-07-21 10:54:06 UTC (rev 250)
+@@ -156,21 +156,23 @@
+  *
+  *  @warning This is not a good formula for using near the poles.
+  *
+- *  @param[in]  longitude Geographic longitude, in radians.
+- *  @param[in]  latitude  Geographic latitude, in radians.
+- *  @param[in]  equ_pos   Equatorial coordinates in radians.
++ *  @param[in]  geo_pos   Geographic position, in radians.
++ *  @param[in]  equ_pos   Equatorial coordinates, in radians.
+  *
+- *  @param[out] A         Azimuth, in radians.
+- *  @param[out] h         Altitude, in radians.
++ *  @param[out] hor_pos   Horizontal coordinates, in radians.
++ *
++ *  @todo Write unit tests.
+  */
+-void equ_to_horiz(double longitude, double latitude, equatorial_coords equ_pos,
+-		  double *A, double *h)
++void equ_to_horiz(geographic_coords geo_pos,
++		  equatorial_coords equ_pos,
++		  horizon_coords *hor_pos
++		  )
+ {
+     const double cosH = cos(equ_pos.ra);
+-    const double sinLat = sin(latitude);
+-    const double cosLat = cos(latitude);
+-    *A = atan2(sin(equ_pos.ra), (cosH * sinLat) - (tan(equ_pos.dec) * cosLat));
+-    *h = asin((sinLat * sin(equ_pos.dec)) + (cosLat * cos(equ_pos.dec) * cosH));
++    const double sinLat = sin(geo_pos.latitude);
++    const double cosLat = cos(geo_pos.latitude);
++    hor_pos-&gt;azimuth  = atan2(sin(equ_pos.ra), (cosH * sinLat) - (tan(equ_pos.dec) * cosLat));
++    hor_pos-&gt;altitude = asin((sinLat * sin(equ_pos.dec)) + (cosLat * cos(equ_pos.dec) * cosH));
+ }
+ 
+ /*! @brief Converts horizontal to equitorial coordinates.
+@@ -181,26 +183,24 @@
+  *
+  *  @warning This is not a good formula for using near the poles.
+  *
+- *  @param[in]  longitude Geographic longitude, in radians.
+- *  @param[in]  latitude  Geographic latitude, in radians.
+- *  @param[in]  A         Azimuth, in radians.
+- *  @param[in]  h         Altitude, in radians.
++ *  @param[in]  geo_pos   Geographic position, in radians.  Note that the longitude is ignored in this calculation.
++ *  @param[in]  hor_pos   Horizontal coordinates, in radians.
+  *
+  *  @param[out] equ_pos   Equatorial coordinates, in radians.
+-
+- *  @param[out] H         Hour angle, in radians.
+- *  @param[out] decl      Declination, in radians.
+  *
++ *  @todo Write unit tests.
++ *
+  *  @author Mike McGavin
+  */
+-void horiz_to_equ(double longitude, double latitude, double A, double h,
++void horiz_to_equ(geographic_coords geo_pos,
++		  horizon_coords hor_pos,
+ 		  equatorial_coords *equ_pos)
+ {
+-    const double cosA = cos(A);
+-    const double sinLat = sin(latitude);
+-    const double cosLat = cos(latitude);
+-    equ_pos-&gt;ra = atan2(sin(A), (cosA * sinLat) + (tan(h) * cosLat));
+-    equ_pos-&gt;dec = asin((sinLat * sin(h)) - (cosLat * cos(h) * cosA));
++    const double cosA = cos(hor_pos.azimuth);
++    const double sinLat = sin(geo_pos.latitude);
++    const double cosLat = cos(geo_pos.latitude);
++    equ_pos-&gt;ra = atan2(sin(hor_pos.azimuth), (cosA * sinLat) + (tan(hor_pos.altitude) * cosLat));
++    equ_pos-&gt;dec = asin((sinLat * sin(hor_pos.altitude)) - (cosLat * cos(hor_pos.altitude) * cosA));
+ }
+ 
+ 
+@@ -211,19 +211,17 @@
+  *  @param[in]  equ_coords Equatorial coordinates to convert from.
+  *  @param[in]  obliquity  Obliquity of the ecliptic, in radians.
+  *
+- *  @param[out] longitude  Ecliptic longitude, in radians.
+- *  @param[out] latitude   Ecliptic latitude, in radians.
++ *  @param[out] ecl_pos    The ecliptic coordinates, in radians.
+  *
+  *  @sa obliquity_hi + nut_in_obl for calculating true obliquity.
+  */
+-void equ_to_ecl(equatorial_coords equ_pos, double obliquity, double *longitude,
+-		double *latitude)
++void equ_to_ecl(equatorial_coords equ_pos, double obliquity, ecliptical_coords *ecl_pos)
+ {
+     const double cose = cos(obliquity);
+     const double sine = sin(obliquity);
+     const double sina = sin(equ_pos.ra);
+-    *longitude = modpi2(atan2(sina * cose + tan(equ_pos.dec) * sine, cos(equ_pos.ra)));
+-    *latitude = modpi2(asin(sin(equ_pos.dec) * cose - cos(equ_pos.dec) * sine * sina));
++    ecl_pos-&gt;ecl_lon = modpi2(atan2(sina * cose + tan(equ_pos.dec) * sine, cos(equ_pos.ra)));
++    ecl_pos-&gt;ecl_lat = modpi2(asin(sin(equ_pos.dec) * cose - cos(equ_pos.dec) * sine * sina));
+ }
+ 
+ /*! @brief Converts a fractional day (0.0..1.0) to integral
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-20 11:37:41 UTC (rev 249)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-21 10:54:06 UTC (rev 250)
+@@ -125,6 +125,30 @@
+     double ecl_lon;            /*!&lt; @brief The ecliptical longitude, in radians. */
+ } ecliptical_coords;
+ 
++
++/*! @brief Struct for holding horizon coordinates.
++ *
++ *  Horizon coordinates are composed of altitude and azimuth, the
++ *  geocentric coordinates at which an observer will see an object in
++ *  the sky.  Altitude is the angle between the horizon and the
++ *  zenith.  Azimuth is the angle measured anti-clockwise from North.
++ */
++typedef struct {
++    double altitude;  /*!&lt; @brief The altitude, in radians. */
++    double azimuth;   /*!&lt; @brief The azimuth, in radians.  */
++} horizon_coords;
++
++/*! @brief Struct for holding geographic coordinates of an observer.
++ *
++ *  Geographic coordinates specify the geographic position at which an
++ *  observer is standing to observe something in the sky.  Latitude and
++ *  longitude are both measured in radians.
++ */
++typedef struct {
++    double latitude;   /*!&lt; @brief The latitude, in radians. */
++    double longitude;  /*!&lt; @brief The longitude, in radians. */
++} geographic_coords;
++
+ /*  What follows are universe-specific constants that are used by
+  *  Ephemeritis to perform calculations.  Don't change these unless you
+  *  are moving to a new universe.
+@@ -243,13 +267,15 @@
+ /* riseset.c */
+ double horizon(const enum HorizonType hType,
+ 	       const double jd,
+-	       const double longitude,
+-	       const double latitude,
++	       const geographic_coords geo_pos,
+ 	       const double *raList,
+-	       const double *decList, double h0, double delta);
++	       const double *decList,
++	       const double h0,
++	       const double delta);
+ double transit(const double jd,
+-	       const double longitude,
+-	       const double latitude, const double *raList, double delta);
++	       const geographic_coords geo_pos,
++	       const double *raList,
++	       const double delta);
+ double moon_rst_altitude(double r);
+ 
+ 
+@@ -259,12 +285,9 @@
+ double diff_angle(double a, double b);
+ double dms_to_d(int deg, int min, double sec);
+ void ecl_to_equ(ecliptical_coords ecl_pos, double obliquity, equatorial_coords *equ_pos);
+-void equ_to_horiz(double longitude, double latitude, equatorial_coords equ_pos,
+-		  double *A, double *h);
+-void horiz_to_equ(double longitude, double latitude, double A, double h,
+-		  equatorial_coords *equ_pos);
+-void equ_to_ecl(equatorial_coords equ_pos, double obliquity, double *longitude,
+-		double *latitude);
++void equ_to_horiz(geographic_coords geo_pos, equatorial_coords equ_pos, horizon_coords *hor_pos);
++void horiz_to_equ(geographic_coords geo_pos, horizon_coords hor_pos, equatorial_coords *equ_pos);
++void equ_to_ecl(equatorial_coords equ_pos, double obliquity, ecliptical_coords *ecl_pos);
+ void fday_to_hms(double day, int *hour, int *min, double *sec);
+ double hms_to_fday(int hr, int mn, double sec);
+ double fday_to_r(const double fday);
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/riseset.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/riseset.c	2006-07-20 11:37:41 UTC (rev 249)
++++ branches/new-vsop-prepare/src/c/libephemeritis/riseset.c	2006-07-21 10:54:06 UTC (rev 250)
+@@ -46,8 +46,7 @@
+  *
+  *  @param[in] hType     Specifies whether rising or setting time is wanted.  Set to either hRising or hSetting.
+  *  @param[in] jd        Julian Day of the day in question, at 0 hr UT.
+- *  @param[in] longitude Observer's longitude, in radians.
+- *  @param[in] latitude  Observer's latitude, in radians.
++ *  @param[in] geo_pos   Observer's geographic position.
+  *  @param[in] raList    A sequence of three right acsension values, in radians, for (jd-1, jd, jd+1).
+  *  @param[in] decList   A sequence of three right declination values, in radians, for (jd-1, jd, jd+1).
+  *  @param[in] h0        The standard altitude, in radians.
+@@ -81,23 +80,21 @@
+  */
+ double horizon(const enum HorizonType hType,
+ 	       const double jd,
+-	       const double longitude,
+-	       const double latitude,
++	       const geographic_coords geo_pos,
+ 	       const double *raList,
+-	       const double *decList, double h0, double delta)
++	       const double *decList,
++	       const double h0,
++	       const double delta)
+ {
+ 
+     const double _k1 = d_to_r(360.985647);
+-
+-    const double lon_rad = longitude;
+-    const double lat_rad = latitude;
+     const double jd_ut = jd;
+ 
+     const double THETA0 = sidereal_time_greenwich(jd_ut);
+     const double deltaT_days = deltaT_seconds(jd_ut) / seconds_per_day;
+     const double cosH0 =
+ 	(sin(h0) -
+-	 sin(lat_rad) * sin(decList[1])) / (cos(lat_rad) *
++	 sin(geo_pos.latitude) * sin(decList[1])) / (cos(geo_pos.latitude) *
+ 					    cos(decList[1]));
+ 
+     if (cosH0 &lt; -1.0) {
+@@ -117,7 +114,7 @@
+     }
+ 
+     const double H0 = acos(cosH0);
+-    double m0 = (raList[1] + lon_rad - THETA0) / pi2;
++    double m0 = (raList[1] + geo_pos.longitude - THETA0) / pi2;
+     double m;
+     if (hRising == hType) {
+ 	m = m0 - H0 / pi2;	/* this is the only difference between rise() and set() */
+@@ -159,17 +156,20 @@
+ 
+ 	const double ra = interpolate_angle3(n, raList);
+ 	const double dec = interpolate3(n, decList);
+-	double H = theta0 - lon_rad - ra;
++	double H = theta0 - geo_pos.longitude - ra;
+ 	H = diff_angle(0.0, H);
+ 
+ 	equatorial_coords equ_pos;
+ 	equ_pos.ra = H;
+ 	equ_pos.dec = dec;
+ 
++	/*
+ 	double A, h;
+-	equ_to_horiz(lon_rad, lat_rad, equ_pos, &amp;A, &amp;h);
++	*/
++	horizon_coords hor_pos;
++	equ_to_horiz(geo_pos, equ_pos, &amp;hor_pos);
+ 	const double dm =
+-	    (h - h0) / (pi2 * cos(dec) * cos(lat_rad) * sin(H));
++	    (hor_pos.altitude - h0) / (pi2 * cos(dec) * cos(geo_pos.latitude) * sin(H));
+ 	m += dm;
+ 	if (fabs(m - m0) &lt; delta) {
+ 	    return jd_ut + m;
+@@ -186,8 +186,7 @@
+ /*! @brief Returns the Julian Day of the transit time of an object.
+  *
+  *  @param[in] jd        Julian Day number of the day in question, at 0 hr UT.
+- *  @param[in] longitude Longitude of observer, in radians.
+- *  @param[in] latitude  Latitude of observer, in radians.
++ *  @param[in] geo_pos   Geographic position of the observer.  Note that latitude is ignored for this calculation.
+  *  @param[in] raList    A sequence of three right acsension values, in radians, for (jd-1, jd, jd+1).
+  *  @param[in] delta     The desired accuracy, in days.
+  *
+@@ -200,17 +199,16 @@
+  *  objects below the horizon.
+  */
+ double transit(const double jd,
+-	       const double longitude,
+-	       const double latitude, const double *raList, double delta)
++	       const geographic_coords geo_pos,
++	       const double *raList,
++	       const double delta)
+ {
+     const double _k1 = d_to_r(360.985647);
+-
+-    const double lon_rad = longitude;
+     const double jd_ut = jd;
+     const double THETA0 = sidereal_time_greenwich(jd_ut);
+     const double deltaT_days = deltaT_seconds(jd_ut) / seconds_per_day;
+ 
+-    double m = (raList[1] + lon_rad - THETA0) / pi2;
++    double m = (raList[1] + geo_pos.longitude - THETA0) / pi2;
+     if (m &lt; 0) {
+ 	m += 1;
+     } else if (m &gt; 1) {
+@@ -239,7 +237,7 @@
+ 	     */
+ 	}
+ 	const double ra = interpolate_angle3(n, raList);
+-	double H = theta0 - lon_rad - ra;
++	double H = theta0 - geo_pos.longitude - ra;
+ 	H = diff_angle(0.0, H);
+ 	const double dm = -H / pi2;
+ 	m += dm;
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-20 11:37:41 UTC (rev 249)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-21 10:54:06 UTC (rev 250)
+@@ -399,13 +399,13 @@
+ 
+     printf(&quot;13.a Equitorial to ecliptical coordinates\n&quot;);
+     {
+-	double L, B;
++	ecliptical_coords ecl_pos;
+ 	equatorial_coords equ_pos;
+ 	equ_pos.ra = d_to_r(116.328942);
+ 	equ_pos.dec = d_to_r(28.026183);
+-	equ_to_ecl(equ_pos, d_to_r(23.4392911), &amp;L, &amp;B);
+-	report(&quot;longitude&quot;, r_to_d(L), 113.215630, 1e-6, &quot;degrees&quot;);
+-	report(&quot;latitude&quot;, r_to_d(B), 6.684170, 1e-6, &quot;degrees&quot;);
++	equ_to_ecl(equ_pos, d_to_r(23.4392911), &amp;ecl_pos);
++	report(&quot;longitude&quot;, r_to_d(ecl_pos.ecl_lon), 113.215630, 1e-6, &quot;degrees&quot;);
++	report(&quot;latitude&quot;, r_to_d(ecl_pos.ecl_lat), 6.684170, 1e-6, &quot;degrees&quot;);
+     }
+ 
+     printf(&quot;13.a Ecliptical to equatorial coordinates\n&quot;);
+@@ -431,8 +431,14 @@
+ 
+     printf(&quot;15.a Rise, Set, Transit\n&quot;);
+     {
++        geographic_coords geo_pos;
++	geo_pos.latitude = d_to_r(42.3333);
++	geo_pos.longitude = d_to_r(71.0833);
++
++	/*
+ 	const double longitude = d_to_r(71.0833);
+ 	const double latitude = d_to_r(42.3333);
++	*/
+ 
+ 	const double ut = cal_to_jd(1988, 3, 20, true);
+ 	const double _raList[] =
+@@ -441,15 +447,15 @@
+ 	    { d_to_r(18.04761), d_to_r(18.44092), d_to_r(18.82742) };
+ 
+ 	double jd;
+-	jd = horizon(hRising, ut, longitude, latitude, _raList, _decList,
++	jd = horizon(hRising, ut, geo_pos, _raList, _decList,
+ 		     d_to_r(-0.5667), days_per_minute);
+ 	report(&quot;rise, julian days&quot;, jd - ut, 0.51766, 1e-5, &quot;days&quot;);
+ 
+-	jd = horizon(hSetting, ut, longitude, latitude, _raList, _decList,
++	jd = horizon(hSetting, ut, geo_pos, _raList, _decList,
+ 		     d_to_r(-0.5667), days_per_minute);
+ 	report(&quot;set, julian days&quot;, jd - ut, 0.12130, 1e-5, &quot;days&quot;);
+ 
+-	jd = transit(ut, longitude, latitude, _raList, 1.0 / (60 * 24));
++	jd = transit(ut, geo_pos, _raList, 1.0 / (60 * 24));
+ 	report(&quot;transit, julian days&quot;, jd - ut, 0.81980, 1e-5, &quot;days&quot;);
+     }
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000102.html">[Ephemeritis-svn] r249 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000104.html">[Ephemeritis-svn] r251 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#103">[ date ]</a>
+              <a href="thread.html#103">[ thread ]</a>
+              <a href="subject.html#103">[ subject ]</a>
+              <a href="author.html#103">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,341 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r260 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-July/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r260%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607240754.k6O7sQsA013662%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000112.html">
+   <LINK REL="Next"  HREF="000114.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r260 - in branches/new-vsop-prepare/src/c:	libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r260%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607240754.k6O7sQsA013662%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r260 - in branches/new-vsop-prepare/src/c:	libephemeritis tests">izogi at mail.berlios.de
+       </A><BR>
+    <I>Mon Jul 24 09:54:26 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000112.html">[Ephemeritis-svn] r259 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000114.html">[Ephemeritis-svn] r261 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#113">[ date ]</a>
+              <a href="thread.html#113">[ thread ]</a>
+              <a href="subject.html#113">[ subject ]</a>
+              <a href="author.html#113">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-07-24 09:54:19 +0200 (Mon, 24 Jul 2006)
+New Revision: 260
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/constants.c
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+   branches/new-vsop-prepare/src/c/libephemeritis/precession.c
+   branches/new-vsop-prepare/src/c/libephemeritis/riseset.c
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+Adding eph prefix to riseset and precession files.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/constants.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/constants.c	2006-07-24 07:22:03 UTC (rev 259)
++++ branches/new-vsop-prepare/src/c/libephemeritis/constants.c	2006-07-24 07:54:19 UTC (rev 260)
+@@ -73,13 +73,13 @@
+ #define LE_STANDARD_RST_ALTITUDE -0.00989078087105	/* -0.5667 degrees */
+ /*! @brief Used for rise-set-transit altitude deflection caused by refraction, given in radians.
+  *
+- *  @sa sun_rst_altitude, moon_rst_altitude
++ *  @sa sun_rst_altitude, ephMoonRstAltitude
+  */
+ const double standard_rst_altitude = LE_STANDARD_RST_ALTITUDE;
+ 
+ #define LE_SUN_RST_ALTITUDE -0.0145438286569	/* -0.8333 degrees */
+ /*! @brief Used for rise-set-transit altitude deflection caused by refraction, given in radians.
+  *
+- *  @sa standard_rst_altitude, moon_rst_altitude
++ *  @sa standard_rst_altitude, ephMoonRstAltitude
+  */
+ const double sun_rst_altitude = LE_SUN_RST_ALTITUDE;
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-24 07:22:03 UTC (rev 259)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-24 07:54:19 UTC (rev 260)
+@@ -39,10 +39,10 @@
+ } EPH_CoordsType;
+ 
+ 
+-/*! @brief Used with the horizon function to specify if a rising
++/*! @brief Used with the ephHorizon function to specify if a rising
+  *  or setting time is wanted
+  *
+- *  @sa horizon
++ *  @sa ephHorizon
+  */
+ typedef enum {
+     hRising,			/*!&lt; @brief Rising  */
+@@ -174,13 +174,13 @@
+ 
+ /*! @brief Used for rise-set-transit altitude deflection caused by refraction, given in radians.
+  *
+- *  @sa sun_rst_altitude, moon_rst_altitude
++ *  @sa sun_rst_altitude, ephMoonRstAltitude
+  */
+ extern const double standard_rst_altitude;	/* -0.5667 degrees */
+ 
+ /*! @brief Used for rise-set-transit altitude deflection caused by refraction, given in radians.
+  *
+- *  @sa standard_rst_altitude, moon_rst_altitude
++ *  @sa standard_rst_altitude, ephMoonRstAltitude
+  */
+ extern const double sun_rst_altitude;	/* -0.8333 degrees */
+ 
+@@ -230,22 +230,22 @@
+     double p_rad;
+ } EPH_PrecessionElEcliptical;
+ 
+-EPH_PrecessionElEquatorial precession_get_elements_eq(const double JDinitial,
+-						  const double JDfinal);
++EPH_PrecessionElEquatorial ephPrecessionGetElementsEq(const double JDinitial,
++                                                      const double JDfinal);
+ 
+-void precession_eq(const EPH_PrecessionElEquatorial pceq,
+-		   const EPH_EquatorialCoords eqInitial,
+-		   EPH_EquatorialCoords *eqFinal);
++void ephPrecessionEq(const EPH_PrecessionElEquatorial pceq,
++                     const EPH_EquatorialCoords eqInitial,
++                     EPH_EquatorialCoords *eqFinal);
+ 
+-EPH_PrecessionElEcliptical precession_get_elements_ecl(const double JDinitial,
+-						    const double JDfinal);
++EPH_PrecessionElEcliptical ephPrecessionGetElementsEcl(const double JDinitial,
++                                                       const double JDfinal);
+ 
+-void precession_ecl(const EPH_PrecessionElEcliptical pcecl,
+-		    const EPH_EclipticalCoords eclInitial,
+-		    EPH_EclipticalCoords *eclFinal);
++void ephPrecessionEcl(const EPH_PrecessionElEcliptical pcecl,
++                      const EPH_EclipticalCoords eclInitial,
++                      EPH_EclipticalCoords *eclFinal);
+ 
+ /* riseset.c */
+-double horizon(const EPH_HorizonType hType,
++double ephHorizon(const EPH_HorizonType hType,
+ 	       const double jd,
+ 	       const EPH_GeographicCoords geo_pos,
+ 	       const double *raList,
+@@ -253,12 +253,12 @@
+ 	       const double h0,
+ 	       const double delta,
+                double *jdRiseSet);
+-int transit(const double jd,
++int ephTransit(const double jd,
+ 	       const EPH_GeographicCoords geo_pos,
+ 	       const double *raList,
+                const double delta,
+                double *jdTransit);
+-double moon_rst_altitude(double r);
++double ephMoonRstAltitude(double r);
+ 
+ 
+ /* conversions.c */
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/precession.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/precession.c	2006-07-24 07:22:03 UTC (rev 259)
++++ branches/new-vsop-prepare/src/c/libephemeritis/precession.c	2006-07-24 07:54:19 UTC (rev 260)
+@@ -60,11 +60,11 @@
+  *  @return A struct to hold the calculated elements, to be passed to
+  *  the precession routine.
+  *
+- *  @see precession_eq, EPH_PrecessionElEcliptical
++ *  @see ephPrecessionEq, EPH_PrecessionElEcliptical
+  *
+  *  @author Mike McGavin.
+  */
+-EPH_PrecessionElEquatorial precession_get_elements_eq(const double JDinitial,
++EPH_PrecessionElEquatorial ephPrecessionGetElementsEq(const double JDinitial,
+ 						  const double JDfinal)
+ {
+ 
+@@ -111,17 +111,17 @@
+  *  This routine uses Meuus' Rigorous method of calculating
+  *  precession.  [Meeus-1998: equations 21.2 to 21.4]
+  *
+- *  @param[in]  pceq       The elements related to the time of the precession, calculated by precession_get_elements_eq.
++ *  @param[in]  pceq       The elements related to the time of the precession, calculated by ephPrecessionGetElementsEq.
+  *  @param[in]  eqInitial  The initial equatorial coordinates.
+  *  @param[out] eqFinal    The final equatorial coordinates.
+  *
+- *  @see precession_get_elements_eq, precession_ecl
++ *  @see ephPrecessionGetElementsEq, ephPrecessionEcl
+  *
+  *  @todo Write more unit tests based on Meeus examples.
+  *
+  *  @author Mike McGavin.
+  */
+-void precession_eq(const EPH_PrecessionElEquatorial pceq,
++void ephPrecessionEq(const EPH_PrecessionElEquatorial pceq,
+ 		   const EPH_EquatorialCoords eqInitial,
+ 		   EPH_EquatorialCoords *eqFinal)
+ {
+@@ -160,11 +160,11 @@
+  *  @return A struct to hold the calculated elements, to be passed to
+  *  the precession routine.
+  *
+- *  @see precession_ecl, EPH_PrecessionElEquatorial
++ *  @see ephPrecessionEcl, EPH_PrecessionElEquatorial
+  *
+  *  @author Mike McGavin.
+  */
+-EPH_PrecessionElEcliptical precession_get_elements_ecl(const double JDinitial,
++EPH_PrecessionElEcliptical ephPrecessionGetElementsEcl(const double JDinitial,
+ 						       const double JDfinal)
+ {
+ 
+@@ -211,19 +211,19 @@
+  *  This routine uses Meuus' Rigorous method of calculating
+  *  precession.  [Meeus-1998: equations 21.2 to 21.4]
+  *
+- *  @param[in]  pcecl        The elements related to the time of the precession, calculated by precession_get_elements_ecl.
++ *  @param[in]  pcecl        The elements related to the time of the precession, calculated by ephPrecessionGetElementsEcl.
+  *  @param[in]  eclInitial   The initial ecliptical coordinates.
+  *  @param[out] eclFinal     The final ecliptical coordinates.
+  *
+- *  @see precession_get_elements_ecl, precession_eq
++ *  @see ephPrecessionGetElementsEcl, ephPrecessionEq
+  *
+  *  @todo Write more unit tests based on Meeus examples.
+  *
+  *  @author Mike McGavin.
+  */
+-void precession_ecl(const EPH_PrecessionElEcliptical pcecl,
+-		    const EPH_EclipticalCoords eclInitial,
+-		    EPH_EclipticalCoords *eclFinal)
++void ephPrecessionEcl(const EPH_PrecessionElEcliptical pcecl,
++		      const EPH_EclipticalCoords eclInitial,
++		      EPH_EclipticalCoords *eclFinal)
+ {
+ 
+     double A =
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/riseset.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/riseset.c	2006-07-24 07:22:03 UTC (rev 259)
++++ branches/new-vsop-prepare/src/c/libephemeritis/riseset.c	2006-07-24 07:54:19 UTC (rev 260)
+@@ -83,7 +83,7 @@
+  *  @todo Make it so altitude of observer is taken into consideration.
+  *  @bug  Some events are dropped at the moment.  (See code.)
+  */
+-double horizon(const EPH_HorizonType hType,
++double ephHorizon(const EPH_HorizonType hType,
+ 	       const double jd,
+ 	       const EPH_GeographicCoords geo_pos,
+ 	       const double *raList,
+@@ -203,7 +203,7 @@
+  *  @todo Report both upper and lower culmination, and transits of
+  *  objects below the horizon.
+  */
+-int transit(const double jd,
++int ephTransit(const double jd,
+ 	       const EPH_GeographicCoords geo_pos,
+ 	       const double *raList,
+ 	       const double delta,
+@@ -267,7 +267,7 @@
+  *
+  *  @return            Standard altitude in radians.
+  */
+-double moon_rst_altitude(double r)
++double ephMoonRstAltitude(double r)
+ {
+     /* horizontal parallax */
+     const double parallax = asin(earth_equ_radius / r);
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-24 07:22:03 UTC (rev 259)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-24 07:54:19 UTC (rev 260)
+@@ -449,15 +449,15 @@
+ 	double jd;
+         int result;
+         
+-        result = horizon(hRising, ut, geo_pos, _raList, _decList,
++        result = ephHorizon(hRising, ut, geo_pos, _raList, _decList,
+ 		     d_to_r(-0.5667), days_per_minute, &amp;jd);
+ 	report(&quot;rise, julian days&quot;, jd - ut, 0.51766, 1e-5, &quot;days&quot;);
+ 
+-	result = horizon(hSetting, ut, geo_pos, _raList, _decList,
++        result = ephHorizon(hSetting, ut, geo_pos, _raList, _decList,
+ 		     d_to_r(-0.5667), days_per_minute, &amp;jd);
+ 	report(&quot;set, julian days&quot;, jd - ut, 0.12130, 1e-5, &quot;days&quot;);
+ 
+-	result = transit(ut, geo_pos, _raList, 1.0 / (60 * 24), &amp;jd);
++        result = ephTransit(ut, geo_pos, _raList, 1.0 / (60 * 24), &amp;jd);
+ 	report(&quot;transit, julian days&quot;, jd - ut, 0.81980, 1e-5, &quot;days&quot;);
+     }
+ 
+@@ -611,7 +611,7 @@
+ 	eqInitial.dec =
+ 	    d_to_r(dms_to_d(49, 13, 42.48) +
+ 		   dms_to_d(0.0, 0.0, 0.0895) * 28.86705);
+-	precession_eq(precession_get_elements_eq(2451545.0, 2462088.69),
++        ephPrecessionEq(ephPrecessionGetElementsEq(2451545.0, 2462088.69),
+ 		      eqInitial, &amp;eqFinal);
+ 
+ 	report(&quot;RA&quot;, eqFinal.ra, fday_to_r(hms_to_fday(2, 46, 11.331)), 0.00001,
+@@ -624,7 +624,7 @@
+ 	EPH_EclipticalCoords eclInitial, eclFinal;
+ 	eclInitial.longitude = d_to_r(149.48194);
+ 	eclInitial.latitude = d_to_r(1.76549);
+-	precession_ecl(precession_get_elements_ecl(ephJeToJd(2000.0), 1643074.5),
++        ephPrecessionEcl(ephPrecessionGetElementsEcl(ephJeToJd(2000.0), 1643074.5),
+ 		eclInitial, &amp;eclFinal);
+ 
+ 	report(&quot;Longitude&quot;, eclFinal.longitude, d_to_r(118.704), 0.00001, &quot;radians&quot;);
+@@ -1272,7 +1272,7 @@
+ 	     *
+ 	     */
+ 	    /*
+-	    precession_eq(precession_get_elements_eq
++            ephPrecessionEq(ephPrecessionGetElementsEq
+ 			  (ephJeToJd(2000.0), test-&gt;jd), ra, dec, &amp;ra,
+ 			  &amp;dec);
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000112.html">[Ephemeritis-svn] r259 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000114.html">[Ephemeritis-svn] r261 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#113">[ date ]</a>
+              <a href="thread.html#113">[ thread ]</a>
+              <a href="subject.html#113">[ subject ]</a>
+              <a href="author.html#113">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

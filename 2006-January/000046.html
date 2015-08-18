@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r193 - trunk/src/c/tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-January/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r193%20-%20trunk/src/c/tests&In-Reply-To=%3C200601061034.k06AYK0E030347%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000045.html">
+   <LINK REL="Next"  HREF="000047.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r193 - trunk/src/c/tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r193%20-%20trunk/src/c/tests&In-Reply-To=%3C200601061034.k06AYK0E030347%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r193 - trunk/src/c/tests">izogi at berlios.de
+       </A><BR>
+    <I>Fri Jan  6 11:34:20 CET 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000045.html">[Ephemeritis-svn] r192 - in trunk/src/c: libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000047.html">[Ephemeritis-svn] r194 - trunk/src/c/tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#46">[ date ]</a>
+              <a href="thread.html#46">[ thread ]</a>
+              <a href="subject.html#46">[ subject ]</a>
+              <a href="author.html#46">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-01-06 11:34:19 +0100 (Fri, 06 Jan 2006)
+New Revision: 193
+
+Modified:
+   trunk/src/c/tests/validate_meeus.c
+Log:
+Rearranged unit tests for chapter 25.b of Meeus (solar coordinates), as they didn't appear to be properly applying the examples in the book.
+
+
+Modified: trunk/src/c/tests/validate_meeus.c
+===================================================================
+--- trunk/src/c/tests/validate_meeus.c	2006-01-06 09:50:37 UTC (rev 192)
++++ trunk/src/c/tests/validate_meeus.c	2006-01-06 10:34:19 UTC (rev 193)
+@@ -682,8 +682,9 @@
+ 
+     printf(&quot;25.b Sun position, high precision\n&quot;);
+     {
++        double jd = 2448908.5;
+ 	double L, B, R;
+-	sol_dimension3_vsop(2448908.5, &amp;L, &amp;B, &amp;R);
++	sol_dimension3_vsop(jd, &amp;L, &amp;B, &amp;R);
+ 	/*
+ 	report_diff(&quot;longitude&quot;, r_to_d(L) * 3600, 199.907372 * 3600,
+ 		    &quot;arc-seconds&quot;);
+@@ -704,20 +705,35 @@
+ 		    &quot;arc-seconds&quot;);
+ 	*/
+ 	report(&quot;corrected longitude&quot;, r_to_d(L) * 3600, 199.907347 * 3600, 1.0, &quot;arc-seconds&quot;);
+-	report(&quot;corrected latitude&quot;, r_to_d(B) * 3600, 0.62, 1.0, &quot;arc-seconds&quot;);
++	report(&quot;corrected latitude&quot;, r_to_d(B) * 3600, 0.62, 0.1, &quot;arc-seconds&quot;);
+ 
+-	const double aberration = aberration_low(R);
+-	report(&quot;aberration&quot;, r_to_d(aberration) * 3600, -20.539, 0.001,
+-	       &quot;arc-seconds&quot;);
+ 
+ 	printf
+ 	    (&quot;25.b Sun position, high precision (complete theory pg 165)\n&quot;);
++
++	const double n_in_l = nut_in_lon(jd);
++	const double n_in_o = nut_in_obl(jd);
++	const double obl = obliquity_hi(jd) + n_in_o;
++	const double aberration = aberration_low(R);
++
++	report(&quot;nutation in lon&quot;, r_to_d(n_in_l) * 3600, 15.908, 0.001, &quot;arc-seconds&quot;);
++	report(&quot;nutation in obliquity&quot;, r_to_d(n_in_o) * 3600, -0.308, 0.001, &quot;arc-seconds&quot;);
++	report(&quot;obliquity&quot;, r_to_d(obl), 23.4401443, 0.0000001, &quot;degrees&quot;);
++	report(&quot;aberration&quot;, r_to_d(aberration) * 3600, -20.539, 0.001, &quot;arc-seconds&quot;);
++
++	double app_lon = L + n_in_l - aberration;
++	report(&quot;apparent longitude&quot;, r_to_d(app_lon),
++	       dms_to_d(199, 54, 21.818), 0.000000001,
++	       &quot;radians&quot;);
++
+ 	report(&quot;longitude&quot;, r_to_d(L) * 3600 * 100,
+ 	       dms_to_d(199, 54, 26.18) * 3600 * 100, 1,
+ 	       &quot;arc-seconds/100&quot;);
+ 	report(&quot;latitude&quot;, r_to_d(B) * 3600 * 100, 0.72 * 100, 1,
+ 	       &quot;arc-seconds/100&quot;);
+ 	report(&quot;radius&quot;, R, 0.99760853, 1e-8, &quot;au&quot;);
++
++
+     }
+ 
+     printf(&quot;26.a Rectangular coordinates of the Sun\n&quot;);
+@@ -900,9 +916,9 @@
+ 	double L, B, R;
+ 	sol_dimension3_fk5(jd, &amp;L, &amp;B, &amp;R);
+ 	rec_coords src = sol_rectangular(L, B, R, obl2000);
+-	report(&quot;solar x&quot;, src.x * km_per_au, -0.9756732 * km_per_au, 0.0000001, &quot;km&quot;);
+-	report(&quot;solar y&quot;, src.y * km_per_au, -0.2003254 * km_per_au, 0.0000001, &quot;km&quot;);
+-	report(&quot;solar z&quot;, src.z * km_per_au, -0.0868566 * km_per_au, 0.0000001, &quot;km&quot;);
++	report(&quot;solar x&quot;, src.x * km_per_au, -0.9756732 * km_per_au, 1, &quot;km&quot;);
++	report(&quot;solar y&quot;, src.y * km_per_au, -0.2003254 * km_per_au, 1, &quot;km&quot;);
++	report(&quot;solar z&quot;, src.z * km_per_au, -0.0868566 * km_per_au, 1, &quot;km&quot;);
+ 
+ 	printf(&quot;Resetting sol values to those in example (because VSOP isn't calculating them properly as above)\n&quot;);
+ 	src.x = -0.9756732;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000045.html">[Ephemeritis-svn] r192 - in trunk/src/c: libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000047.html">[Ephemeritis-svn] r194 - trunk/src/c/tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#46">[ date ]</a>
+              <a href="thread.html#46">[ thread ]</a>
+              <a href="subject.html#46">[ subject ]</a>
+              <a href="author.html#46">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

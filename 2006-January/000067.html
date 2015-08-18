@@ -1,0 +1,194 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r214 - branches/new-vsop-prepare/src/c/tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-January/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r214%20-%20branches/new-vsop-prepare/src/c/tests&In-Reply-To=%3C200601150926.k0F9QeaI005758%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000066.html">
+   <LINK REL="Next"  HREF="000068.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r214 - branches/new-vsop-prepare/src/c/tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r214%20-%20branches/new-vsop-prepare/src/c/tests&In-Reply-To=%3C200601150926.k0F9QeaI005758%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r214 - branches/new-vsop-prepare/src/c/tests">izogi at berlios.de
+       </A><BR>
+    <I>Sun Jan 15 10:26:40 CET 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000066.html">[Ephemeritis-svn] r213 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000068.html">[Ephemeritis-svn] r215 - branches/new-vsop-prepare/src/python
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#67">[ date ]</a>
+              <a href="thread.html#67">[ thread ]</a>
+              <a href="subject.html#67">[ subject ]</a>
+              <a href="author.html#67">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-01-15 10:26:40 +0100 (Sun, 15 Jan 2006)
+New Revision: 214
+
+Modified:
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+More playing with code to try and take advantage of new vsop code.  (Not yet working.)
+
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-01-15 00:04:23 UTC (rev 213)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-01-15 09:26:40 UTC (rev 214)
+@@ -949,42 +949,56 @@
+ 	report(&quot;y&quot;, rc.y, 0.4849175, 0.0000001, &quot;AU&quot;);
+ 	report(&quot;z&quot;, rc.z, 0.3573373, 0.0000001, &quot;AU&quot;);
+ 
+-	double L, B, R;
+-	sol_dimension3_fk5(jd, &amp;L, &amp;B, &amp;R);
+ 
++	vsop_handle vh;
++	int result;
++	if(0 != (result = get_vsop_data_handle(vsop_earth, hel_sph_j2, &amp;vh))) {
++	  printf(&quot;Problem opening file: %s&quot;, strerror(result));
++	} else {
++	  vsop_sph_coords vsc = vsop_sph_vsop_to_fk5(vsop_get_spherical(vh, jd));
+ 
+-	rec_coords src = sol_rectangular(L, B, R, obl2000);
+-	report(&quot;solar x&quot;, src.x * km_per_au, -0.9756732 * km_per_au, 1, &quot;km&quot;);
+-	report(&quot;solar y&quot;, src.y * km_per_au, -0.2003254 * km_per_au, 1, &quot;km&quot;);
+-	report(&quot;solar z&quot;, src.z * km_per_au, -0.0868566 * km_per_au, 1, &quot;km&quot;);
++	  double E = obliquity_hi(jd);
++	  rec_coords src = sol_rectangular(vsc.sc.L, vsc.sc.B, vsc.sc.R, E);
++	  src.x = -src.x;
++	  src.y = -src.y;
++	  src.z = -src.z;
+ 
+-	printf(&quot;Resetting sol values to those in example (because VSOP isn't calculating them properly as above)\n&quot;);
+-	src.x = -0.9756732;
+-	src.y = -0.2003254;
+-	src.z = -0.0868566;
++/* 	double L, B, R; */
++/* 	sol_dimension3_fk5(jd, &amp;L, &amp;B, &amp;R); */
++/* 	rec_coords src = sol_rectangular(L, B, R, obl2000); */
++	  report(&quot;solar x&quot;, src.x * km_per_au, -0.9756732 * km_per_au, 800, &quot;km&quot;);
++	  report(&quot;solar y&quot;, src.y * km_per_au, -0.2003254 * km_per_au, 800, &quot;km&quot;);
++	  report(&quot;solar z&quot;, src.z * km_per_au, -0.0868566 * km_per_au, 800, &quot;km&quot;);
+ 
+-	double ra, dec, elongation, phase_angle, body_r_earth;
+-	elliptical_orbit_ecliptical(src, rc, r_sun, &amp;ra, &amp;dec, &amp;elongation, &amp;phase_angle, &amp;body_r_earth);
++/* 	printf(&quot;Resetting sol values to those in example (because VSOP isn't calculating them properly as above)\n&quot;); */
++/* 	src.x = -0.9756732; */
++/* 	src.y = -0.2003254; */
++/* 	src.z = -0.0868566; */
+ 
+-	report(&quot;delta-earth&quot;, body_r_earth, 0.8243689, 0.0000001, &quot;AU&quot;);
++	  double ra, dec, elongation, phase_angle, body_r_earth;
++	  elliptical_orbit_ecliptical(src, rc, r_sun, &amp;ra, &amp;dec, &amp;elongation, &amp;phase_angle, &amp;body_r_earth);
+ 
+-	double tau = 0.0057755183 * body_r_earth;
+-	jd = jd - tau;
+-	el.M = mean_anomoly(jd, T, el.n);
+-	ec = get_element_constants(obl2000, el, 53);
+-	r_sun = get_r_sun(ec);
+-	rc = elliptical_orbit_rectangular(ec, r_sun);
++	  report(&quot;delta-earth&quot;, body_r_earth, 0.8243689, 0.000001, &quot;AU&quot;);
+ 
+-	report(&quot;recalc-x&quot;, rc.x, 0.2509310, 0.0000001, &quot;AU&quot;);
+-	report(&quot;recalc-y&quot;, rc.y, 0.4849477, 0.0000001, &quot;AU&quot;);
+-	report(&quot;recalc-z&quot;, rc.z, 0.3573712, 0.0000001, &quot;AU&quot;);
++	  double tau = 0.0057755183 * body_r_earth;
++	  jd = jd - tau;
++	  el.M = mean_anomoly(jd, T, el.n);
++	  ec = get_element_constants(obl2000, el, 53);
++	  r_sun = get_r_sun(ec);
++	  rc = elliptical_orbit_rectangular(ec, r_sun);
+ 
+-	elliptical_orbit_ecliptical(src, rc, r_sun, &amp;ra, &amp;dec, &amp;elongation, &amp;phase_angle, &amp;body_r_earth);
++	  report(&quot;recalc-x&quot;, rc.x, 0.2509310, 0.000001, &quot;AU&quot;);
++	  report(&quot;recalc-y&quot;, rc.y, 0.4849477, 0.000001, &quot;AU&quot;);
++	  report(&quot;recalc-z&quot;, rc.z, 0.3573712, 0.000001, &quot;AU&quot;);
+ 
+-	report(&quot;recalc-delta-earth&quot;, body_r_earth, 0.8242811, 0.0000001, &quot;AU&quot;);
+-	report(&quot;ra&quot;, ra, d_to_r(158.558965), 0.0000001, &quot;radians&quot;);
+-	report(&quot;dec&quot;, dec, d_to_r(19.158496), 0.0000001, &quot;radians&quot;);
+-	report(&quot;elongation&quot;, elongation, d_to_r(40.51), 0.0000001, &quot;radians&quot;);
++	  elliptical_orbit_ecliptical(src, rc, r_sun, &amp;ra, &amp;dec, &amp;elongation, &amp;phase_angle, &amp;body_r_earth);
++
++	  report(&quot;recalc-delta-earth&quot;, body_r_earth, 0.8242811, 0.000001, &quot;AU&quot;);
++	  report(&quot;ra&quot;, ra, d_to_r(158.558965), 0.00001, &quot;radians&quot;);
++	  report(&quot;dec&quot;, dec, d_to_r(19.158496), 0.00001, &quot;radians&quot;);
++	  report(&quot;elongation&quot;, elongation, d_to_r(40.51), 0.00001, &quot;radians&quot;);
++	}
++
+     }
+ 
+     printf(&quot;47.a Moon position\n&quot;);
+@@ -1091,11 +1105,23 @@
+ 	    printf(&quot;Testing %s, test %d\n&quot;, or-&gt;name, o);
+ 
+ 
++	    vsop_handle vh;
++	    get_vsop_data_handle(vsop_earth, hel_sph_j2, &amp;vh);
++	    vsop_sph_coords vsc = vsop_sph_vsop_to_fk5(vsop_get_spherical(vh, test-&gt;jd));
++
++	    double E = obliquity_hi(test-&gt;jd);
++	    vsc.sc.L = modpi2(vsc.sc.L + pi);
++	    vsc.sc.B = -vsc.sc.B;
++	    rec_coords sun_rec = sol_rectangular(vsc.sc.L, vsc.sc.B, vsc.sc.R, E);
++
++
++
++	    /*
+ 	    double L, B, R;
+ 	    sol_dimension3_fk5(test-&gt;jd, &amp;L, &amp;B, &amp;R);
+ 	    rec_coords sun_rec = sol_rectangular(L, B, R, obliquity_hi(je_to_jd(2000)));
++	    */
+ 
+-
+ 	    double ra;
+ 	    double dec;
+ 	    double elongation;
+@@ -1144,7 +1170,7 @@
+ 
+ 	    /* Adjust for nutation. */
+ 	    double a_in_ra, a_in_dec;
+-	    aberration_in_ra_dec_low(test-&gt;jd, ra, dec, obliquity_hi(test-&gt;jd), L, &amp;a_in_ra, &amp;a_in_dec);
++	    aberration_in_ra_dec_low(test-&gt;jd, ra, dec, obliquity_hi(test-&gt;jd), vsc.sc.L, &amp;a_in_ra, &amp;a_in_dec);
+ 	    ra  += a_in_ra;
+ 	    dec += a_in_dec;
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000066.html">[Ephemeritis-svn] r213 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000068.html">[Ephemeritis-svn] r215 - branches/new-vsop-prepare/src/python
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#67">[ date ]</a>
+              <a href="thread.html#67">[ thread ]</a>
+              <a href="subject.html#67">[ subject ]</a>
+              <a href="author.html#67">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

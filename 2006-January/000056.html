@@ -1,0 +1,130 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r203 - branches/new-vsop-prepare/src/c/utils
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-January/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r203%20-%20branches/new-vsop-prepare/src/c/utils&In-Reply-To=%3C200601091005.k09A50jw011104%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000055.html">
+   <LINK REL="Next"  HREF="000057.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r203 - branches/new-vsop-prepare/src/c/utils</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r203%20-%20branches/new-vsop-prepare/src/c/utils&In-Reply-To=%3C200601091005.k09A50jw011104%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r203 - branches/new-vsop-prepare/src/c/utils">izogi at berlios.de
+       </A><BR>
+    <I>Mon Jan  9 11:05:00 CET 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000055.html">[Ephemeritis-svn] r202 - in branches/new-vsop-prepare/src/c: libephemeritis utils
+</A></li>
+        <LI>Next message: <A HREF="000057.html">[Ephemeritis-svn] r204 - in branches/new-vsop-prepare/src/c: libephemeritis utils
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#56">[ date ]</a>
+              <a href="thread.html#56">[ thread ]</a>
+              <a href="subject.html#56">[ subject ]</a>
+              <a href="author.html#56">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-01-09 11:05:00 +0100 (Mon, 09 Jan 2006)
+New Revision: 203
+
+Modified:
+   branches/new-vsop-prepare/src/c/utils/build_vsop_data.c
+Log:
+Committed changes that were accidentally unsaved in previous commit.
+
+
+Modified: branches/new-vsop-prepare/src/c/utils/build_vsop_data.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/utils/build_vsop_data.c	2006-01-09 10:03:09 UTC (rev 202)
++++ branches/new-vsop-prepare/src/c/utils/build_vsop_data.c	2006-01-09 10:05:00 UTC (rev 203)
+@@ -86,53 +86,8 @@
+ }
+ 
+ 
+-static void print_body_elements(FILE *ostream, body_elements *b)
+-{
+-  fprintf(ostream, &quot;Ephemeritis Version String: %s.\n&quot;, b-&gt;meta.eph_header_text);
+-  fprintf(ostream, &quot;Data for \&quot;%s\&quot;.\n&quot;, b-&gt;meta.body_name);
+-  fprintf(ostream, &quot;%d variables overall.\n&quot;, b-&gt;meta.num_variables);
+ 
+-  int v;
+-  for(v=0; v&lt;b-&gt;meta.num_variables; v++) {
+-    vsop_variable *var = &amp;(b-&gt;variable_list[v]);
+-    fprintf(ostream, &quot;\nVariable %d contains %d series':\n\n&quot;, v, var-&gt;meta.series_count);
+ 
+-    int s;
+-    for(s=0; s&lt;var-&gt;meta.series_count; s++) {
+-      series *ser = &amp;var-&gt;series_list[s];
+-      fprintf(ostream, &quot;  Series %d has alpha %d and contains %d terms.\n&quot;, s, ser-&gt;meta.alpha, (ser-&gt;meta.num_terms));
+-    }
+-  }
+-}
+-
+-/*! @brief Given an open output file and a body_elements structure,
+- *  output the body elements in binary format.
+- */
+-static void write_body_elements(FILE *outfile, body_elements *b)
+-{
+-  /* Write the header data. */
+-  fwrite(&amp;b-&gt;meta, sizeof(b-&gt;meta), 1, outfile);
+-
+-  /* Loop through the variables, writing data of each one. */
+-  int v;
+-  for(v=0; v&lt;b-&gt;meta.num_variables; v++) {
+-    vsop_variable *var = &amp;(b-&gt;variable_list[v]);
+-    fwrite(&amp;var-&gt;meta, sizeof(var-&gt;meta), 1, outfile);
+-
+-    /* Loop through the series variables, writing data of each one. */
+-    int s;
+-    for(s=0; s&lt;var-&gt;meta.series_count; s++) {
+-      series *ser = &amp;var-&gt;series_list[s];
+-      fwrite(&amp;ser-&gt;meta, sizeof(ser-&gt;meta), 1, outfile);
+-
+-      /* Write the list of terms. */
+-      fwrite(ser-&gt;terms, sizeof(*(ser-&gt;terms)), ser-&gt;meta.num_terms, outfile);
+-    }
+-  }
+-}
+-
+-
+-
+ /*! @brief Allocates space for and builds a body_elements structure in
+  *  memory, given an opened file to read from.
+  */
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000055.html">[Ephemeritis-svn] r202 - in branches/new-vsop-prepare/src/c: libephemeritis utils
+</A></li>
+	<LI>Next message: <A HREF="000057.html">[Ephemeritis-svn] r204 - in branches/new-vsop-prepare/src/c: libephemeritis utils
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#56">[ date ]</a>
+              <a href="thread.html#56">[ thread ]</a>
+              <a href="subject.html#56">[ subject ]</a>
+              <a href="author.html#56">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

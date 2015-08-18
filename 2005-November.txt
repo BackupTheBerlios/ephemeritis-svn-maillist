@@ -1,0 +1,807 @@
+From izogi at berlios.de  Sun Nov 27 19:54:39 2005
+From: izogi at berlios.de (izogi at BerliOS)
+Date: Sun, 27 Nov 2005 19:54:39 +0100
+Subject: [Ephemeritis-svn] r133 - trunk
+Message-ID: <200511271854.jARIsdcL022362@sheep.berlios.de>
+
+Author: izogi
+Date: 2005-11-27 19:54:35 +0100 (Sun, 27 Nov 2005)
+New Revision: 133
+
+Modified:
+   trunk/configure.ac
+Log:
+Turned off man page generation for doxygen documentation (for now at least).
+
+
+Modified: trunk/configure.ac
+===================================================================
+--- trunk/configure.ac	2005-11-27 09:47:02 UTC (rev 132)
++++ trunk/configure.ac	2005-11-27 18:54:35 UTC (rev 133)
+@@ -4,7 +4,7 @@
+ DX_HTML_FEATURE(ON)
+ DX_CHM_FEATURE(OFF)
+ DX_CHI_FEATURE(OFF)
+-DX_MAN_FEATURE(ON)
++DX_MAN_FEATURE(OFF)
+ DX_RTF_FEATURE(OFF)
+ DX_XML_FEATURE(OFF)
+ DX_PDF_FEATURE(OFF)
+
+
+
+From izogi at berlios.de  Mon Nov 28 10:09:50 2005
+From: izogi at berlios.de (izogi at BerliOS)
+Date: Mon, 28 Nov 2005 10:09:50 +0100
+Subject: [Ephemeritis-svn] r134 - in trunk/src/c: libephemeritis tests
+Message-ID: <200511280909.jAS99oLk018871@sheep.berlios.de>
+
+Author: izogi
+Date: 2005-11-28 10:09:24 +0100 (Mon, 28 Nov 2005)
+New Revision: 134
+
+Modified:
+   trunk/src/c/libephemeritis/calendar.c
+   trunk/src/c/libephemeritis/constants.c
+   trunk/src/c/libephemeritis/conversions.c
+   trunk/src/c/libephemeritis/dynamical.c
+   trunk/src/c/libephemeritis/elp2000.c
+   trunk/src/c/libephemeritis/ephemeritis.h
+   trunk/src/c/libephemeritis/equinox.c
+   trunk/src/c/libephemeritis/nutation.c
+   trunk/src/c/libephemeritis/precession.c
+   trunk/src/c/libephemeritis/refraction.c
+   trunk/src/c/libephemeritis/riseset.c
+   trunk/src/c/libephemeritis/separation.c
+   trunk/src/c/libephemeritis/solar.c
+   trunk/src/c/libephemeritis/util.c
+   trunk/src/c/libephemeritis/vsop87d.c
+   trunk/src/c/libephemeritis/vsop_structures.h
+   trunk/src/c/tests/validate_meeus.c
+Log:
+Renamed 'libephem' to 'Ephemeritis' in all commented GPL copyright statements in various files.
+
+
+Modified: trunk/src/c/libephemeritis/calendar.c
+===================================================================
+--- trunk/src/c/libephemeritis/calendar.c	2005-11-27 18:54:35 UTC (rev 133)
++++ trunk/src/c/libephemeritis/calendar.c	2005-11-28 09:09:24 UTC (rev 134)
+@@ -1,19 +1,19 @@
+ /* Copyright 2000, 2001, 2005 William McClain, Mike McGavin
+ 
+-This file is part of libephem.
++This file is part of Ephemeritis.
+ 
+-libephem is free software; you can redistribute it and/or modify
++Ephemeritis is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ 
+-libephem is distributed in the hope that it will be useful,
++Ephemeritis is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+-along with libephem; if not, write to the Free Software
++along with Ephemeritis; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+ 
+
+Modified: trunk/src/c/libephemeritis/constants.c
+===================================================================
+--- trunk/src/c/libephemeritis/constants.c	2005-11-27 18:54:35 UTC (rev 133)
++++ trunk/src/c/libephemeritis/constants.c	2005-11-28 09:09:24 UTC (rev 134)
+@@ -1,19 +1,19 @@
+ /* Copyright 2000, 2001, 2005 William McClain, Mike McGavin
+ 
+-This file is part of libephem.
++This file is part of Ephemeritis.
+ 
+-libephem is free software; you can redistribute it and/or modify
++Ephemeritis is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ 
+-libephem is distributed in the hope that it will be useful,
++Ephemeritis is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+-along with libephem; if not, write to the Free Software
++along with Ephemeritis; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+ 
+
+Modified: trunk/src/c/libephemeritis/conversions.c
+===================================================================
+--- trunk/src/c/libephemeritis/conversions.c	2005-11-27 18:54:35 UTC (rev 133)
++++ trunk/src/c/libephemeritis/conversions.c	2005-11-28 09:09:24 UTC (rev 134)
+@@ -1,19 +1,19 @@
+ /* Copyright 2000, 2001, 2005 William McClain, Mike McGavin
+ 
+-This file is part of libephem.
++This file is part of Ephemeritis.
+ 
+-libephem is free software; you can redistribute it and/or modify
++Ephemeritis is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ 
+-libephem is distributed in the hope that it will be useful,
++Ephemeritis is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+-along with libephem; if not, write to the Free Software
++along with Ephemeritis; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+ 
+
+Modified: trunk/src/c/libephemeritis/dynamical.c
+===================================================================
+--- trunk/src/c/libephemeritis/dynamical.c	2005-11-27 18:54:35 UTC (rev 133)
++++ trunk/src/c/libephemeritis/dynamical.c	2005-11-28 09:09:24 UTC (rev 134)
+@@ -1,19 +1,19 @@
+ /* Copyright 2000, 2001, 2005 William McClain, Mike McGavin
+ 
+-This file is part of libephem.
++This file is part of Ephemeritis.
+ 
+-libephem is free software; you can redistribute it and/or modify
++Ephemeritis is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ 
+-libephem is distributed in the hope that it will be useful,
++Ephemeritis is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+-along with libephem; if not, write to the Free Software
++along with Ephemeritis; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+ 
+
+Modified: trunk/src/c/libephemeritis/elp2000.c
+===================================================================
+--- trunk/src/c/libephemeritis/elp2000.c	2005-11-27 18:54:35 UTC (rev 133)
++++ trunk/src/c/libephemeritis/elp2000.c	2005-11-28 09:09:24 UTC (rev 134)
+@@ -1,19 +1,19 @@
+ /* Copyright 2000, 2001, 2005 William McClain, Mike McGavin
+ 
+-This file is part of libephem.
++This file is part of Ephemeritis.
+ 
+-libephem is free software; you can redistribute it and/or modify
++Ephemeritis is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ 
+-libephem is distributed in the hope that it will be useful,
++Ephemeritis is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+-along with libephem; if not, write to the Free Software
++along with Ephemeritis; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+ 
+
+Modified: trunk/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- trunk/src/c/libephemeritis/ephemeritis.h	2005-11-27 18:54:35 UTC (rev 133)
++++ trunk/src/c/libephemeritis/ephemeritis.h	2005-11-28 09:09:24 UTC (rev 134)
+@@ -1,19 +1,19 @@
+ /* Copyright 2000, 2001, 2005 William McClain, Mike McGavin
+ 
+-This file is part of libephem.
++This file is part of Ephemeritis.
+ 
+-libephem is free software; you can redistribute it and/or modify
++Ephemeritis is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ 
+-libephem is distributed in the hope that it will be useful,
++Ephemeritis is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+-along with libephem; if not, write to the Free Software
++along with Ephemeritis; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+ 
+@@ -96,7 +96,7 @@
+ 	       */
+ 
+ /*  What follows are universe-specific constants that are used by
+- *  libephem to perform calculations.  Don't change these unless you
++ *  Ephemeritis to perform calculations.  Don't change these unless you
+  *  are moving to a new universe.
+  */
+ 
+
+Modified: trunk/src/c/libephemeritis/equinox.c
+===================================================================
+--- trunk/src/c/libephemeritis/equinox.c	2005-11-27 18:54:35 UTC (rev 133)
++++ trunk/src/c/libephemeritis/equinox.c	2005-11-28 09:09:24 UTC (rev 134)
+@@ -1,19 +1,19 @@
+ /* Copyright 2000, 2001, 2005 William McClain, Mike McGavin
+ 
+-This file is part of libephem.
++This file is part of Ephemeritis.
+ 
+-libephem is free software; you can redistribute it and/or modify
++Ephemeritis is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ 
+-libephem is distributed in the hope that it will be useful,
++Ephemeritis is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+-along with libephem; if not, write to the Free Software
++along with Ephemeritis; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+ 
+
+Modified: trunk/src/c/libephemeritis/nutation.c
+===================================================================
+--- trunk/src/c/libephemeritis/nutation.c	2005-11-27 18:54:35 UTC (rev 133)
++++ trunk/src/c/libephemeritis/nutation.c	2005-11-28 09:09:24 UTC (rev 134)
+@@ -1,19 +1,19 @@
+ /* Copyright 2000, 2001, 2005 William McClain, Mike McGavin
+ 
+-This file is part of libephem.
++This file is part of Ephemeritis.
+ 
+-libephem is free software; you can redistribute it and/or modify
++Ephemeritis is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ 
+-libephem is distributed in the hope that it will be useful,
++Ephemeritis is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+-along with libephem; if not, write to the Free Software
++along with Ephemeritis; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+ 
+
+Modified: trunk/src/c/libephemeritis/precession.c
+===================================================================
+--- trunk/src/c/libephemeritis/precession.c	2005-11-27 18:54:35 UTC (rev 133)
++++ trunk/src/c/libephemeritis/precession.c	2005-11-28 09:09:24 UTC (rev 134)
+@@ -1,19 +1,19 @@
+ /* Copyright 2000, 2001, 2005 Mike McGavin
+ 
+-This file is part of libephem.
++This file is part of Ephemeritis.
+ 
+-libephem is free software; you can redistribute it and/or modify
++Ephemeritis is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ 
+-libephem is distributed in the hope that it will be useful,
++Ephemeritis is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+-along with libephem; if not, write to the Free Software
++along with Ephemeritis; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+ 
+
+Modified: trunk/src/c/libephemeritis/refraction.c
+===================================================================
+--- trunk/src/c/libephemeritis/refraction.c	2005-11-27 18:54:35 UTC (rev 133)
++++ trunk/src/c/libephemeritis/refraction.c	2005-11-28 09:09:24 UTC (rev 134)
+@@ -1,19 +1,19 @@
+ /* Copyright 2000, 2001, 2005 Mike McGavin
+ 
+-This file is part of libephem.
++This file is part of Ephemeritis.
+ 
+-libephem is free software; you can redistribute it and/or modify
++Ephemeritis is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ 
+-libephem is distributed in the hope that it will be useful,
++Ephemeritis is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+-along with libephem; if not, write to the Free Software
++along with Ephemeritis; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+ 
+
+Modified: trunk/src/c/libephemeritis/riseset.c
+===================================================================
+--- trunk/src/c/libephemeritis/riseset.c	2005-11-27 18:54:35 UTC (rev 133)
++++ trunk/src/c/libephemeritis/riseset.c	2005-11-28 09:09:24 UTC (rev 134)
+@@ -1,19 +1,19 @@
+ /* Copyright 2000, 2001, 2005 William McClain, Mike McGavin
+ 
+-This file is part of libephem.
++This file is part of Ephemeritis.
+ 
+-libephem is free software; you can redistribute it and/or modify
++Ephemeritis is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ 
+-libephem is distributed in the hope that it will be useful,
++Ephemeritis is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+-along with libephem; if not, write to the Free Software
++along with Ephemeritis; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+ 
+
+Modified: trunk/src/c/libephemeritis/separation.c
+===================================================================
+--- trunk/src/c/libephemeritis/separation.c	2005-11-27 18:54:35 UTC (rev 133)
++++ trunk/src/c/libephemeritis/separation.c	2005-11-28 09:09:24 UTC (rev 134)
+@@ -1,19 +1,19 @@
+ /* Copyright 2000, 2001, 2005 Mike McGavin
+ 
+-This file is part of libephem.
++This file is part of Ephemeritis.
+ 
+-libephem is free software; you can redistribute it and/or modify
++Ephemeritis is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ 
+-libephem is distributed in the hope that it will be useful,
++Ephemeritis is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+-along with libephem; if not, write to the Free Software
++along with Ephemeritis; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+ 
+
+Modified: trunk/src/c/libephemeritis/solar.c
+===================================================================
+--- trunk/src/c/libephemeritis/solar.c	2005-11-27 18:54:35 UTC (rev 133)
++++ trunk/src/c/libephemeritis/solar.c	2005-11-28 09:09:24 UTC (rev 134)
+@@ -1,19 +1,19 @@
+ /* Copyright 2000, 2001, 2005 William McClain, Mike McGavin
+ 
+-This file is part of libephem.
++This file is part of Ephemeritis.
+ 
+-libephem is free software; you can redistribute it and/or modify
++Ephemeritis is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ 
+-libephem is distributed in the hope that it will be useful,
++Ephemeritis is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+-along with libephem; if not, write to the Free Software
++along with Ephemeritis; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+ 
+
+Modified: trunk/src/c/libephemeritis/util.c
+===================================================================
+--- trunk/src/c/libephemeritis/util.c	2005-11-27 18:54:35 UTC (rev 133)
++++ trunk/src/c/libephemeritis/util.c	2005-11-28 09:09:24 UTC (rev 134)
+@@ -1,19 +1,19 @@
+ /* Copyright 2000, 2001, 2005 William McClain, Mike McGavin
+ 
+-This file is part of libephem.
++This file is part of Ephemeritis.
+ 
+-libephem is free software; you can redistribute it and/or modify
++Ephemeritis is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ 
+-libephem is distributed in the hope that it will be useful,
++Ephemeritis is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+-along with libephem; if not, write to the Free Software
++along with Ephemeritis; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+ 
+
+Modified: trunk/src/c/libephemeritis/vsop87d.c
+===================================================================
+--- trunk/src/c/libephemeritis/vsop87d.c	2005-11-27 18:54:35 UTC (rev 133)
++++ trunk/src/c/libephemeritis/vsop87d.c	2005-11-28 09:09:24 UTC (rev 134)
+@@ -1,19 +1,19 @@
+ /* Copyright 2000, 2001, 2005 William McClain, Mike McGavin
+ 
+-This file is part of libephem.
++This file is part of Ephemeritis.
+ 
+-libephem is free software; you can redistribute it and/or modify
++Ephemeritis is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ 
+-libephem is distributed in the hope that it will be useful,
++Ephemeritis is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+-along with libephem; if not, write to the Free Software
++along with Ephemeritis; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+ 
+
+Modified: trunk/src/c/libephemeritis/vsop_structures.h
+===================================================================
+--- trunk/src/c/libephemeritis/vsop_structures.h	2005-11-27 18:54:35 UTC (rev 133)
++++ trunk/src/c/libephemeritis/vsop_structures.h	2005-11-28 09:09:24 UTC (rev 134)
+@@ -1,19 +1,19 @@
+ /* Copyright 2000, 2001, 2005 William McClain, Mike McGavin
+ 
+-This file is part of libephem.
++This file is part of Ephemeritis.
+ 
+-libephem is free software; you can redistribute it and/or modify
++Ephemeritis is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ 
+-libephem is distributed in the hope that it will be useful,
++Ephemeritis is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+-along with libephem; if not, write to the Free Software
++along with Ephemeritis; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+ 
+
+Modified: trunk/src/c/tests/validate_meeus.c
+===================================================================
+--- trunk/src/c/tests/validate_meeus.c	2005-11-27 18:54:35 UTC (rev 133)
++++ trunk/src/c/tests/validate_meeus.c	2005-11-28 09:09:24 UTC (rev 134)
+@@ -1,19 +1,19 @@
+ /* Copyright 2000, 2001, 2005 William McClain, Mike McGavin
+ 
+-This file is part of libephem.
++This file is part of Ephemeritis.
+ 
+-libephem is free software; you can redistribute it and/or modify
++Ephemeritis is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ 
+-libephem is distributed in the hope that it will be useful,
++Ephemeritis is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+-along with libephem; if not, write to the Free Software
++along with Ephemeritis; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+ 
+
+
+
+From izogi at berlios.de  Mon Nov 28 10:47:16 2005
+From: izogi at berlios.de (izogi at BerliOS)
+Date: Mon, 28 Nov 2005 10:47:16 +0100
+Subject: [Ephemeritis-svn] r135 - trunk/src/c/libephemeritis
+Message-ID: <200511280947.jAS9lGLu018373@sheep.berlios.de>
+
+Author: izogi
+Date: 2005-11-28 10:47:14 +0100 (Mon, 28 Nov 2005)
+New Revision: 135
+
+Modified:
+   trunk/src/c/libephemeritis/solar.c
+Log:
+Fixed mis-labeled doxygen documentation.
+
+
+Modified: trunk/src/c/libephemeritis/solar.c
+===================================================================
+--- trunk/src/c/libephemeritis/solar.c	2005-11-28 09:09:24 UTC (rev 134)
++++ trunk/src/c/libephemeritis/solar.c	2005-11-28 09:47:14 UTC (rev 135)
+@@ -60,10 +60,10 @@
+ 
+ /*! @brief Returns geocentric ecliptic longitude, latitude and radius.
+  *
+- *  @param[in]  jd        Julian Day in dynamical time.
+- *  @param[out] longitude Longitude, in radians.
+- *  @param[out] latitude  Latitude, in radians.
+- *  @param[out] radius    Radius, in astronomical units.
++ *  @param[in]  jd  Julian Day in dynamical time.
++ *  @param[out] L   Longitude, in radians.
++ *  @param[out] B   Latitude, in radians.
++ *  @param[out] R   Radius, in astronomical units.
+  *
+  *  @sa dynamical::deltaT_seconds for calculating %dynamical time offset.
+  */
+@@ -73,7 +73,7 @@
+   *R = sol_dimension(jd, vR);
+ }
+ 
+-/*! @brief Returns geometric longitude and radius vector. 
++/*! @brief Returns geometric longitude and radius vector.
+  *
+  *  Low precision. The longitude is accurate to 0.01 degree.
+  *  The latitude should be presumed to be 0.0. [Meeus-1998:
+@@ -103,8 +103,8 @@
+   const double M  = polynomial(_kM,  3, T);
+   const double e  = polynomial(_ke,  3, T);
+   const double C  =
+-    (polynomial(_kC,  3, T) * sin(M)) 
+-    + ((_ck3 - (_ck4 * T)) * sin(2 * M)) 
++    (polynomial(_kC,  3, T) * sin(M))
++    + ((_ck3 - (_ck4 * T)) * sin(2 * M))
+     + (_ck5 * sin(3 * M));
+   *L = modpi2(L0 + C);
+   const double v = M + C;
+@@ -135,7 +135,7 @@
+   const double omega = _lk0 - _lk1 * T;
+   return modpi2(L - _lk2 - _lk3 * sin(omega));
+ }
+-    
++
+ /*! @brief Corrects for aberration.
+  *
+  *  Low precision, but good enough for most uses. [Meeus-1998: pg 164]
+
+
+
+From izogi at berlios.de  Tue Nov 29 08:42:01 2005
+From: izogi at berlios.de (izogi at BerliOS)
+Date: Tue, 29 Nov 2005 08:42:01 +0100
+Subject: [Ephemeritis-svn] r136 - in trunk/doc: . src-doxygen-main
+Message-ID: <200511290742.jAT7g13R031711@sheep.berlios.de>
+
+Author: izogi
+Date: 2005-11-29 08:41:16 +0100 (Tue, 29 Nov 2005)
+New Revision: 136
+
+Modified:
+   trunk/doc/src-doxygen-main/main.h
+   trunk/doc/todo.txt
+Log:
+More renaming from Astrolabe to Ephemeritis.
+
+
+Modified: trunk/doc/src-doxygen-main/main.h
+===================================================================
+--- trunk/doc/src-doxygen-main/main.h	2005-11-28 09:47:14 UTC (rev 135)
++++ trunk/doc/src-doxygen-main/main.h	2005-11-29 07:41:16 UTC (rev 136)
+@@ -4,14 +4,14 @@
+  * the code.
+  */
+ 
+-/*! @mainpage Documentation for Astrolabe
++/*! @mainpage Documentation for Ephemeritis
+ 
+ @section intro_sec Introduction
+ 
+-Astrolabe is a software library that contains algorithms for
++Ephemeritis is a software library that contains algorithms for
+ calculating information about celestial positions and events.  It is
+ written in C++, although only partly makes use of the language's
+-object oriented features.  The main C++ features which Astrolabe makes
++object oriented features.  The main C++ features which Ephemeritis makes
+ use of are namespaces, which are used to categorise the algorithms,
+ and the STL.
+ 
+@@ -32,7 +32,7 @@
+ 
+ @section credit_sec Credits
+ 
+-Astrolabe has mostly been written by William McClain.  The majority of
++Ephemeritis has mostly been written by William McClain.  The majority of
+ the implemented algorithms are provided in the book <em>Astronomical
+ Algorithms</em>, by Jean Meeus (2nd edition, 1998).  At the time of
+ writing, this book is published by and available for order through Sky
+@@ -40,7 +40,7 @@
+ 
+ */
+ 
+-/*! @page acquaintance_page Getting acquainted with Astrolabe
++/*! @page acquaintance_page Getting acquainted with Ephemeritis
+ 
+ @section install_sec Installation
+ 
+
+Modified: trunk/doc/todo.txt
+===================================================================
+--- trunk/doc/todo.txt	2005-11-28 09:47:14 UTC (rev 135)
++++ trunk/doc/todo.txt	2005-11-29 07:41:16 UTC (rev 136)
+@@ -1,3 +1,7 @@
++todo file from William McClain / Astrolabe.
++
++==
++
+ cronus
+     begin and end of 3 twilights
+     heliacal rising and setting of planets and bright stars
+
+
+
+From izogi at berlios.de  Tue Nov 29 08:54:52 2005
+From: izogi at berlios.de (izogi at BerliOS)
+Date: Tue, 29 Nov 2005 08:54:52 +0100
+Subject: [Ephemeritis-svn] r137 - in trunk: . doc old-src
+Message-ID: <200511290754.jAT7sqcr004785@sheep.berlios.de>
+
+Author: izogi
+Date: 2005-11-29 08:54:39 +0100 (Tue, 29 Nov 2005)
+New Revision: 137
+
+Added:
+   trunk/old-src/todo.txt
+Removed:
+   trunk/doc/todo.txt
+Modified:
+   trunk/configure.ac
+   trunk/doc/Makefile.am
+Log:
+Moved old astrolabe todo.txt file into deprecated directory.
+Upped version to 0.4.3, and checked dist generation worked.
+
+
+Modified: trunk/configure.ac
+===================================================================
+--- trunk/configure.ac	2005-11-29 07:41:16 UTC (rev 136)
++++ trunk/configure.ac	2005-11-29 07:54:39 UTC (rev 137)
+@@ -10,7 +10,7 @@
+ DX_PDF_FEATURE(OFF)
+ DX_PS_FEATURE(OFF)
+ 
+-AM_INIT_AUTOMAKE(ephemeritis, 0.4.2)
++AM_INIT_AUTOMAKE(ephemeritis, 0.4.3)
+ AM_CONFIG_HEADER(config.h)
+ 
+ DX_INIT_DOXYGEN(ephemeritis, doxygen.cfg)
+
+Modified: trunk/doc/Makefile.am
+===================================================================
+--- trunk/doc/Makefile.am	2005-11-29 07:41:16 UTC (rev 136)
++++ trunk/doc/Makefile.am	2005-11-29 07:54:39 UTC (rev 137)
+@@ -1,4 +1,4 @@
+ AUTOMAKE_OPTIONS = gnu
+ SUBDIRS = src-doxygen-main
+ 
+-EXTRA_DIST = index.html todo.txt
++EXTRA_DIST = index.html
+
+Deleted: trunk/doc/todo.txt
+===================================================================
+--- trunk/doc/todo.txt	2005-11-29 07:41:16 UTC (rev 136)
++++ trunk/doc/todo.txt	2005-11-29 07:54:39 UTC (rev 137)
+@@ -1,42 +0,0 @@
+-todo file from William McClain / Astrolabe.
+-
+-==
+-
+-cronus
+-    begin and end of 3 twilights
+-    heliacal rising and setting of planets and bright stars
+-    acronychian rising and setting of planets and bright stars (Pannekoek pg 22)
+-    cosmic rising and setting
+-    real time clock
+-    bright stars, rise-set-transit
+-    aphelion, perihelion
+-    apogee, perigee
+-    planetary conjunctions, elongations, oppositions, stationary points
+-    moon, planets at the nodes
+-    moon crater sun rise and set
+-    constellation boundary crossings
+-
+-vsop accuracy:
+-
+-    delta = { \
+-        "Mercury" : ( 0.3871,  0.6e-8), 
+-        "Venus"   : ( 0.7233,  2.5e-8),
+-        "Earth"   : ( 1.0000,  2.5e-8),
+-        "Mars"    : ( 1.5237, 10.0e-8),
+-        "Jupiter" : ( 5.2026, 35.0e-8),
+-        "Saturn"  : ( 9.5547, 70.0e-8),
+-        "Uranus"  : (19.2181,  8.0e-8),
+-        "Neptune" : (30.1096, 42.0e-8)}
+-
+-delete zip file from ftp dir
+-
+-establish mailing list for announcements
+-
+-diff between py and C++, cronus:
+-    last day of year
+-    rst failures
+-    winter solstice position in queue: rst are exhausted before new set are queued.
+-
+-test suite
+-
+-factor divisors into nutation tables
+
+Copied: trunk/old-src/todo.txt (from rev 136, trunk/doc/todo.txt)
+
+
+

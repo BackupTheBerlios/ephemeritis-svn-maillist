@@ -1,0 +1,230 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r192 - in trunk/src/c: libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-January/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r192%20-%20in%20trunk/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200601060950.k069ocfp026271%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000044.html">
+   <LINK REL="Next"  HREF="000046.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r192 - in trunk/src/c: libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r192%20-%20in%20trunk/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200601060950.k069ocfp026271%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r192 - in trunk/src/c: libephemeritis tests">izogi at berlios.de
+       </A><BR>
+    <I>Fri Jan  6 10:50:38 CET 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000044.html">[Ephemeritis-svn] r191 - in trunk: . src/c/libephemeritis src/c/tests
+</A></li>
+        <LI>Next message: <A HREF="000046.html">[Ephemeritis-svn] r193 - trunk/src/c/tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#45">[ date ]</a>
+              <a href="thread.html#45">[ thread ]</a>
+              <a href="subject.html#45">[ subject ]</a>
+              <a href="author.html#45">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-01-06 10:50:37 +0100 (Fri, 06 Jan 2006)
+New Revision: 192
+
+Modified:
+   trunk/src/c/libephemeritis/equationoftime.c
+   trunk/src/c/libephemeritis/vsop87d.c
+   trunk/src/c/tests/validate_meeus.c
+Log:
+Fixed a bug in equation_of_time(), where the Earth's nutation was being added to solar longitude instead of subtracted.
+
+
+Modified: trunk/src/c/libephemeritis/equationoftime.c
+===================================================================
+--- trunk/src/c/libephemeritis/equationoftime.c	2006-01-05 08:27:10 UTC (rev 191)
++++ trunk/src/c/libephemeritis/equationoftime.c	2006-01-06 09:50:37 UTC (rev 192)
+@@ -38,7 +38,7 @@
+ 
+ /*! @brief Calculates the equation of time at a given instant.
+  *
+- *  @param[in] jd  The julian date for which to calculate the equation of time.
++ *  @param[in] jd  The julian date for which to calculate the equation of time, in dynamical time.
+  *
+  *  @return        The equation of time for the specified instant.
+  *
+@@ -46,11 +46,13 @@
+  */
+ double equation_of_time(const double jd)
+ {
+-    double T = (jd - 2451545.0) / 365250.0;
++  double T = jd_to_jcent(jd) / 10.0;
++  /* (jd - 2451545.0) / 365250.0; */
+     double _terms[] =
+-	{ 280.4664567, 360007.6982779, 0.03032028, 1.0 / 49931.0,
+-	1.0 / 15300.0, 1.0 / 2000000.0
+-    };
++      {
++	280.4664567, 360007.6982779, 0.03032028, 1.0 / 49931.0,
++	-1.0 / 15300.0, -1.0 / 2000000.0
++      };
+     double L0 = modpi2(d_to_r(polynomial(_terms, 6, T)));
+ 
+     /* Solar longitude, latitude and radius. */
+@@ -62,7 +64,7 @@
+     double aberration = aberration_low(radius);
+ 
+     /* Correct the longitude for nutation and aberration. */
+-    longitude = longitude + nut_in_lon(jd) + aberration;
++    longitude = longitude - nut_in_lon(jd) + aberration;
+ 
+     /* Solar ra and dec. */
+     double obl = obliquity_hi(jd) + nut_in_obl(jd);
+
+Modified: trunk/src/c/libephemeritis/vsop87d.c
+===================================================================
+--- trunk/src/c/libephemeritis/vsop87d.c	2006-01-05 08:27:10 UTC (rev 191)
++++ trunk/src/c/libephemeritis/vsop87d.c	2006-01-06 09:50:37 UTC (rev 192)
+@@ -66,11 +66,13 @@
+     /* The idea here is to sum the results of A*cos(B+(C*tau)) for
+      * each series, combine the result for each series together in
+      * a polynomial of the form L = L0 + L1tau + l2tau^2, etc, 
+-     * 
++     *
+      */
+ 
+     double X = 0.0;
+     double tauN = 1.0;
++
++    /* Set tau to the Julian millenia. */
+     const double tau = jd_to_jcent(jd) / 10.0;
+ 
+     /* Sum together results of A * cos(B + (C*tau)) of each term.
+
+Modified: trunk/src/c/tests/validate_meeus.c
+===================================================================
+--- trunk/src/c/tests/validate_meeus.c	2006-01-05 08:27:10 UTC (rev 191)
++++ trunk/src/c/tests/validate_meeus.c	2006-01-06 09:50:37 UTC (rev 192)
+@@ -684,15 +684,28 @@
+     {
+ 	double L, B, R;
+ 	sol_dimension3_vsop(2448908.5, &amp;L, &amp;B, &amp;R);
++	/*
+ 	report_diff(&quot;longitude&quot;, r_to_d(L) * 3600, 199.907372 * 3600,
+ 		    &quot;arc-seconds&quot;);
+ 	report_diff(&quot;latitude&quot;, r_to_d(B) * 3600, 0.644, &quot;arc-seconds&quot;);
+ 	report_diff(&quot;radius&quot;, R * km_per_au, 0.99760775 * km_per_au, &quot;km&quot;);
++	*/
++
++	report(&quot;longitude&quot;, r_to_d(L) * 3600, 199.907372 * 3600, 1.0, &quot;arc-seconds&quot;);
++	report(&quot;latitude&quot;, r_to_d(B) * 3600, 0.644, 1.0, &quot;arc-seconds&quot;);
++	report(&quot;radius&quot;, R * km_per_au, 0.99760775 * km_per_au, 200.0, &quot;km&quot;);
++
+ 	vsop_to_fk5(2448908.5, &amp;L, &amp;B);
++
++	/*
+ 	report_diff(&quot;corrected longitude&quot;, r_to_d(L) * 3600,
+ 		    199.907347 * 3600, &quot;arc-seconds&quot;);
+ 	report_diff(&quot;corrected latitude&quot;, r_to_d(B) * 3600, 0.62,
+ 		    &quot;arc-seconds&quot;);
++	*/
++	report(&quot;corrected longitude&quot;, r_to_d(L) * 3600, 199.907347 * 3600, 1.0, &quot;arc-seconds&quot;);
++	report(&quot;corrected latitude&quot;, r_to_d(B) * 3600, 0.62, 1.0, &quot;arc-seconds&quot;);
++
+ 	const double aberration = aberration_low(R);
+ 	report(&quot;aberration&quot;, r_to_d(aberration) * 3600, -20.539, 0.001,
+ 	       &quot;arc-seconds&quot;);
+@@ -721,9 +734,9 @@
+ 	R = 0.99760775;
+ 	double E = obliquity_hi(jd);
+ 	rec_coords rc = sol_rectangular(L, B, R, E);
+-	report(&quot;X&quot;, rc.x, -0.9379952, 0.0000001, &quot;AU&quot;);
+-	report(&quot;Y&quot;, rc.y, -0.3116544, 0.0000001, &quot;AU&quot;);
+-	report(&quot;Z&quot;, rc.z, -0.1351215, 0.0000001, &quot;AU&quot;);
++	report(&quot;X&quot;, rc.x * km_per_au, -0.9379952 * km_per_au, 5.0, &quot;km&quot;);
++	report(&quot;Y&quot;, rc.y * km_per_au, -0.3116544 * km_per_au, 5.0, &quot;km&quot;);
++	report(&quot;Z&quot;, rc.z * km_per_au, -0.1351215 * km_per_au, 5.0, &quot;km&quot;);
+     }
+ 
+     printf(&quot;27.a Approximate solstice\n&quot;);
+@@ -817,11 +830,11 @@
+ 
+     printf(&quot;28.a Equation of time\n&quot;);
+     {
+-	double jd = 2448908.5;
++      double jd = 2448908.5;
+ 	double eot_result = equation_of_time(jd);
+-	report(&quot;Equation of time&quot;, eot_result,
+-	       fday_to_r(hms_to_fday(0.0, 13.0, 42.6)), 0.000001,
+-	       &quot;radians&quot;);
++	report(&quot;Equation of time&quot;, eot_result * 3600.0,
++	       fday_to_r(hms_to_fday(0.0, 13.0, 42.6)) * 3600.0, 1,
++	       &quot;arc-sec&quot;);
+     }
+ 
+     printf(&quot;30.a Eccentricity anomoly (Equation of Kepler)\n&quot;);
+@@ -837,11 +850,16 @@
+     {
+ 	double L, B, R;
+ 	vsop_dimension3_vsop(2448976.5, vVenus, &amp;L, &amp;B, &amp;R);
++	/*
+ 	report_diff(&quot;longitude&quot;, r_to_d(L) * 3600, 26.11428 * 3600,
+ 		    &quot;arc-seconds&quot;);
+ 	report_diff(&quot;latitude&quot;, r_to_d(B) * 3600, -2.62070 * 3600,
+ 		    &quot;arc-seconds&quot;);
+ 	report_diff(&quot;radius&quot;, R * km_per_au, 0.724603 * km_per_au, &quot;km&quot;);
++	*/
++	report(&quot;longitude&quot;, r_to_d(L) * 3600, 26.11428 * 3600, 1.0, &quot;arc-seconds&quot;);
++	report(&quot;latitude&quot;, r_to_d(B) * 3600, -2.62070 * 3600, 1.0, &quot;arc-seconds&quot;);
++	report(&quot;radius&quot;, R * km_per_au, 0.724603 * km_per_au, 200.0, &quot;km&quot;);
+     }
+ 
+     printf(&quot;33.a Apparent position (vsop)\n&quot;);
+@@ -882,11 +900,11 @@
+ 	double L, B, R;
+ 	sol_dimension3_fk5(jd, &amp;L, &amp;B, &amp;R);
+ 	rec_coords src = sol_rectangular(L, B, R, obl2000);
+-	report(&quot;solar x&quot;, src.x, -0.9756732, 0.0000001, &quot;AU&quot;);
+-	report(&quot;solar y&quot;, src.y, -0.2003254, 0.0000001, &quot;AU&quot;);
+-	report(&quot;solar z&quot;, src.z, -0.0868566, 0.0000001, &quot;AU&quot;);
++	report(&quot;solar x&quot;, src.x * km_per_au, -0.9756732 * km_per_au, 0.0000001, &quot;km&quot;);
++	report(&quot;solar y&quot;, src.y * km_per_au, -0.2003254 * km_per_au, 0.0000001, &quot;km&quot;);
++	report(&quot;solar z&quot;, src.z * km_per_au, -0.0868566 * km_per_au, 0.0000001, &quot;km&quot;);
+ 
+-	printf(&quot;Resetting sol values to those in example (because VSOP isn't calculating them properly as above)&quot;);
++	printf(&quot;Resetting sol values to those in example (because VSOP isn't calculating them properly as above)\n&quot;);
+ 	src.x = -0.9756732;
+ 	src.y = -0.2003254;
+ 	src.z = -0.0868566;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000044.html">[Ephemeritis-svn] r191 - in trunk: . src/c/libephemeritis src/c/tests
+</A></li>
+	<LI>Next message: <A HREF="000046.html">[Ephemeritis-svn] r193 - trunk/src/c/tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#45">[ date ]</a>
+              <a href="thread.html#45">[ thread ]</a>
+              <a href="subject.html#45">[ subject ]</a>
+              <a href="author.html#45">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,266 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r231 - in branches/new-vsop-prepare/src/c: libephemeritis utils
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-January/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r231%20-%20in%20branches/new-vsop-prepare/src/c%3A%20libephemeritis%20utils&In-Reply-To=%3C200601281003.k0SA3amF019896%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000083.html">
+   <LINK REL="Next"  HREF="000085.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r231 - in branches/new-vsop-prepare/src/c: libephemeritis utils</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r231%20-%20in%20branches/new-vsop-prepare/src/c%3A%20libephemeritis%20utils&In-Reply-To=%3C200601281003.k0SA3amF019896%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r231 - in branches/new-vsop-prepare/src/c: libephemeritis utils">izogi at berlios.de
+       </A><BR>
+    <I>Sat Jan 28 11:03:36 CET 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000083.html">[Ephemeritis-svn] r230 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+        <LI>Next message: <A HREF="000085.html">[Ephemeritis-svn] r232 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#84">[ date ]</a>
+              <a href="thread.html#84">[ thread ]</a>
+              <a href="subject.html#84">[ subject ]</a>
+              <a href="author.html#84">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-01-28 11:03:35 +0100 (Sat, 28 Jan 2006)
+New Revision: 231
+
+Added:
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_internal.h
+Removed:
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_internal.h
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/Makefile.am
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c
+   branches/new-vsop-prepare/src/c/utils/build_vsop_data.c
+Log:
+Renamed ephemeritis_vsop_internal.h to vsop_internal.h.
+
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/Makefile.am
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/Makefile.am	2006-01-28 04:15:58 UTC (rev 230)
++++ branches/new-vsop-prepare/src/c/libephemeritis/Makefile.am	2006-01-28 10:03:35 UTC (rev 231)
+@@ -28,6 +28,6 @@
+ 	util.c
+ 
+ include_HEADERS = ephemeritis.h ephemeritis_constid.h
+-noinst_HEADERS = vsop_structures.h ephemeritis_vsop_internal.h
++noinst_HEADERS = vsop_structures.h vsop_internal.h
+ 
+ libephemeritis_la_ldflags = --version-info 0:0:0
+
+Deleted: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_internal.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_internal.h	2006-01-28 04:15:58 UTC (rev 230)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_internal.h	2006-01-28 10:03:35 UTC (rev 231)
+@@ -1,124 +0,0 @@
+-/* Copyright 2000, 2001, 2005 William McClain, Mike McGavin
+-
+-This file is part of Ephemeritis.
+-
+-Ephemeritis is free software; you can redistribute it and/or modify
+-it under the terms of the GNU General Public License as published by
+-the Free Software Foundation; either version 2 of the License, or
+-(at your option) any later version.
+-
+-Ephemeritis is distributed in the hope that it will be useful,
+-but WITHOUT ANY WARRANTY; without even the implied warranty of
+-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-GNU General Public License for more details.
+-
+-You should have received a copy of the GNU General Public License
+-along with Ephemeritis; if not, write to the Free Software
+-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+-*/
+-
+-#ifndef _ephemeritis_vsop_internal_h_
+-#define _ephemeritis_vsop_internal_h_
+-
+-#include &quot;ephemeritis.h&quot;
+-
+-/*! @file ephemeritis_vsop_internal.h
+- *
+- * Definitions for VSOP data and related functions.  This list is
+- * included by various parts of the code and utilities to allow them
+- * to share commonly understood data structures.
+- *
+- * @todo Document the defines.
+- * @todo Update EPHEMERITIS_VSOP_DATA_PATH to make it configurable by the user at installation time.
+- *
+- * @author Mike McGavin.
+- */
+-
+-
+-#include &lt;stdio.h&gt;
+-
+-#define EPHEMERITIS_BIN_HEADER_TEXT_FORMAT &quot;EphB v=%s&quot;
+-
+-/* Define data path -- this should be updated to something more elegantly configurable. */
+-#ifdef VSOP_DATA_PATH
+-#define EPH_VSOP_DATA_PATH VSOP_DATA_PATH &quot;/&quot;
+-#else
+-#define EPH_VSOP_DATA_PATH &quot;&quot;
+-#endif
+-
+-
+-/* Start with... */
+-#define EPH_VSOP_PREFIX    &quot;VSOP87&quot;
+-
+-/* Add one of... */
+-#define EPH_VSOP_HEJ2      &quot;&quot;
+-#define EPH_VSOP_HRJ2      &quot;A&quot;
+-#define EPH_VSOP_HSJ2      &quot;B&quot;
+-#define EPH_VSOP_HRD       &quot;C&quot;
+-#define EPH_VSOP_HSD       &quot;D&quot;
+-#define EPH_VSOP_BRJ2      &quot;E&quot;
+-
+-/* Followed by... */
+-#define EPH_MER  &quot;mer&quot;
+-#define EPH_VEN  &quot;ven&quot;
+-#define EPH_EAR  &quot;ear&quot;
+-#define EPH_MAR  &quot;mar&quot;
+-#define EPH_JUP  &quot;jup&quot;
+-#define EPH_SAT  &quot;sat&quot;
+-#define EPH_URA  &quot;ura&quot;
+-#define EPH_NEP  &quot;nep&quot;
+-
+-#define EPH_SOL  &quot;sun&quot;
+-#define EPH_EMB  &quot;emb&quot;
+-
+-/* The suffix for binary files. */
+-#define EPH_VSOP_SUFFIX    &quot;.eph.bin&quot;
+-
+-/*! @brief Represents a VSOP87 term.
+- */
+-typedef struct {
+-    double A, B, C;
+-} term_bin;
+-
+-
+-typedef struct {
+-    struct {
+-	char alpha;		/*!&lt; @brief The degree alpha of time variable for this series. */
+-	short int num_terms;	/*!&lt; @brief The number of terms listed for this series. */
+-    } meta;
+-
+-    term_bin *terms;		/*!&lt; @brief The terms. */
+-} series;
+-
+-
+-
+-/*! @brief Collects together a particular set of elements for a
+- *  particular body.
+- */
+-typedef struct {
+-    struct {
+-	char eph_header_text[23];	/*!&lt; @brief Ephemeritis header text.                            */
+-	char body_name[8];	/*!&lt; @brief The name of the body represented by these elements. */
+-	char num_variables;	/*!&lt; @brief The number of variables included in these elements. */
+-    } meta;
+-
+-    struct {
+-	struct {
+-	    char series_count;	/*!&lt; @brief The number of series' listed in the series_list field. */
+-	} meta;			/*!&lt; @brief Binary meta data about the VSOP variable.              */
+-
+-	series *series_list;	/*!&lt; @brief The series list.                   */
+-    } variable_list[6];		/*!&lt; @brief The variables.                     */
+-
+-} body_elements;
+-
+-
+-body_elements *ephint_get_body_elements_for_handle(const vsop_handle vh);
+-void ephint_free_body_elements(body_elements * b);
+-void ephint_write_body_elements(FILE * outfile, body_elements * b);
+-/*
+-void ephint_print_body_statistics(FILE *ostream, body_elements *b);
+-body_elements *ephint_read_body_elements(FILE *infile);
+-*/
+-
+-#endif
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-01-28 04:15:58 UTC (rev 230)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-01-28 10:03:35 UTC (rev 231)
+@@ -27,7 +27,7 @@
+  */
+ 
+ #include &quot;ephemeritis.h&quot;
+-#include &quot;ephemeritis_vsop_internal.h&quot;
++#include &quot;vsop_internal.h&quot;
+ #include &quot;config.h&quot;
+ 
+ #include &lt;math.h&gt;
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c	2006-01-28 04:15:58 UTC (rev 230)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c	2006-01-28 10:03:35 UTC (rev 231)
+@@ -24,7 +24,7 @@
+  * @author Mike McGavin.
+  */
+ 
+-#include &quot;ephemeritis_vsop_internal.h&quot;
++#include &quot;vsop_internal.h&quot;
+ #include &quot;ephemeritis.h&quot;
+ 
+ #include &lt;errno.h&gt;
+
+Copied: branches/new-vsop-prepare/src/c/libephemeritis/vsop_internal.h (from rev 227, branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_internal.h)
+
+Modified: branches/new-vsop-prepare/src/c/utils/build_vsop_data.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/utils/build_vsop_data.c	2006-01-28 04:15:58 UTC (rev 230)
++++ branches/new-vsop-prepare/src/c/utils/build_vsop_data.c	2006-01-28 10:03:35 UTC (rev 231)
+@@ -32,7 +32,7 @@
+ 
+ #include &quot;config.h&quot;
+ #include &lt;ephemeritis.h&gt;
+-#include &lt;ephemeritis_vsop_internal.h&gt;
++#include &lt;vsop_internal.h&gt;
+ #include &lt;stdio.h&gt;
+ #include &lt;stdlib.h&gt;
+ #include &lt;errno.h&gt;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000083.html">[Ephemeritis-svn] r230 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+	<LI>Next message: <A HREF="000085.html">[Ephemeritis-svn] r232 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#84">[ date ]</a>
+              <a href="thread.html#84">[ thread ]</a>
+              <a href="subject.html#84">[ subject ]</a>
+              <a href="author.html#84">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

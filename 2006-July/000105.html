@@ -1,0 +1,273 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r253 - branches/new-vsop-prepare
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-July/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r253%20-%20branches/new-vsop-prepare&In-Reply-To=%3C200607230821.k6N8LgWK022947%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000108.html">
+   <LINK REL="Next"  HREF="000109.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r253 - branches/new-vsop-prepare</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r253%20-%20branches/new-vsop-prepare&In-Reply-To=%3C200607230821.k6N8LgWK022947%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r253 - branches/new-vsop-prepare">izogi at mail.berlios.de
+       </A><BR>
+    <I>Sun Jul 23 10:21:42 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000108.html">[Ephemeritis-svn] r252 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000109.html">[Ephemeritis-svn] r254 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#105">[ date ]</a>
+              <a href="thread.html#105">[ thread ]</a>
+              <a href="subject.html#105">[ subject ]</a>
+              <a href="author.html#105">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-07-23 10:21:41 +0200 (Sun, 23 Jul 2006)
+New Revision: 253
+
+Added:
+   branches/new-vsop-prepare/ephemeritis.kdevelop
+Log:
+Adding a simple kdevelop project file.
+
+
+Added: branches/new-vsop-prepare/ephemeritis.kdevelop
+===================================================================
+--- branches/new-vsop-prepare/ephemeritis.kdevelop	2006-07-23 08:00:44 UTC (rev 252)
++++ branches/new-vsop-prepare/ephemeritis.kdevelop	2006-07-23 08:21:41 UTC (rev 253)
+@@ -0,0 +1,196 @@
++&lt;?xml version = '1.0'?&gt;
++&lt;kdevelop&gt;
++  &lt;general&gt;
++    &lt;author&gt;Mike McGavin&lt;/author&gt;
++    &lt;email&gt;<A HREF="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">iizogii at gmail.com</A>&lt;/email&gt;
++    &lt;version&gt;$VERSION$&lt;/version&gt;
++    &lt;projectmanagement&gt;KDevAutoProject&lt;/projectmanagement&gt;
++    &lt;primarylanguage&gt;C&lt;/primarylanguage&gt;
++    &lt;ignoreparts/&gt;
++    &lt;projectdirectory&gt;.&lt;/projectdirectory&gt;
++    &lt;absoluteprojectpath&gt;false&lt;/absoluteprojectpath&gt;
++    &lt;description&gt;&lt;/description&gt;
++    &lt;versioncontrol&gt;kdevsubversion&lt;/versioncontrol&gt;
++  &lt;/general&gt;
++  &lt;kdevautoproject&gt;
++    &lt;general&gt;
++      &lt;activetarget&gt;src/ephemeritis&lt;/activetarget&gt;
++      &lt;useconfiguration&gt;debug&lt;/useconfiguration&gt;
++    &lt;/general&gt;
++    &lt;run&gt;
++      &lt;mainprogram&gt;src/ephemeritis&lt;/mainprogram&gt;
++      &lt;directoryradio&gt;executable&lt;/directoryradio&gt;
++      &lt;customdirectory&gt;/&lt;/customdirectory&gt;
++      &lt;programargs&gt;&lt;/programargs&gt;
++      &lt;terminal&gt;false&lt;/terminal&gt;
++      &lt;autocompile&gt;true&lt;/autocompile&gt;
++      &lt;envvars/&gt;
++    &lt;/run&gt;
++    &lt;configurations&gt;
++      &lt;optimized&gt;
++        &lt;builddir&gt;optimized&lt;/builddir&gt;
++        &lt;ccompiler&gt;GccOptions&lt;/ccompiler&gt;
++        &lt;cxxcompiler&gt;GppOptions&lt;/cxxcompiler&gt;
++        &lt;f77compiler&gt;G77Options&lt;/f77compiler&gt;
++        &lt;cflags&gt;-O2 -g0&lt;/cflags&gt;
++      &lt;/optimized&gt;
++      &lt;debug&gt;
++        &lt;configargs&gt;--enable-debug=full&lt;/configargs&gt;
++        &lt;builddir&gt;debug&lt;/builddir&gt;
++        &lt;ccompiler&gt;kdevgccoptions&lt;/ccompiler&gt;
++        &lt;cxxcompiler&gt;kdevgppoptions&lt;/cxxcompiler&gt;
++        &lt;f77compiler&gt;kdevpgf77options&lt;/f77compiler&gt;
++        &lt;cflags&gt;-O0 -g3&lt;/cflags&gt;
++        &lt;envvars/&gt;
++        &lt;topsourcedir&gt;&lt;/topsourcedir&gt;
++        &lt;cppflags&gt;&lt;/cppflags&gt;
++        &lt;ldflags&gt;&lt;/ldflags&gt;
++        &lt;ccompilerbinary&gt;&lt;/ccompilerbinary&gt;
++        &lt;cxxcompilerbinary&gt;&lt;/cxxcompilerbinary&gt;
++        &lt;f77compilerbinary&gt;&lt;/f77compilerbinary&gt;
++        &lt;cxxflags&gt;&lt;/cxxflags&gt;
++        &lt;f77flags&gt;&lt;/f77flags&gt;
++      &lt;/debug&gt;
++    &lt;/configurations&gt;
++    &lt;make&gt;
++      &lt;envvars&gt;
++        &lt;envvar value=&quot;1&quot; name=&quot;WANT_AUTOCONF_2_5&quot; /&gt;
++        &lt;envvar value=&quot;1&quot; name=&quot;WANT_AUTOMAKE_1_6&quot; /&gt;
++      &lt;/envvars&gt;
++      &lt;abortonerror&gt;true&lt;/abortonerror&gt;
++      &lt;runmultiplejobs&gt;false&lt;/runmultiplejobs&gt;
++      &lt;numberofjobs&gt;1&lt;/numberofjobs&gt;
++      &lt;dontact&gt;false&lt;/dontact&gt;
++      &lt;makebin&gt;&lt;/makebin&gt;
++      &lt;prio&gt;0&lt;/prio&gt;
++    &lt;/make&gt;
++  &lt;/kdevautoproject&gt;
++  &lt;kdevdebugger&gt;
++    &lt;general&gt;
++      &lt;dbgshell&gt;libtool&lt;/dbgshell&gt;
++      &lt;programargs&gt;&lt;/programargs&gt;
++      &lt;gdbpath&gt;&lt;/gdbpath&gt;
++      &lt;configGdbScript&gt;&lt;/configGdbScript&gt;
++      &lt;runShellScript&gt;&lt;/runShellScript&gt;
++      &lt;runGdbScript&gt;&lt;/runGdbScript&gt;
++      &lt;breakonloadinglibs&gt;true&lt;/breakonloadinglibs&gt;
++      &lt;separatetty&gt;false&lt;/separatetty&gt;
++      &lt;floatingtoolbar&gt;false&lt;/floatingtoolbar&gt;
++    &lt;/general&gt;
++    &lt;display&gt;
++      &lt;staticmembers&gt;false&lt;/staticmembers&gt;
++      &lt;demanglenames&gt;true&lt;/demanglenames&gt;
++      &lt;outputradix&gt;10&lt;/outputradix&gt;
++    &lt;/display&gt;
++  &lt;/kdevdebugger&gt;
++  &lt;kdevdoctreeview&gt;
++    &lt;ignoretocs&gt;
++      &lt;toc&gt;ada&lt;/toc&gt;
++      &lt;toc&gt;ada_bugs_gcc&lt;/toc&gt;
++      &lt;toc&gt;bash&lt;/toc&gt;
++      &lt;toc&gt;bash_bugs&lt;/toc&gt;
++      &lt;toc&gt;clanlib&lt;/toc&gt;
++      &lt;toc&gt;fortran_bugs_gcc&lt;/toc&gt;
++      &lt;toc&gt;gnome1&lt;/toc&gt;
++      &lt;toc&gt;gnustep&lt;/toc&gt;
++      &lt;toc&gt;gtk&lt;/toc&gt;
++      &lt;toc&gt;gtk_bugs&lt;/toc&gt;
++      &lt;toc&gt;haskell&lt;/toc&gt;
++      &lt;toc&gt;haskell_bugs_ghc&lt;/toc&gt;
++      &lt;toc&gt;java_bugs_gcc&lt;/toc&gt;
++      &lt;toc&gt;java_bugs_sun&lt;/toc&gt;
++      &lt;toc&gt;kde2book&lt;/toc&gt;
++      &lt;toc&gt;libstdc++&lt;/toc&gt;
++      &lt;toc&gt;opengl&lt;/toc&gt;
++      &lt;toc&gt;pascal_bugs_fp&lt;/toc&gt;
++      &lt;toc&gt;php&lt;/toc&gt;
++      &lt;toc&gt;php_bugs&lt;/toc&gt;
++      &lt;toc&gt;perl&lt;/toc&gt;
++      &lt;toc&gt;perl_bugs&lt;/toc&gt;
++      &lt;toc&gt;python&lt;/toc&gt;
++      &lt;toc&gt;python_bugs&lt;/toc&gt;
++      &lt;toc&gt;qt-kdev3&lt;/toc&gt;
++      &lt;toc&gt;ruby&lt;/toc&gt;
++      &lt;toc&gt;ruby_bugs&lt;/toc&gt;
++      &lt;toc&gt;sdl&lt;/toc&gt;
++      &lt;toc&gt;stl&lt;/toc&gt;
++      &lt;toc&gt;sw&lt;/toc&gt;
++      &lt;toc&gt;w3c-dom-level2-html&lt;/toc&gt;
++      &lt;toc&gt;w3c-svg&lt;/toc&gt;
++      &lt;toc&gt;w3c-uaag10&lt;/toc&gt;
++      &lt;toc&gt;wxwidgets_bugs&lt;/toc&gt;
++    &lt;/ignoretocs&gt;
++    &lt;ignoreqt_xml&gt;
++      &lt;toc&gt;Guide to the Qt Translation Tools&lt;/toc&gt;
++      &lt;toc&gt;Qt Assistant Manual&lt;/toc&gt;
++      &lt;toc&gt;Qt Designer Manual&lt;/toc&gt;
++      &lt;toc&gt;Qt Reference Documentation&lt;/toc&gt;
++      &lt;toc&gt;qmake User Guide&lt;/toc&gt;
++    &lt;/ignoreqt_xml&gt;
++    &lt;ignoredoxygen&gt;
++      &lt;toc&gt;KDE Libraries (Doxygen)&lt;/toc&gt;
++    &lt;/ignoredoxygen&gt;
++  &lt;/kdevdoctreeview&gt;
++  &lt;kdevfilecreate&gt;
++    &lt;filetypes/&gt;
++    &lt;useglobaltypes&gt;
++      &lt;type ext=&quot;c&quot; /&gt;
++      &lt;type ext=&quot;h&quot; /&gt;
++    &lt;/useglobaltypes&gt;
++  &lt;/kdevfilecreate&gt;
++  &lt;cppsupportpart&gt;
++    &lt;filetemplates&gt;
++      &lt;interfacesuffix&gt;.h&lt;/interfacesuffix&gt;
++      &lt;implementationsuffix&gt;.cpp&lt;/implementationsuffix&gt;
++    &lt;/filetemplates&gt;
++  &lt;/cppsupportpart&gt;
++  &lt;kdevcppsupport&gt;
++    &lt;qt&gt;
++      &lt;used&gt;false&lt;/used&gt;
++      &lt;version&gt;3&lt;/version&gt;
++      &lt;root&gt;&lt;/root&gt;
++    &lt;/qt&gt;
++    &lt;codecompletion&gt;
++      &lt;includeGlobalFunctions&gt;true&lt;/includeGlobalFunctions&gt;
++      &lt;includeTypes&gt;true&lt;/includeTypes&gt;
++      &lt;includeEnums&gt;true&lt;/includeEnums&gt;
++      &lt;includeTypedefs&gt;false&lt;/includeTypedefs&gt;
++      &lt;automaticCodeCompletion&gt;true&lt;/automaticCodeCompletion&gt;
++      &lt;automaticArgumentsHint&gt;true&lt;/automaticArgumentsHint&gt;
++      &lt;automaticHeaderCompletion&gt;true&lt;/automaticHeaderCompletion&gt;
++      &lt;codeCompletionDelay&gt;250&lt;/codeCompletionDelay&gt;
++      &lt;argumentsHintDelay&gt;400&lt;/argumentsHintDelay&gt;
++      &lt;headerCompletionDelay&gt;250&lt;/headerCompletionDelay&gt;
++    &lt;/codecompletion&gt;
++    &lt;creategettersetter&gt;
++      &lt;prefixGet&gt;&lt;/prefixGet&gt;
++      &lt;prefixSet&gt;set&lt;/prefixSet&gt;
++      &lt;prefixVariable&gt;m_,_&lt;/prefixVariable&gt;
++      &lt;parameterName&gt;theValue&lt;/parameterName&gt;
++      &lt;inlineGet&gt;true&lt;/inlineGet&gt;
++      &lt;inlineSet&gt;true&lt;/inlineSet&gt;
++    &lt;/creategettersetter&gt;
++    &lt;references/&gt;
++  &lt;/kdevcppsupport&gt;
++  &lt;kdevdocumentation&gt;
++    &lt;projectdoc&gt;
++      &lt;docsystem&gt;&lt;/docsystem&gt;
++      &lt;docurl&gt;&lt;/docurl&gt;
++      &lt;usermanualurl&gt;&lt;/usermanualurl&gt;
++    &lt;/projectdoc&gt;
++  &lt;/kdevdocumentation&gt;
++  &lt;kdevfileview&gt;
++    &lt;groups&gt;
++      &lt;hidenonprojectfiles&gt;false&lt;/hidenonprojectfiles&gt;
++      &lt;hidenonlocation&gt;false&lt;/hidenonlocation&gt;
++    &lt;/groups&gt;
++    &lt;tree&gt;
++      &lt;hidepatterns&gt;*.o,*.lo,CVS&lt;/hidepatterns&gt;
++      &lt;hidenonprojectfiles&gt;false&lt;/hidenonprojectfiles&gt;
++    &lt;/tree&gt;
++  &lt;/kdevfileview&gt;
++  &lt;ctagspart&gt;
++    &lt;customArguments&gt;&lt;/customArguments&gt;
++    &lt;customTagfilePath&gt;&lt;/customTagfilePath&gt;
++  &lt;/ctagspart&gt;
++&lt;/kdevelop&gt;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000108.html">[Ephemeritis-svn] r252 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000109.html">[Ephemeritis-svn] r254 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#105">[ date ]</a>
+              <a href="thread.html#105">[ thread ]</a>
+              <a href="subject.html#105">[ subject ]</a>
+              <a href="author.html#105">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

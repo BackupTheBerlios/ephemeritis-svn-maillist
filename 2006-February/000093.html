@@ -1,0 +1,504 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r240 - branches/new-vsop-prepare/src/c/libephemeritis
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-February/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r240%20-%20branches/new-vsop-prepare/src/c/libephemeritis&In-Reply-To=%3C200602030951.k139pkPE022257%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   
+   <LINK REL="Next"  HREF="000094.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r240 - branches/new-vsop-prepare/src/c/libephemeritis</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r240%20-%20branches/new-vsop-prepare/src/c/libephemeritis&In-Reply-To=%3C200602030951.k139pkPE022257%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r240 - branches/new-vsop-prepare/src/c/libephemeritis">izogi at berlios.de
+       </A><BR>
+    <I>Fri Feb  3 10:51:46 CET 2006</I>
+    <P><UL>
+        
+        <LI>Next message: <A HREF="000094.html">[Ephemeritis-svn] r241 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#93">[ date ]</a>
+              <a href="thread.html#93">[ thread ]</a>
+              <a href="subject.html#93">[ subject ]</a>
+              <a href="author.html#93">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-02-03 10:51:45 +0100 (Fri, 03 Feb 2006)
+New Revision: 240
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+Log:
+Wrote eccliptic_planet(), and vsop_simple_heliocentric_spherical_date_fk5(), designed to be combined to allow calculation of ecliptical coordinates.  (The coordinates can then be converted to equatorial coordinates and what-not.)
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-01-31 08:06:59 UTC (rev 239)
++++ branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-02-03 09:51:45 UTC (rev 240)
+@@ -73,12 +73,6 @@
+  *  the act of moving the Earth as well as moving the body accounts
+  *  for abberation, but am not entirely sure.
+  *
+- *  @todo Audit code and confirm that it's not breaking the algorithm
+- *  to move the fk5 conversion back into the vsop coordinate
+- *  calculations.  If it's a simple translation of coordinates (as I
+- *  think it should be), then I think it should be okay.  Meeus
+- *  doesn't clearly state if it's okay to do this, however.
+- *
+  *  @todo Compare the loop in this code with the notes on pp224-226,
+  *  and decide if the iteration is necessary.  It might be that the
+  *  iteration and corrections for things really belong outside this
+@@ -158,14 +152,6 @@
+ 	return -1;
+     }
+ 
+-    /* Transform to FK5 ecliptic and equinox. */
+-    /*
+-       --- This is now done within the vsop function.  It's probably slightly less efficient that
+-       --- way, but it keeps all the vsop code bundled together, allowing for the layer of abstraction
+-       --- between the geocentric and heliocentric coordinate calculations.
+-       vsop_to_fk5(jd, &amp;l, &amp;b);
+-     */
+-
+     /* Nutation in longitude. */
+     l += n_in_l;
+ 
+@@ -177,7 +163,87 @@
+ }
+ 
+ 
++vsop_error_state ecliptic_planet(double jd,
++				   vsop_body planet,
++				   vsop_error_state (*heliocentic_f) (double, vsop_body, sph_coords *),
++				   double delta,
++				   double *longitude, double *latitude)
++{
++    double t = jd;
++    double l0 = -100.0;		/* Impossible value. */
+ 
++    /* We need to iterate to correct for light-time and aberration.
++     * At most three passes through the loop always nails it.
++     * Note that we move both the Earth and the other planet during
++     *    the iteration.
++     */
++    double l, b;
++    bool ok = false;
++    int bailout = 0;
++    for (bailout = 0; bailout &lt; 20; bailout++) {
++	/* Heliocentric geometric ecliptic coordinates of the Earth. */
++
++        sph_coords sc_e, sc_p;
++	vsop_error_state retval;
++
++	if(ok != (retval = heliocentic_f(t, vsop_earth, &amp;sc_e))) {
++	  return retval;
++	}
++
++	/* Heliocentric geometric ecliptic coordinates of the planet. */
++	if(ok != (retval = heliocentic_f(t, planet, &amp;sc_p))) {
++	  return retval;
++	}
++
++	/* Rectangular offset. */
++	const double cosB0 = cos(sc_e.B);
++	const double cosB = cos(sc_p.B);
++	const double x = sc_p.R * cosB * cos(sc_p.L) - sc_e.R * cosB0 * cos(sc_e.L);
++	const double y = sc_p.R * cosB * sin(sc_p.L) - sc_e.R * cosB0 * sin(sc_e.L);
++	const double z = sc_p.R * sin(sc_p.B) - sc_e.R * sin(sc_e.B);
++
++	/* Geocentric geometric ecliptic coordinates of the planet. */
++	const double x2 = x * x;
++	const double y2 = y * y;
++	l = atan2(y, x);
++	b = atan2(z, sqrt(x2 + y2));
++
++	/* At this point, l and b respectively represent the
++	   geocentric longitude and geocentric latitude, but it hasn't
++	   been adjusted for the time it takes for light to travel to
++	   Earth (if it's the first loop iteration), or for
++	   aberration. */
++
++	/* Distance to planet in AU. */
++	const double dist = sqrt(x2 + y2 + z * z);
++
++	/* Light time in days. */
++	const double tau = 0.0057755183 * dist;
++
++	if (fabs(diff_angle(l, l0)) &lt; pi2 * delta) {
++	    ok = true;
++	    break;
++	}
++
++	/* Adjust for light travel time and try again. */
++	l0 = l;
++	t = jd - tau;
++    }
++
++    if (!ok) {
++	/* Bail out. */
++	return -1;
++    }
++
++    *longitude = l;
++    *latitude = b;
++    return ok;
++}
++
++
++
++
++
+ /*! @brief A private helper function to return the sign of a variable.
+  *
+  *  The main reason this function exists is because ANSI C doesn't
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-01-31 08:06:59 UTC (rev 239)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-02-03 09:51:45 UTC (rev 240)
+@@ -288,121 +288,7 @@
+ 			 double *radius);
+ void vsop_to_fk5(double jd, double *L, double *B);
+ 
+-/* elliptical.c */
+ 
+-/*! @brief The type of magnitude-calculation data provided for an orbital element.
+- *
+- *  @sa orbital_elements
+- */
+-typedef enum {
+-    abs_s,			/*! @brief  Calculation by the absolute magnitude and cometary constant system. */
+-    iau_s			/*! @brief  Calculation using the mean absolute visual magnitude and slope parameter system, as adopted by Commission 20 of the IAU (New Delhi, Nov 1985). */
+-} magdatatype;
+-
+-/*! @brief Struct to contain orbital elements.
+- */
+-typedef struct {
+-    double M;			/*!&lt; @brief The Mean anonomy.
+-				 *
+-				 *   @sa mean_anomoly, for calculating the mean anomoly if it's unknown.
+-				 */
+-    double a;			/*!&lt; @brief The length of the semi-major axis, in astronomical units. */
+-    double e;			/*!&lt; @brief The orbital eccentricity. */
+-    double i;			/*!&lt; @brief The orbital inclination, in radians.  Note that an inclination above 90 degrees implies a retrograde orbit. */
+-    double w;			/*!&lt; @brief The argument of perihelion, in radians. */
+-    double L;			/*!&lt; @brief Longitude of the ascending node, in radians. */
+-    double n;			/*!&lt; @brief Mean motion, in radians per day. */
+-
+-    /*! @brief The type of magnitude-calculation data provided for this element.
+-     *
+-     *  abs_ implies calculation by the absolute magnitude and cometary
+-     *  constant system.  iau_s implies calculation using the mean
+-     *  absolute visual magnitude and slope parameter system, as adopted
+-     *  by Commission 20 of the IAU (New Delhi, Nov 1985).
+-     */
+-    magdatatype mdt;
+-    union {
+-	struct {
+-	    double g;		/*!&lt; @brief Absolute magnitude. */
+-	    double K;		/*!&lt; @brief Body constant. */
+-	} _abs;
+-	struct {
+-	    double H;		/*!&lt; @brief Mean absolute visual magnitude. */
+-	    double G;		/*!&lt; @brief Slope parameter. */
+-	} _iau;
+-    } magdata;
+-} orbital_elements;
+-
+-/*! @brief A structure to hold the calculated values that are constant
+- *  for particular elements, and can be re-used for different times.
+- *  This structure should be populated using get_element_constants.
+- *
+- *  This structure is an intermediate structure that is used between
+- *  the initial orbital elements and the calculations.  It is used to
+- *  extract those calculated values that can be re-used over and over
+- *  again for positions at different times.
+- *
+- *  @sa get_element_constants, for generating the data to fill this
+- *  structure.
+- */
+-typedef struct {
+-    double _A, _B, _C;
+-    double _a, _b, _c;
+-
+-    double E;			/*!&lt; @brief The eccentricity anomoly, in radians. */
+-    double w;			/*!&lt; @brief The argument of perihelion, in radians. */
+-    double M;			/*!&lt; @brief The Mean anonomy. */
+-    double a;			/*!&lt; @brief The length of the semi-major axis, in astronomical units. */
+-    double e;			/*!&lt; @brief The orbital eccentricity. */
+-} element_constants;
+-
+-double eccentricity_anomoly(double M, double e, int iterations);
+-
+-int geocentric_planet(double jd,
+-		      enum vPlanets basePlanet,
+-		      enum vPlanets targetPlanet,
+-		      void (*heliocentic_f) (double, enum vPlanets,
+-					     double *, double *, double *),
+-		      double n_in_l, double epsilon, double delta,
+-		      double *ra, double *dec);
+-
+-
+-element_constants get_element_constants(const double obl,
+-					const orbital_elements elements,
+-					const int iterations);
+-double get_r_sun(const element_constants ec);
+-
+-rec_coords elliptical_orbit_rectangular(const element_constants ec,
+-					const double r_sun);
+-
+-double mean_anomoly(double jd, double T, double n);
+-void elliptical_orbit_ecliptical(const rec_coords sol,
+-				 const rec_coords body,
+-				 const double r_sun,
+-				 double *ra,
+-				 double *dec,
+-				 double *elongation,
+-				 double *phase_angle, double *r_earth);
+-
+-double mag_abs(const double g, const double k, const double r_sun,
+-	       const double r_earth);
+-
+-double mag_iau(const double H, const double G, const double r_sun,
+-	       const double r_earth, const double B);
+-
+-orbital_elements populate_orbital_elements(const double epoch,
+-					   const double M_epoch,
+-					   const double jd,
+-					   const double n,
+-					   const double a,
+-					   const double e,
+-					   const double i,
+-					   const double w,
+-					   const double L,
+-					   const magdatatype mdt,
+-					   const double g_or_H,
+-					   const double K_or_G);
+-
+ /* aberration.c */
+ void aberration_in_lon_lat_low(double jd, double lon, double lat,
+ 			       double sol_lon, double *delta_lon,
+@@ -479,6 +365,10 @@
+  */
+ typedef enum {
+   ok = 0,            /*!&lt; @brief No error state -- everything's fine. */
++  vh_load_error,     /*!&lt; @brief
++                        (vsop_simple_heliocentric_spherical_date) A
++                        VSOP handle couldn't be loaded for some
++                        reason. */
+   vh_access_error,   /*!&lt; @brief (vsop_get_rectangular,
+ 		        vsop_get_spherical) indicates a vsop_handle
+ 		        error.  (Data referenced by this handle wasn't
+@@ -505,6 +395,8 @@
+   not_solar          /*!&lt; @brief (sol_sph_to_rec) indicates that the
+                         incoming spherical coordinates were not solar
+                         coordinates. */
++
++  
+ } vsop_error_state;
+ 
+ /*! @brief A user-available structure to refer to VSOP data.
+@@ -581,4 +473,131 @@
+ 
+ vsop_rec_coords sol_sph_to_rec(vsop_sph_coords vsc);
+ 
++
++vsop_error_state vsop_simple_heliocentric_spherical_date_fk5(double jd, vsop_body planet, sph_coords *sc);
++
++
++/* elliptical.c */
++
++/*! @brief The type of magnitude-calculation data provided for an orbital element.
++ *
++ *  @sa orbital_elements
++ */
++typedef enum {
++    abs_s,			/*! @brief  Calculation by the absolute magnitude and cometary constant system. */
++    iau_s			/*! @brief  Calculation using the mean absolute visual magnitude and slope parameter system, as adopted by Commission 20 of the IAU (New Delhi, Nov 1985). */
++} magdatatype;
++
++/*! @brief Struct to contain orbital elements.
++ */
++typedef struct {
++    double M;			/*!&lt; @brief The Mean anonomy.
++				 *
++				 *   @sa mean_anomoly, for calculating the mean anomoly if it's unknown.
++				 */
++    double a;			/*!&lt; @brief The length of the semi-major axis, in astronomical units. */
++    double e;			/*!&lt; @brief The orbital eccentricity. */
++    double i;			/*!&lt; @brief The orbital inclination, in radians.  Note that an inclination above 90 degrees implies a retrograde orbit. */
++    double w;			/*!&lt; @brief The argument of perihelion, in radians. */
++    double L;			/*!&lt; @brief Longitude of the ascending node, in radians. */
++    double n;			/*!&lt; @brief Mean motion, in radians per day. */
++
++    /*! @brief The type of magnitude-calculation data provided for this element.
++     *
++     *  abs_ implies calculation by the absolute magnitude and cometary
++     *  constant system.  iau_s implies calculation using the mean
++     *  absolute visual magnitude and slope parameter system, as adopted
++     *  by Commission 20 of the IAU (New Delhi, Nov 1985).
++     */
++    magdatatype mdt;
++    union {
++	struct {
++	    double g;		/*!&lt; @brief Absolute magnitude. */
++	    double K;		/*!&lt; @brief Body constant. */
++	} _abs;
++	struct {
++	    double H;		/*!&lt; @brief Mean absolute visual magnitude. */
++	    double G;		/*!&lt; @brief Slope parameter. */
++	} _iau;
++    } magdata;
++} orbital_elements;
++
++/*! @brief A structure to hold the calculated values that are constant
++ *  for particular elements, and can be re-used for different times.
++ *  This structure should be populated using get_element_constants.
++ *
++ *  This structure is an intermediate structure that is used between
++ *  the initial orbital elements and the calculations.  It is used to
++ *  extract those calculated values that can be re-used over and over
++ *  again for positions at different times.
++ *
++ *  @sa get_element_constants, for generating the data to fill this
++ *  structure.
++ */
++typedef struct {
++    double _A, _B, _C;
++    double _a, _b, _c;
++
++    double E;			/*!&lt; @brief The eccentricity anomoly, in radians. */
++    double w;			/*!&lt; @brief The argument of perihelion, in radians. */
++    double M;			/*!&lt; @brief The Mean anonomy. */
++    double a;			/*!&lt; @brief The length of the semi-major axis, in astronomical units. */
++    double e;			/*!&lt; @brief The orbital eccentricity. */
++} element_constants;
++
++double eccentricity_anomoly(double M, double e, int iterations);
++
++int geocentric_planet(double jd,
++		      enum vPlanets basePlanet,
++		      enum vPlanets targetPlanet,
++		      void (*heliocentic_f) (double, enum vPlanets,
++					     double *, double *, double *),
++		      double n_in_l, double epsilon, double delta,
++		      double *ra, double *dec);
++
++vsop_error_state ecliptic_planet(double jd,
++				   vsop_body planet,
++				   vsop_error_state (*heliocentic_f) (double, vsop_body, sph_coords *),
++				   double delta,
++				   double *longitude, double *latitude);
++
++
++
++element_constants get_element_constants(const double obl,
++					const orbital_elements elements,
++					const int iterations);
++double get_r_sun(const element_constants ec);
++
++rec_coords elliptical_orbit_rectangular(const element_constants ec,
++					const double r_sun);
++
++double mean_anomoly(double jd, double T, double n);
++void elliptical_orbit_ecliptical(const rec_coords sol,
++				 const rec_coords body,
++				 const double r_sun,
++				 double *ra,
++				 double *dec,
++				 double *elongation,
++				 double *phase_angle, double *r_earth);
++
++double mag_abs(const double g, const double k, const double r_sun,
++	       const double r_earth);
++
++double mag_iau(const double H, const double G, const double r_sun,
++	       const double r_earth, const double B);
++
++orbital_elements populate_orbital_elements(const double epoch,
++					   const double M_epoch,
++					   const double jd,
++					   const double n,
++					   const double a,
++					   const double e,
++					   const double i,
++					   const double w,
++					   const double L,
++					   const magdatatype mdt,
++					   const double g_or_H,
++					   const double K_or_G);
++
++
+ #endif
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-01-31 08:06:59 UTC (rev 239)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-02-03 09:51:45 UTC (rev 240)
+@@ -543,3 +543,27 @@
+   vrc.rc.z = vsc.sc.R * ((cosB * sinL * sinobl) + (sinB * cosobl));
+   return vrc;
+ }
++
++
++/*! @brief Calculates the spherical coordinates for a specified planet
++ *  at a given date, using VSOP methods.
++ *
++ *  vsop_data_init() must have been called, or this will fail.
++ *
++ */
++vsop_error_state vsop_simple_heliocentric_spherical_date_fk5(double jd, vsop_body planet, sph_coords *sc)
++{
++  vsop_handle vh_planet;
++  int result = get_vsop_data_handle(planet, hel_sph_date, &amp;vh_planet);
++  if(0 != result) {
++      return vh_load_error;
++  }
++
++  vsop_sph_coords vsc = vsop_sph_to_fk5(vsop_get_spherical(vh_planet, jd));
++  if(ok != vsc.error_state) {
++      return vsc.error_state;
++  } else {
++      *sc = vsc.sc;
++      return ok;
++  }
++}
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	
+	<LI>Next message: <A HREF="000094.html">[Ephemeritis-svn] r241 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#93">[ date ]</a>
+              <a href="thread.html#93">[ thread ]</a>
+              <a href="subject.html#93">[ subject ]</a>
+              <a href="author.html#93">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

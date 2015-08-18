@@ -1,0 +1,2112 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r191 - in trunk: . src/c/libephemeritis src/c/tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-January/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r191%20-%20in%20trunk%3A%20.%20src/c/libephemeritis%20src/c/tests&In-Reply-To=%3C200601050827.k058RL9r005071%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   
+   <LINK REL="Next"  HREF="000045.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r191 - in trunk: . src/c/libephemeritis src/c/tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r191%20-%20in%20trunk%3A%20.%20src/c/libephemeritis%20src/c/tests&In-Reply-To=%3C200601050827.k058RL9r005071%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r191 - in trunk: . src/c/libephemeritis src/c/tests">izogi at berlios.de
+       </A><BR>
+    <I>Thu Jan  5 09:27:21 CET 2006</I>
+    <P><UL>
+        
+        <LI>Next message: <A HREF="000045.html">[Ephemeritis-svn] r192 - in trunk/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#44">[ date ]</a>
+              <a href="thread.html#44">[ thread ]</a>
+              <a href="subject.html#44">[ subject ]</a>
+              <a href="author.html#44">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-01-05 09:27:10 +0100 (Thu, 05 Jan 2006)
+New Revision: 191
+
+Added:
+   trunk/src/c/libephemeritis/aberration.c
+Modified:
+   trunk/ChangeLog
+   trunk/src/c/libephemeritis/Makefile.am
+   trunk/src/c/libephemeritis/constellations.c
+   trunk/src/c/libephemeritis/conversions.c
+   trunk/src/c/libephemeritis/dynamical.c
+   trunk/src/c/libephemeritis/elliptical.c
+   trunk/src/c/libephemeritis/elp2000.c
+   trunk/src/c/libephemeritis/ephemeritis.h
+   trunk/src/c/libephemeritis/equationoftime.c
+   trunk/src/c/libephemeritis/nutation.c
+   trunk/src/c/libephemeritis/precession.c
+   trunk/src/c/libephemeritis/solar.c
+   trunk/src/c/libephemeritis/vsop87d.c
+   trunk/src/c/tests/validate_meeus.c
+Log:
+Many changes from when I was on holiday -- from the temporary ChangeLog:
+
+  * Added aberration.c for code that calculates aberration adjustments.
+  * Renamed obliquity() to obliquity_low(), to emphasise that it's
+    relatively low accuracy.
+  * Added a collection of unit testing for chapter 23 in Meeus, which
+    collects various operations necessary for the apparent place of a
+    star.
+  * Added unit tests to validate_meeus for elliptical orbit calculation,
+    based on figures made available by the International Bureau of
+    Astronomical Telegrammes.  (Note: It's still out by about 100 or so
+    arc-seconds in RA and Dec, possibly due to the Sun's VSOP position not
+    being calculated correctly.
+  * Adjusted several places, such as nutation code, where constants were
+    being calculated on every call to a function even though they were going
+    to be the same every time.  They're now declared as static variables and
+    only initialised the first time the function's called.
+  * Added nut_in_ra_dec().
+  * Added ut_to_dt(), to simplify addition of dynamical difference to UT.
+  * Added circumpi(), similar to modpi2() but will return a negative angle
+    if it fits between -pi..0, positive between 0..pi.
+  * Adjusted fday_to_hms() to accept the seconds parameter as double
+    instead of int.
+  * Added r_to_fday(), r_to_hms(), fday_to_r() and hms_to_r().
+  * Changed several functions that requested an out structure variable, so
+    that they simply returned the structure type by value.  (It just seems
+    simpler to use this way, and it's unlikely to be more than a trivial  
+    efficiency issue.)
+  * Changed elliptical_orbit_rectangular() so that it requests the solar
+    radius of a body instead of calculating and returning it.
+  * Added get_r_sun() to calculate the solar radius of a body.
+  * Added populate_orbital_elements() for populated an orbital_elements
+    structure in a managed way.
+
+
+
+Modified: trunk/ChangeLog
+===================================================================
+--- trunk/ChangeLog	2005-12-25 02:43:38 UTC (rev 190)
++++ trunk/ChangeLog	2006-01-05 08:27:10 UTC (rev 191)
+@@ -1,3 +1,37 @@
++ephemeritis (0.4.5 unreleased)
++  [ Mike McGavin ]
++  * Added aberration.c for code that calculates aberration adjustments.
++  * Renamed obliquity() to obliquity_low(), to emphasise that it's
++    relatively low accuracy.
++  * Added a collection of unit testing for chapter 23 in Meeus, which
++    collects various operations necessary for the apparent place of a
++    star.
++  * Added unit tests to validate_meeus for elliptical orbit calculation,
++    based on figures made available by the International Bureau of
++    Astronomical Telegrammes.  (Note: It's still out by about 100 or so
++    arc-seconds in RA and Dec, possibly due to the Sun's VSOP position not
++    being calculated correctly.
++  * Adjusted several places, such as nutation code, where constants were
++    being calculated on every call to a function even though they were going
++    to be the same every time.  They're now declared as static variables and
++    only initialised the first time the function's called.
++  * Added nut_in_ra_dec().
++  * Added ut_to_dt(), to simplify addition of dynamical difference to UT.
++  * Added circumpi(), similar to modpi2() but will return a negative angle
++    if it fits between -pi..0, positive between 0..pi.
++  * Adjusted fday_to_hms() to accept the seconds parameter as double
++    instead of int.
++  * Added r_to_fday(), r_to_hms(), fday_to_r() and hms_to_r().
++  * Changed several functions that requested an out structure variable, so
++    that they simply returned the structure type by value.  (It just seems
++    simpler to use this way, and it's unlikely to be more than a trivial
++    efficiency issue.)
++  * Changed elliptical_orbit_rectangular() so that it requests the solar
++    radius of a body instead of calculating and returning it.
++  * Added get_r_sun() to calculate the solar radius of a body.
++  * Added populate_orbital_elements() for populated an orbital_elements
++    structure in a managed way.
++
+ ephemeritis (0.4.4)
+   [ Mike McGavin ]
+   * Ran all code through 'indent -kr' to enforce Kerninghan &amp; Ritchie indentation.
+
+Modified: trunk/src/c/libephemeritis/Makefile.am
+===================================================================
+--- trunk/src/c/libephemeritis/Makefile.am	2005-12-25 02:43:38 UTC (rev 190)
++++ trunk/src/c/libephemeritis/Makefile.am	2006-01-05 08:27:10 UTC (rev 191)
+@@ -5,6 +5,7 @@
+ lib_LTLIBRARIES = libephemeritis.la
+ 
+ libephemeritis_la_SOURCES = \
++	aberration.c \
+ 	constants.c \
+ 	constellations.c \
+ 	conversions.c \
+
+Added: trunk/src/c/libephemeritis/aberration.c
+===================================================================
+--- trunk/src/c/libephemeritis/aberration.c	2005-12-25 02:43:38 UTC (rev 190)
++++ trunk/src/c/libephemeritis/aberration.c	2006-01-05 08:27:10 UTC (rev 191)
+@@ -0,0 +1,147 @@
++/* Copyright 2000, 2001, 2005, 2006 Mike McGavin
++
++This file is part of Ephemeritis.
++
++Ephemeritis is free software; you can redistribute it and/or modify
++it under the terms of the GNU General Public License as published by
++the Free Software Foundation; either version 2 of the License, or
++(at your option) any later version.
++
++Ephemeritis is distributed in the hope that it will be useful,
++but WITHOUT ANY WARRANTY; without even the implied warranty of
++MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++GNU General Public License for more details.
++
++You should have received a copy of the GNU General Public License
++along with Ephemeritis; if not, write to the Free Software
++Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
++*/
++
++/*! @file aberration.c
++ *
++ *  @brief Functions to calculate aberration values.
++ *
++ *  Reference: Jean Meeus, _Astronomical Algorithms_, second
++ *  edition, 1998, Willmann-Bell, Inc.
++ *
++ *  @todo Write code -- including ra/dec.
++ *  @todo Write documentation.
++ *  @todo Write unit tests.
++ *
++ *  @author Mike McGavin.
++ */
++
++#include &quot;ephemeritis.h&quot;
++#include &quot;config.h&quot;
++
++#include &lt;math.h&gt;
++
++
++
++
++static void _constants(double jd, double *e, double *p, double *K)
++{
++    double T = jd_to_jcent(jd);
++    /*
++(jd - 2451545.0) / 36525.0;
++*/
++    double e_terms[] = { 0.016708634, -0.000042037, -0.0000001267 };
++    double p_terms[] =
++	{ d_to_r(102.93735), d_to_r(1.71946), d_to_r(0.00046) };
++
++    *e = polynomial(e_terms, 3, T);
++    *p = polynomial(p_terms, 3, T);
++
++    *K = d_to_r(dms_to_d(0, 0, 20.49552));
++}
++
++
++/*! @brief Calculates adjustments in celestial longitude and latitude
++ *  due to annual aberration.
++ *
++ *  [Meeus 1998: 23.2]
++ *
++ *  This is not a rigorously exact formula, as it assumes that the
++ *  Earth's orbit is unperterbed, which isn't really correct.  For
++ *  rigorous calculation, work in RA/Dec and use aberration_in_ra_dec.
++ *
++ *  @param[in]  jd        The julian day, in dynamical time.
++ *  @param[in]  lon       The celestial longitude, in radians.
++ *  @param[in]  lat       The celestial latitude, in radians.
++ *  @param[in]  sol_lon   The true geometric longitude of the Sun.
++ *  @param[out] delta_lon The adjustment for longitude.
++ *  @param[out] delta_lat The adjustment for latitude.
++ *
++ *  @todo Unit tests.
++ *
++ *  @sa aberration_in_ra_dec_low
++ *  @sa aberration_in_ra_dec
++ */
++void aberration_in_lon_lat_low(double jd, double lon, double lat,
++			       double sol_lon, double *delta_lon,
++			       double *delta_lat)
++{
++    double e, p, K;
++    _constants(jd, &amp;e, &amp;p, &amp;K);
++    *delta_lon =
++	(((-K * cos(sol_lon - lon)) + (e * K * cos(p - lon))) / cos(lat));
++    *delta_lat = -K * sin(lat) * (sin(sol_lon - lon) - e * sin(p - lon));
++}
++
++/*! @brief Calculates adjustments in right ascension and declination
++ *  due to annual aberration.
++ *
++ *  [Meeus 1998: 23.3]
++ *
++ *  This is not a rigorously exact formula, as it assumes that the
++ *  Earth's orbit is unperterbed, which isn't really correct.  For
++ *  rigorous calculation, work in RA/Dec and use aberration_in_ra_dec.
++ *
++ *  @param[in]  jd        The julian day, in dynamical time.
++ *  @param[in]  ra        The celestial longitude, in radians.
++ *  @param[in]  dec       The celestial latitude, in radians.
++ *  @param[in]  obl       The obliquity of the ecliptic at the jd of calculation.
++ *  @param[in]  sol_lon   The true geometric longitude of the Sun.
++ *  @param[out] delta_ra  The adjustment for longitude.
++ *  @param[out] delta_dec The adjustment for latitude.
++ *
++ *  @sa aberration_in_lat_lon_low
++ *  @sa aberration_in_ra_dec
++ */
++void aberration_in_ra_dec_low(double jd, double ra, double dec, double obl,
++			      double sol_lon, double *delta_ra,
++			      double *delta_dec)
++{
++    double e, p, K;
++    _constants(jd, &amp;e, &amp;p, &amp;K);
++
++    double cosra = cos(ra);
++    double cossol_lon = cos(sol_lon);
++    double cosobl = cos(obl);
++    double sinra = sin(ra);
++    double sinsol_lon = sin(sol_lon);
++    double cosdec = cos(dec);
++    double cosp = cos(p);
++    double sinp = sin(p);
++    double tanobl = tan(obl);
++    double sindec = sin(dec);
++
++    double cosra_cosobl = cosra * cosobl;
++    double cosra_sindec = cosra * sindec;
++    double tanobl_cosdec__sinra_sindec = tanobl * cosdec - sinra * sindec;
++
++    *delta_ra =
++	-K * ((cosra_cosobl * cossol_lon + sinra * sinsol_lon) / cosdec)
++	+ e * K * (((cosra_cosobl * cosp) + (sinra * sinp)) / cosdec);
++
++    *delta_dec =
++	-K * ((cossol_lon * cosobl * tanobl_cosdec__sinra_sindec) +
++	      (cosra_sindec * sinsol_lon))
++	+ e * K * ((cosp * cosobl * tanobl_cosdec__sinra_sindec) +
++		   (cosra_sindec * sinp));
++}
++
++
++void aberration_in_ra_dec()
++{
++}
+
+Modified: trunk/src/c/libephemeritis/constellations.c
+===================================================================
+--- trunk/src/c/libephemeritis/constellations.c	2005-12-25 02:43:38 UTC (rev 190)
++++ trunk/src/c/libephemeritis/constellations.c	2006-01-05 08:27:10 UTC (rev 191)
+@@ -537,7 +537,7 @@
+  *  @return          The index of the list at which the position has been found.
+  */
+ static int raw_scan_boundaries(const constellation_boundary * list,
+-			const double ra, const double dec)
++			       const double ra, const double dec)
+ {
+     /* Scan through the list until NoConstellation is encountered, or
+      * the constellation is found.  The former should never happen with
+
+Modified: trunk/src/c/libephemeritis/conversions.c
+===================================================================
+--- trunk/src/c/libephemeritis/conversions.c	2005-12-25 02:43:38 UTC (rev 190)
++++ trunk/src/c/libephemeritis/conversions.c	2006-01-05 08:27:10 UTC (rev 191)
+@@ -20,6 +20,7 @@
+ /*! @file conversions.c
+  *
+  *  @brief Collection of functions for performing conversions.
++ *
+  */
+ 
+ #include &quot;ephemeritis.h&quot;
+@@ -89,6 +90,7 @@
+  *  @return       b - a, in radians.
+  *
+  *  @sa modpi2
++ *  @sa circumpi
+  */
+ double diff_angle(double a, double b)
+ {
+@@ -135,7 +137,7 @@
+  *  @param[out] ra         Right ascension, in radians.
+  *  @param[out] dec        Declination, in radians.
+  *
+- *  @sa obliquity + nut_in_obl for calculating true obliquity.
++ *  @sa obliquity_hi + nut_in_obl for calculating true obliquity.
+  */
+ void ecl_to_equ(double longitude, double latitude, double obliquity,
+ 		double *ra, double *dec)
+@@ -214,7 +216,7 @@
+  *  @param[out] longitude Ecliptic longitude, in radians.
+  *  @param[out] latitude  Ecliptic latitude, in radians.
+  *
+- *  @sa nutation::obliquity + nutation::nut_in_obl for calculating true obliquity.
++ *  @sa obliquity_hi + nut_in_obl for calculating true obliquity.
+  */
+ void equ_to_ecl(double ra, double dec, double obliquity, double *longitude,
+ 		double *latitude)
+@@ -235,14 +237,23 @@
+  *  @param[out] min  Minute (0..59).
+  *  @param[out] sec  Second (0..59).
+  */
+-void fday_to_hms(double day, int *hour, int *min, int *sec)
++void fday_to_hms(double day, int *hour, int *min, double *sec)
+ {
++  /*
+     const long tsec = (long) (day * seconds_per_day);
+     const int tmin = tsec / 60;
+     const int thour = tmin / 60;
+     *hour = thour % 24;
+     *min = tmin % 60;
+     *sec = tsec % 60;
++    */
++
++    double tsec = day * seconds_per_day;
++    *hour = (int) (tsec / 3600.0);
++    tsec -= (*hour) * 3600.0;
++    *min = (int) (tsec / 60.0);
++    tsec -= (*min) * 60.0;
++    *sec = tsec;
+ }
+ 
+ /*! @brief Converts hours-minutes-seconds into a fractional day 0.0..1.0.
+@@ -260,18 +271,60 @@
+ }
+ 
+ /*! @brief Converts fractional day to radians.
+- * 
++ *
+  *  @param[in]  fday A fractional day, 0..24.
+- * 
++ *
+  *  @return          The angle in radians.
+- * 
++ *
+  *  @author Mike McGavin.
+  */
+-double fday_to_r(double fday)
++double fday_to_r(const double fday)
+ {
+     return modpi2(fday * 2 * pi);
+ }
+ 
++
++/*! @brief Converts radians to fractional day.
++ *
++ *  @param[in]  r    The angle in radians.
++ *
++ *  @@return         A fractional day, 0..24.
++ *
++ *  @author Mike McGavin.
++ */
++double r_to_fday(const double r)
++{
++    return modpi2(r) / (2 * pi);
++}
++
++/*! @brief Converts radians to hours-minutes-seconds.
++ *
++ *  @param[in]   r   The angle in radians.
++ *  @param[out]  hr  Hours, 0..23.
++ *  @param[out]  mn  Minutes, 0..59.
++ *  @param[out]  sec Seconds, 0..59.
++ *
++ *  @author Mike McGavin.
++ */
++void r_to_hms(const double r, int *hr, int *mn, double *sec)
++{
++    return fday_to_hms(r_to_fday(r), hr, mn, sec);
++}
++
++
++/*! @brief Converts hours-minutes-seconds into radians.
++ *
++ *  @param[in]  hr  Hours, 0..23.
++ *  @param[in]  mn  Minutes, 0..59.
++ *  @param[in]  sec Seconds, 0..59.
++ *
++ *  @return         The angle in radians.
++ */
++double hms_to_r(const int hr, const int mn, const double sec)
++{
++    return fday_to_r(hms_to_fday(hr, mn, sec));
++}
++
+ /*! @brief Reduces an angle in radians to the range 0..2pi.
+  *
+  *  @param[in]  x  An angle, in radians.
+@@ -279,6 +332,7 @@
+  *  @return        An angle in radians, in the range 0..2pi.
+  *
+  *  @sa diff_angle
++ *  @sa circumpi
+  */
+ double modpi2(double x)
+ {
+@@ -289,6 +343,23 @@
+     return x;
+ }
+ 
++/*! @brief Reduces an angle in radians to the range -pi..pi.  Useful
++ *  for declination, latitude, etc.
++ *
++ *  @param[in]  x  An angle, in radians.
++ *
++ *  @return        An angle in radians, in the range -pi..pi.
++ *
++ *  @sa modpi2
++ *
++ *  @author Mike McGavin.
++ */
++double circumpi(double x)
++{
++  x = modpi2(x);
++  return x &gt; pi ? x - 2*pi : x;
++}
++
+ /*! @brief Converts radians to degrees.
+  *
+  *  @param[in]  r  Radians.
+
+Modified: trunk/src/c/libephemeritis/dynamical.c
+===================================================================
+--- trunk/src/c/libephemeritis/dynamical.c	2005-12-25 02:43:38 UTC (rev 190)
++++ trunk/src/c/libephemeritis/dynamical.c	2006-01-05 08:27:10 UTC (rev 191)
+@@ -22,10 +22,18 @@
+  *  @brief Functions which calculate the deltaT correction to convert
+  *  between dynamical and universal time.
+  *
++ *  The rotation speed of the Earth is slowing down over time, meaning
++ *  that the day-to-day terrestrial time scale isn't uniform.  This
++ *  isn't acceptable for celestial calculations, which require a
++ *  uniform and predictable time scale to work with.  These functions
++ *  allow for terrestrial-based Universal time, which is based on the
++ *  rotation of the Earth, to be converted to the uniform Dynamical
++ *  Time.
++ *
+  *  Reference: Jean Meeus, _Astronomical Algorithms_, second
+  *  edition, 1998, Willmann-Bell, Inc.
+  *
+- *  @author William McClain
++ *  @author William McClain, Mike McGavin.
+  */
+ 
+ #include &quot;ephemeritis.h&quot;
+@@ -255,12 +263,18 @@
+ 
+ 
+ 
+-/*! @brief Returns deltaT as seconds of time. 
++/*! @brief Returns the number of seconds difference between Universal
++ *  Time and Dynamical Time.
+  *
+- *  For a historical range from 1620 to a recent year, we
+- *  interpolate from a table of observed values. Outside that *
+- *  range we use formulae.
++ *  For a historical range from 1620 to a recent year, the value is
++ *  taken by interpolating from a table of observed values.  Outside
++ *  that range, formulae are used.  Given Universal Time
++ *  (Earth-rotational-centric and therefore not uniform), the deltaT
++ *  value returned by this function should be added in order to
++ *  generate Dynamical Time, which is uniform.
+  *
++ *  [Meeus-1998: equations 10.1 and  10.2]
++ *
+  *  @param[in] jd     Julian Day number.
+  *
+  *  @return           deltaT in seconds.
+@@ -396,3 +410,15 @@
+ {
+     return jd - (deltaT_seconds(jd) / seconds_per_day);
+ }
++
++
++/*! @brief Convert Julian Day from Universal Time to Dynamical Time.
++ *
++ *  @param[in] jd     Julian Day number (universal time).
++ *
++ *  @return           Julian Day number (dynamical time).
++ */
++double ut_to_dt(double jd)
++{
++    return jd + (deltaT_seconds(jd) / seconds_per_day);
++}
+
+Modified: trunk/src/c/libephemeritis/elliptical.c
+===================================================================
+--- trunk/src/c/libephemeritis/elliptical.c	2005-12-25 02:43:38 UTC (rev 190)
++++ trunk/src/c/libephemeritis/elliptical.c	2006-01-05 08:27:10 UTC (rev 191)
+@@ -26,7 +26,10 @@
+  *  _Astronomical Algorithms_, second edition, 1998, Willmann-Bell,
+  *  Inc.
+  *
+- *  @todo Check that modpi2() is used in all the appropriate places.
++ *  @todo Check that modpi2() is used in all the appropriate places,
++ *  when radian values are returned.  (Be careful about declination
++ *  and similar values, though, since it's sometimes more useful to
++ *  have -90 degrees than +270 degrees.)
+  *
+  *  @author Mike McGavin
+  */
+@@ -50,7 +53,7 @@
+  *                                seriously tested from any other planets.
+  *  @param[in]  targetPlanet      The planet for which the position should be calculated.
+  *  @param[in]  (*heliocentic_f)  A function to calculate three heliocentric dimensions, returning the results in fk5 coordinates.
+- *  @param[in]  deltaPsi  Nutation in longitude, in radians.
++ *  @param[in]  n_in_l    Nutation in longitude, in radians.
+  *  @param[in]  epsilon   True obliquity (corrected for nutation), in radians.
+  *  @param[in]  delta     Desired accuracy, in days.
+  *
+@@ -58,12 +61,18 @@
+  *  @param[out] dec       Declination, in radians.
+  *
+  *  @returns             Returns  0 if successful.
+- *                       Returns -1 if bailing out as calculated angle was invalid for some reason.
++ *                       Returns -1 if bailing out as desired accuracy was unreachable within a preset number of iterations.
+  *
+  *  @sa deltaT_seconds for calculating %dynamical time offset.
+  *  @sa nut_in_lon for calculating %nutation in longitude.
+- *  @sa (obliquity or obliquity_hi) + nut_in_obl for calculating true obliquity.
++ *  @sa (obliquity_low or obliquity_hi) + nut_in_obl for calculating true obliquity.
+  *
++ *  @todo Check if this code actually &lt;em&gt;does&lt;/em&gt; take aberration
++ *  into account.  The original description says it does, but it
++ *  doesn't seem to be apparent in the actual code.  I &lt;em&gt;think&lt;/em&gt;
++ *  the act of moving the Earth as well as moving the body accounts
++ *  for abberation, but am not entirely sure.
++ *
+  *  @todo Audit code and confirm that it's not breaking the algorithm
+  *  to move the fk5 conversion back into the vsop coordinate
+  *  calculations.  If it's a simple translation of coordinates (as I
+@@ -75,6 +84,8 @@
+  *  iteration and corrections for things really belong outside this
+  *  function, as happens in elliptical_orbit_ecliptical.
+  *
++ *  @todo Adjust parameters so that r_earth gets passed back too.
++ *
+  *  @author Bill McClain, Mike McGavin.
+  */
+ int geocentric_planet(double jd,
+@@ -82,7 +93,7 @@
+ 		      enum vPlanets targetPlanet,
+ 		      void (*heliocentic_f) (double, enum vPlanets,
+ 					     double *, double *, double *),
+-		      double deltaPsi, double epsilon, double delta,
++		      double n_in_l, double epsilon, double delta,
+ 		      double *ra, double *dec)
+ {
+     double t = jd;
+@@ -121,7 +132,8 @@
+ 	/* At this point, l and b respectively represent the
+ 	   geocentric longitude and geocentric latitude, but it hasn't
+ 	   been adjusted for the time it takes for light to travel to
+-	   Earth, or for aberration. */
++	   Earth (if it's the first loop iteration), or for
++	   aberration. */
+ 
+ 	/* Distance to planet in AU. */
+ 	const double dist = sqrt(x2 + y2 + z * z);
+@@ -153,10 +165,10 @@
+      */
+ 
+     /* Nutation in longitude. */
+-    l += deltaPsi;
++    l += n_in_l;
+ 
+     /* Equatorial coordinates. */
+-    ecl_to_equ(l, b, epsilon, &amp;(*ra), &amp;(*dec));
++    ecl_to_equ(l, b, epsilon, ra, dec);
+ 
+     /* Return success. */
+     return 0;
+@@ -334,26 +346,23 @@
+  *  @param[in]  iterations Iterations of calculation to use (for accuracy).
+  *                         33 iterations should be sufficient for 10 digit
+  *                         accuracy, 53 for 16 digit accuracy.
+- *  @param[out] ec  The calculated constants for the provided orbital elements.
+  *
+- *  @return A pointer to the ec structure that was passed in.  This
+- *  return value is for convenience only.
++ *  @return The calculated constants for the provided orbital elements.
+  *
+  *  @sa elliptical_orbit_rectangular
+  *
+  *  @author Mike McGavin.
+  */
+-element_constants *get_element_constants(const double obl,
+-					 const orbital_elements * elements,
+-					 const int iterations,
+-					 element_constants * ec)
++element_constants get_element_constants(const double obl,
++					const orbital_elements elements,
++					const int iterations)
+ {
+-    double cosL = cos(elements-&gt;L);
+-    double sinL = sin(elements-&gt;L);
++    double cosL = cos(elements.L);
++    double sinL = sin(elements.L);
+     double cosO = cos(obl);
+     double sinO = sin(obl);
+-    double cosi = cos(elements-&gt;i);
+-    double sini = sin(elements-&gt;i);
++    double cosi = cos(elements.i);
++    double sini = sin(elements.i);
+ 
+     double F = cosL;
+     double G = sinL * cosO;
+@@ -364,20 +373,22 @@
+ 
+     /* Note that at this point, F^2 + G^2 + H^2 should == 1, and P^2 + Q^2 + R^2 == 1. */
+ 
+-    ec-&gt;_A = atan2(F, P);
+-    ec-&gt;_B = atan2(G, Q);
+-    ec-&gt;_C = atan2(H, R);
++    element_constants ec;
+ 
+-    ec-&gt;_a = sqrt(F * F + P * P);
+-    ec-&gt;_b = sqrt(G * G + Q * Q);
+-    ec-&gt;_c = sqrt(H * H + R * R);
++    ec._A = atan2(F, P);
++    ec._B = atan2(G, Q);
++    ec._C = atan2(H, R);
+ 
+-    ec-&gt;E = eccentricity_anomoly(elements-&gt;M, elements-&gt;e, iterations);
++    ec._a = sqrt(F * F + P * P);
++    ec._b = sqrt(G * G + Q * Q);
++    ec._c = sqrt(H * H + R * R);
+ 
+-    ec-&gt;w = elements-&gt;w;
+-    ec-&gt;M = elements-&gt;M;
+-    ec-&gt;a = elements-&gt;a;
+-    ec-&gt;e = elements-&gt;e;
++    ec.E = eccentricity_anomoly(elements.M, elements.e, iterations);
++
++    ec.w = elements.w;
++    ec.M = elements.M;
++    ec.a = elements.a;
++    ec.e = elements.e;
+     return ec;
+ }
+ 
+@@ -385,40 +396,43 @@
+ /*! @brief Calculates the rectangular coordinates of a body, and its
+  *  distance from the Sun, given appropriate orbital elements.
+  *
+-
+-
+  *  @param[in]  jd  The time at which to calculate the position, in dynamical time.
+-
+-
+  *  @param[in]  ec  The calculated constants that apply for the orbit
+  *                  being calculated.  Use get_element_constants to generate this
+  *                  data.
+-
+- *  @param[in]  obl The obliquity of the ecliptic for the epoch at which i, L and w are provided.
+- *  @param[in]  elements The known elements for the orbit to calculate.
+-
+- *  @param[out] rc  The rectangular coordinates of the body at the specified time.
+- *  @param[out] r_sun The calculated distance of the body from the Sun, in AU, at the specified time.
++ *  @param[in] r_sun The radius vector (distance to the Sun) in
++ *                   astronomical units.
+  *
+- *  @return A pointer to the rc structure that was passed in.  This
+- *  return value is for convenience only.
++ *  @return The rectangular coordinates of the body at the specified time.
+  *
+  *  @author Mike McGavin.
+  */
+-rec_coords *elliptical_orbit_rectangular(const element_constants * ec,
+-					 rec_coords * rc, double *r_sun)
++rec_coords elliptical_orbit_rectangular(const element_constants ec,
++					const double r_sun)
+ {
+-    double v = true_anomoly(ec-&gt;e, ec-&gt;E);
+-    double r = radius_vector(ec-&gt;a, ec-&gt;e, ec-&gt;E);
++    double v = true_anomoly(ec.e, ec.E);
+ 
+-    rc-&gt;x = r * ec-&gt;_a * sin(ec-&gt;_A + ec-&gt;w + v);
+-    rc-&gt;y = r * ec-&gt;_b * sin(ec-&gt;_B + ec-&gt;w + v);
+-    rc-&gt;z = r * ec-&gt;_c * sin(ec-&gt;_C + ec-&gt;w + v);
++    rec_coords rc;
++    rc.x = r_sun * ec._a * sin(ec._A + ec.w + v);
++    rc.y = r_sun * ec._b * sin(ec._B + ec.w + v);
++    rc.z = r_sun * ec._c * sin(ec._C + ec.w + v);
+ 
+-    *r_sun = r;
+     return rc;
+ }
+ 
++/*! @brief Returns the radius vector (distance between a body and the
++ *  Sun) given the body's set of element constants.
++ *
++ *  @param[in]  ec  The calculated constants that apply for the orbit
++ *                  being calculated.  Use get_element_constants to generate this
++ *                  data.
++ *
++ *  @return         The radius vector (distance to the Sun), in Astronomical Units.
++ */
++double get_r_sun(const element_constants ec)
++{
++  return radius_vector(ec.a, ec.e, ec.E);
++}
+ 
+ /*! @brief Helper function to calculate magnitude using an absolute
+  *  magnitude and cometary constant.
+@@ -503,27 +517,34 @@
+  *  @todo Adjust so that r_sun is calculated, or passed in more
+  *  elegantly.
+  *
++ *  @bug Generally seems to be out by amounts on the order of 100 or
++ *  so arc-seconds when using elements from the IBAT, and comparing
++ *  with IBAT's own result tables.  It's unclear whether this is due
++ *  to differences in calculation methods, incorrect adjustments after
++ *  the results are returned, or different interpretations as to
++ *  exactly what information is being provided.
++ *
+  *  @author Mike McGavin.
+  */
+-void elliptical_orbit_ecliptical(const rec_coords * sol,
+-				 const rec_coords * body,
++void elliptical_orbit_ecliptical(const rec_coords sol,
++				 const rec_coords body,
+ 				 const double r_sun,
+ 				 double *ra,
+ 				 double *dec,
+ 				 double *elongation,
+ 				 double *phase_angle, double *r_earth)
+ {
+-    double s = sol-&gt;x + body-&gt;x;
+-    double n = sol-&gt;y + body-&gt;y;
+-    double t = sol-&gt;z + body-&gt;z;
++    double s = sol.x + body.x;
++    double n = sol.y + body.y;
++    double t = sol.z + body.z;
+ 
+     double r_e = sqrt(s * s + n * n + t * t);
+     *r_earth = r_e;
+ 
+     *ra = modpi2(atan2(n, s));
+-    *dec = asin(t / *r_earth);
++    *dec = asin(t / r_e);
+ 
+-    double R = sqrt(sol-&gt;x * sol-&gt;x + sol-&gt;y * sol-&gt;y + sol-&gt;x * sol-&gt;x);
++    double R = sqrt(sol.x * sol.x + sol.y * sol.y + sol.z * sol.z);
+     *elongation =
+ 	acos((R * R + r_e * r_e - r_sun * r_sun) / (2 * R * r_e));
+     *phase_angle =
+@@ -531,31 +552,62 @@
+ }
+ 
+ 
+-/*
+-void elliptical_body_angles(const rec_coords * sol,
+-			    const element_mag_constants * emc,
+-			    double * elongation,
+-			    double * phase_angle)
++/*! @brief Provides a managed way to populate a set of orbital elements.
++ *
++ *  This function manages input regarding orbital elements, and
++ *  performs appropriate calculations where necessary to generate the
++ *  values to be placed in an orbital_elements struct.
++ *
++ *  @param[in] epoch   The epoch of the elements being provided.
++ *  @param[in] M_epoch The Mean Anomoly at the specified epoch.
++ *  @param[in] jd      The Julian Day for which orbital information is sought.
++ *  @param[in] n       Mean motion, in radians / day.  If this parameter is given as 0.0, it will be calculated as GGC/(a*sqrt(a)), where GGC is the Gaussian Gravitational Constant.
++ *  @param[in] a       The semimajor axis, in Astronomical Units.
++ *  @param[in] e       The orbital eccentricity.
++ *  @param[in] i       The inclination.
++ *  @param[in] w       The argument of perihelion.
++ *  @param[in] L       The longitude of the ascending node.
++ *  @param[in] mdt     The type of magnitude data being provided.
++ *  @param[in] g_or_H  The absolute magnitude (g) if mdt was given as abs_s, or the mean absolute visual magnitude (H) if mdt was given as iau_s.
++ *  @param[in] K_or_G  The magnitude constant (K) if mdt was given as abs_s, or the slope parameter (G) if mdt was given as iau_s.
++ *
++ *  @return A struct containing the compiled orbital elements for this body.
++ *
++ *  @todo Make the Gaussian Gravitational Constant a constant in constants.c.
++ *
++ *  @author Mike McGavin.
++ */
++orbital_elements populate_orbital_elements(const double epoch,
++					   const double M_epoch,
++					   const double jd,
++					   const double n,
++					   const double a,
++					   const double e,
++					   const double i,
++					   const double w,
++					   const double L,
++					   const magdatatype mdt,
++					   const double g_or_H,
++					   const double K_or_G)
+ {
+-  double x;
+-  double y;
+-  double z;
+-  double v = true_anomoly(emc-&gt;e, emc-&gt;E);
+-  double r = radius_vector(emc-&gt;a, emc-&gt;e, emc-&gt;E);
+-  double cosv = cos(v);
+-  double sinv = sin(v);
+-
+-  x = r * ((emc-&gt;Px * cosv) + (emc-&gt;Qx * sinv));
+-  y = r * ((emc-&gt;Py * cosv) + (emc-&gt;Qy * sinv));
+-  z = r * ((emc-&gt;Pz * cosv) + (emc-&gt;Qz * sinv));
+-
+-  double s = sol-&gt;x + x;
+-  double n = sol-&gt;y + y;
+-  double t = sol-&gt;z + z;
+-  double r_earth = sqrt(s * s + n * n + t * t);
+-  double R = sqrt(sol-&gt;x*sol-&gt;x + sol-&gt;y*sol-&gt;y + sol-&gt;x*sol-&gt;x);
+-
+-  *elongation = acos((R*R + r_earth*r_earth - r*r) / (2 * R * r_earth));
+-  *phase_angle = acos((r*r + r_earth*r_earth - R*R) / (2 * r * r_earth));
++    orbital_elements dest;
++    dest.a = a;
++    dest.e = e;
++    dest.i = i;
++    dest.w = w;
++    dest.L = L;
++    if(n != 0.0) {
++      dest.n = n;
++    } else {
++      dest.n = 0.9856076686 / (a * sqrt(a));
++    }
++    dest.M = M_epoch + (n * (jd - epoch));
++    if (abs_s == mdt) {
++	dest.magdata._abs.g = g_or_H;
++	dest.magdata._abs.K = K_or_G;
++    } else {
++	dest.magdata._iau.H = g_or_H;
++	dest.magdata._iau.G = K_or_G;
++    }
++    return dest;
+ }
+-*/
+
+Modified: trunk/src/c/libephemeritis/elp2000.c
+===================================================================
+--- trunk/src/c/libephemeritis/elp2000.c	2005-12-25 02:43:38 UTC (rev 190)
++++ trunk/src/c/libephemeritis/elp2000.c	2006-01-05 08:27:10 UTC (rev 191)
+@@ -195,19 +195,24 @@
+      */
+     const double _kL1[] =
+ 	{ d_to_r(218.3164477), d_to_r(481267.88123421), d_to_r(-0.0015786),
+-d_to_r(1.0 / 538841), d_to_r(-1.0 / 65194000) };
++	d_to_r(1.0 / 538841), d_to_r(-1.0 / 65194000)
++    };
+     const double _kD[] =
+ 	{ d_to_r(297.8501921), d_to_r(445267.1114034), d_to_r(-0.0018819),
+-d_to_r(1.0 / 545868), d_to_r(-1.0 / 113065000) };
++	d_to_r(1.0 / 545868), d_to_r(-1.0 / 113065000)
++    };
+     const double _kM[] =
+ 	{ d_to_r(357.5291092), d_to_r(35999.0502909), d_to_r(-0.0001536),
+-d_to_r(1.0 / 24490000) };
++	d_to_r(1.0 / 24490000)
++    };
+     const double _kM1[] =
+ 	{ d_to_r(134.9633964), d_to_r(477198.8675055), d_to_r(0.0087414),
+-d_to_r(1.0 / 69699), d_to_r(-1.0 / 14712000) };
++	d_to_r(1.0 / 69699), d_to_r(-1.0 / 14712000)
++    };
+     const double _kF[] =
+ 	{ d_to_r(93.2720950), d_to_r(483202.0175233), d_to_r(-0.0036539),
+-d_to_r(-1.0 / 3526000), d_to_r(1.0 / 863310000) };
++	d_to_r(-1.0 / 3526000), d_to_r(1.0 / 863310000)
++    };
+     const double _kA1[] = { d_to_r(119.75), d_to_r(131.849) };
+     const double _kA2[] = { d_to_r(53.09), d_to_r(479264.290) };
+     const double _kA3[] = { d_to_r(313.45), d_to_r(481266.484) };
+
+Modified: trunk/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- trunk/src/c/libephemeritis/ephemeritis.h	2005-12-25 02:43:38 UTC (rev 190)
++++ trunk/src/c/libephemeritis/ephemeritis.h	2006-01-05 08:27:10 UTC (rev 191)
+@@ -172,6 +172,7 @@
+ /* dynamical.c */
+ double deltaT_seconds(double jd);
+ double dt_to_ut(double jd);
++double ut_to_dt(double jd);
+ 
+ /* elp2000.c */
+ void elp_dimension3(double jd, double *longitude, double *latitude,
+@@ -188,7 +189,8 @@
+ /* nutation.c */
+ double nut_in_lon(double jd);
+ double nut_in_obl(double jd);
+-double obliquity(double jd);
++void nut_in_ra_dec(double ra, double dec, double obl, double n_in_l, double n_in_o, double *n_in_ra, double *n_in_dec);
++double obliquity_low(double jd);
+ double obliquity_hi(double jd);
+ 
+ /* precession.c */
+@@ -204,23 +206,18 @@
+     double p_rad;
+ } precession_elements_ecl;
+ 
+-precession_elements_eq
+-    * precession_get_elements_eq(const double JDinitial,
+-				 const double JDfinal,
+-				 precession_elements_eq * pceq);
++precession_elements_eq precession_get_elements_eq(const double JDinitial,
++						  const double JDfinal);
+ 
+-void precession_eq(const precession_elements_eq * pceq,
++void precession_eq(const precession_elements_eq pceq,
+ 		   const double raInitial,
+ 		   const double decInitial,
+ 		   double *raFinal, double *decFinal);
+ 
+-precession_elements_ecl *precession_get_elements_ecl(const double
+-						     JDinitial,
+-						     const double JDfinal,
+-						     precession_elements_ecl
+-						     * pcecl);
++precession_elements_ecl precession_get_elements_ecl(const double JDinitial,
++						     const double JDfinal);
+ 
+-void precession_ecl(const precession_elements_ecl * pcecl,
++void precession_ecl(const precession_elements_ecl pcecl,
+ 		    const double longInitial,
+ 		    const double latInitial,
+ 		    double *longFinal, double *latFinal);
+@@ -251,10 +248,14 @@
+ 		  double *H, double *decl);
+ void equ_to_ecl(double ra, double dec, double obliquity, double *longitude,
+ 		double *latitude);
+-void fday_to_hms(double day, int *hour, int *min, int *sec);
++void fday_to_hms(double day, int *hour, int *min, double *sec);
+ double hms_to_fday(int hr, int mn, double sec);
+-double fday_to_r(double fday);
++double fday_to_r(const double fday);
++double r_to_fday(const double r);
++void r_to_hms(const double r, int *hr, int *mn, double *sec);
++double hms_to_r(const int hr, const int mn, const double sec);
+ double modpi2(double x);
++double circumpi(double x);
+ double r_to_d(double r);
+ 
+ /* refraction.c */
+@@ -286,6 +287,15 @@
+ 
+ /* elliptical.c */
+ 
++/*! @brief The type of magnitude-calculation data provided for an orbital element.
++ *
++ *  @sa orbital_elements
++ */
++typedef enum {
++    abs_s,			/*! @brief  Calculation by the absolute magnitude and cometary constant system. */
++    iau_s			/*! @brief  Calculation using the mean absolute visual magnitude and slope parameter system, as adopted by Commission 20 of the IAU (New Delhi, Nov 1985). */
++} magdatatype;
++
+ /*! @brief Struct to contain orbital elements.
+  */
+ typedef struct {
+@@ -307,7 +317,7 @@
+      *  absolute visual magnitude and slope parameter system, as adopted
+      *  by Commission 20 of the IAU (New Delhi, Nov 1985).
+      */
+-    enum { abs_s, iau_s } magdatatype;
++    magdatatype mdt;
+     union {
+ 	struct {
+ 	    double g;		/*!&lt; @brief Absolute magnitude. */
+@@ -349,20 +359,20 @@
+ 		      enum vPlanets targetPlanet,
+ 		      void (*heliocentic_f) (double, enum vPlanets,
+ 					     double *, double *, double *),
+-		      double deltaPsi, double epsilon, double delta,
++		      double n_in_l, double epsilon, double delta,
+ 		      double *ra, double *dec);
+ 
+-element_constants *get_element_constants(const double obl,
+-					 const orbital_elements * elements,
+-					 const int iterations,
+-					 element_constants * ec);
++element_constants get_element_constants(const double obl,
++					const orbital_elements elements,
++					const int iterations);
++double get_r_sun(const element_constants ec);
+ 
+-rec_coords *elliptical_orbit_rectangular(const element_constants * ec,
+-					 rec_coords * rc, double *r_sun);
++rec_coords elliptical_orbit_rectangular(const element_constants ec,
++					const double r_sun);
+ 
+ double mean_anomoly(double jd, double T, double n);
+-void elliptical_orbit_ecliptical(const rec_coords * sol,
+-				 const rec_coords * body,
++void elliptical_orbit_ecliptical(const rec_coords sol,
++				 const rec_coords body,
+ 				 const double r_sun,
+ 				 double *ra,
+ 				 double *dec,
+@@ -375,6 +385,29 @@
+ double mag_iau(const double H, const double G, const double r_sun,
+ 	       const double r_earth, const double B);
+ 
++orbital_elements populate_orbital_elements(const double epoch,
++					   const double M_epoch,
++					   const double jd,
++					   const double n,
++					   const double a,
++					   const double e,
++					   const double i,
++					   const double w,
++					   const double L,
++					   const magdatatype mdt,
++					   const double g_or_H,
++					   const double K_or_G);
++
++/* aberration.c */
++void aberration_in_lon_lat_low(double jd, double lon, double lat,
++			       double sol_lon, double *delta_lon,
++			       double *delta_lat);
++void aberration_in_ra_dec_low(double jd, double ra, double dec, double obl,
++			      double sol_lon, double *delta_ra,
++			      double *delta_dec);
++
++
++
+ /* solar.c */
+ double sol_dimension_vsop(double jd, enum Coords dim);
+ void sol_dimension3_vsop(double jd, double *longitude, double *latitude,
+@@ -384,8 +417,7 @@
+ void longitude_radius_low(double jd, double *L, double *R);
+ double apparent_longitude_low(double jd, double L);
+ double aberration_low(double R);
+-rec_coords *sol_rectangular(double L, double B, double R, double E,
+-			    rec_coords * rc);
++rec_coords sol_rectangular(double L, double B, double R, double obl);
+ 
+ 
+ /* constellations.c */
+
+Modified: trunk/src/c/libephemeritis/equationoftime.c
+===================================================================
+--- trunk/src/c/libephemeritis/equationoftime.c	2005-12-25 02:43:38 UTC (rev 190)
++++ trunk/src/c/libephemeritis/equationoftime.c	2006-01-05 08:27:10 UTC (rev 191)
+@@ -44,29 +44,34 @@
+  *
+  *  @author Mike McGavin
+  */
+-double equation_of_time(const double jd) {
+-  double T = (jd - 2451545.0) / 365250.0;
+-  double _terms[] = {280.4664567, 360007.6982779, 0.03032028, 1.0 / 49931.0, 1.0 / 15300.0, 1.0 / 2000000.0};
+-  double L0 = modpi2(d_to_r(polynomial(_terms, 6, T)));
++double equation_of_time(const double jd)
++{
++    double T = (jd - 2451545.0) / 365250.0;
++    double _terms[] =
++	{ 280.4664567, 360007.6982779, 0.03032028, 1.0 / 49931.0,
++	1.0 / 15300.0, 1.0 / 2000000.0
++    };
++    double L0 = modpi2(d_to_r(polynomial(_terms, 6, T)));
+ 
+-  /* Solar longitude, latitude and radius. */
+-  double longitude;
+-  double latitude;
+-  double radius;
+-  sol_dimension3_vsop(jd, &amp;longitude, &amp;latitude, &amp;radius);
++    /* Solar longitude, latitude and radius. */
++    double longitude;
++    double latitude;
++    double radius;
++    sol_dimension3_vsop(jd, &amp;longitude, &amp;latitude, &amp;radius);
+ 
+-  double aberration = aberration_low(radius);
++    double aberration = aberration_low(radius);
+ 
+-  /* Correct the longitude for nutation and aberration. */
+-  longitude = longitude + nut_in_lon(jd) + aberration;
++    /* Correct the longitude for nutation and aberration. */
++    longitude = longitude + nut_in_lon(jd) + aberration;
+ 
+-  /* Solar ra and dec. */
+-  double obl = obliquity_hi(jd) + nut_in_obl(jd);
+-  double ra;
+-  double dec;
+-  ecl_to_equ(longitude, latitude, obl, &amp;ra, &amp;dec);
++    /* Solar ra and dec. */
++    double obl = obliquity_hi(jd) + nut_in_obl(jd);
++    double ra;
++    double dec;
++    ecl_to_equ(longitude, latitude, obl, &amp;ra, &amp;dec);
+ 
+-  /* Do the final calculation, and return it. */
+-  double E = L0 - d_to_r(0.0057183) - ra + nut_in_lon(jd) * cos(d_to_r(obl));
+-  return E;
++    /* Do the final calculation, and return it. */
++    double E =
++	L0 - d_to_r(0.0057183) - ra + nut_in_lon(jd) * cos(d_to_r(obl));
++    return E;
+ }
+
+Modified: trunk/src/c/libephemeritis/nutation.c
+===================================================================
+--- trunk/src/c/libephemeritis/nutation.c	2005-12-25 02:43:38 UTC (rev 190)
++++ trunk/src/c/libephemeritis/nutation.c	2006-01-05 08:27:10 UTC (rev 191)
+@@ -171,7 +171,7 @@
+     {2, 0, 1, -2, 0, -1, 0, 0, 0},	/* 103 */
+     {2, 0, 2, 0, 0, 1, 0, 0, 0},	/* 104 */
+     {4, 0, 0, 2, 2, -1, 0, 0, 0},	/* 105 */
+-    {1, 1, 0, 0, 0, 1, 0, 0, 0}	        /* 106 */
++    {1, 1, 0, 0, 0, 1, 0, 0, 0}	/* 106 */
+ };
+ 
+ void _constants(double T, double *D, double *M, double *M1, double *F,
+@@ -183,23 +183,43 @@
+      * Constant terms.
+      */
+ 
+-    /* These should really be static, but it was lost during the port to C.  Should be fixed later. */
+-    const double _kD[] =
+-	{ d_to_r(297.85036), d_to_r(445267.111480), d_to_r(-0.0019142),
+-d_to_r(1.0 / 189474) };
+-    const double _kM[] =
+-	{ d_to_r(357.52772), d_to_r(35999.050340), d_to_r(-0.0001603),
+-d_to_r(-1.0 / 300000) };
+-    const double _kM1[] =
+-	{ d_to_r(134.96298), d_to_r(477198.867398), d_to_r(0.0086972),
+-d_to_r(1.0 / 56250) };
+-    const double _kF[] =
+-	{ d_to_r(93.27191), d_to_r(483202.017538), d_to_r(-0.0036825),
+-d_to_r(1.0 / 327270) };
+-    const double _ko[] =
+-	{ d_to_r(125.04452), d_to_r(-1934.136261), d_to_r(0.0020708),
+-d_to_r(1.0 / 450000) };
++    /* Initialise the arrays if this is the first time the function's been called. */
++    static bool initialised = false;
++    static double _kD[4];
++    static double _kM[4];
++    static double _kM1[4];
++    static double _kF[4];
++    static double _ko[4];
+ 
++    if (!initialised) {
++	initialised = true;
++
++	_kD[0] = d_to_r(297.85036);
++	_kD[1] = d_to_r(445267.111480);
++	_kD[2] = d_to_r(-0.0019142);
++	_kD[3] = d_to_r(1.0 / 189474);
++
++	_kM[0] = d_to_r(357.52772);
++	_kM[1] = d_to_r(35999.050340);
++	_kM[2] = d_to_r(-0.0001603);
++	_kM[3] = d_to_r(-1.0 / 300000);
++
++	_kM1[0] = d_to_r(134.96298);
++	_kM1[1] = d_to_r(477198.867398);
++	_kM1[2] = d_to_r(0.0086972);
++	_kM1[3] = d_to_r(1.0 / 56250);
++
++	_kF[0] = d_to_r(93.27191);
++	_kF[1] = d_to_r(483202.017538);
++	_kF[2] = d_to_r(-0.0036825);
++	_kF[3] = d_to_r(1.0 / 327270);
++
++	_ko[0] = d_to_r(125.04452);
++	_ko[1] = d_to_r(-1934.136261);
++	_ko[2] = d_to_r(0.0020708);
++	_ko[3] = d_to_r(1.0 / 450000);
++    }
++
+     *D = modpi2(polynomial(_kD, 4, T));
+     *M = modpi2(polynomial(_kM, 4, T));
+     *M1 = modpi2(polynomial(_kM1, 4, T));
+@@ -279,6 +299,38 @@
+     return deltaEps;
+ }
+ 
++/*! @brief Calculates first order adjustments for nutation in RA and
++ *  Dec, given the corresponding nutation in Longitude and Obliquity.
++ *
++ *  [Meeus 1998: equation 23.1]
++ *
++ *  @param[in]  ra       The starting right ascension, in radians.
++ *  @param[in]  dec      The starting declination, in radians.
++ *  @param[in]  obl      The obliquity of the ecliptic, in radians.
++ *  @param[in]  n_in_l   The nutation in longitude, in radians.
++ *  @param[in]  n_in_o   The nutation in obliquity, in radians.
++ *  @param[out] n_in_ra  The nutation in right ascension, in radians.
++ *  @param[out] n_in_dec The nutation in declination, in radians.
++ *
++ *  @warning This function isn't very reliable if the coordinates are
++ *  near the celestial poles.  If this is the case, it's best to work
++ *  in ecliptical coordinates, and then convert back to equatorial
++ *  coordinates afterwards.
++ *
++ *  @todo Figure out if the obliquity is supposed to be true
++ *  obliquity, or mean obliquity.  Meeus' book isn't clear, but the
++ *  presence of nutation in obliquity given separately suggests that
++ *  it's only mean obliquity.
++ *
++ *  @author Mike McGavin.
++ */
++void nut_in_ra_dec(double ra, double dec, double obl, double n_in_l, double n_in_o, double *n_in_ra, double *n_in_dec)
++{
++  *n_in_ra = (cos(obl) + (sin(obl) * sin(ra) * tan(dec))) * n_in_l - (cos(ra) * tan(dec) * n_in_o);
++  *n_in_dec = (sin(obl) * cos(ra) * n_in_l) + (sin(ra) * n_in_o);
++}
++
++
+ /*! @brief Returns the mean obliquity of the ecliptic.
+  *
+  *  Low precision, but good enough for most uses. [Meeus-1998:
+@@ -291,24 +343,24 @@
+  *
+  *  @sa dynamical::deltaT_seconds for calculating %dynamical time offset.
+  *
+- *  @todo Fix values that should be static, but haven't been since the C port.
+  *  @todo Consider removing this function in favour of the hi accuracy one below.
+  */
+-double obliquity(double jd)
++double obliquity_low(double jd)
+ {
+     /*
+      * Constant terms:
+      */
+ 
+-    /* The following should be static, but that was removed from the C
+-       port (hopefully temporary) because it can't be done at compile
+-       time. */
+-    const double _el0[] = {
+-	d_to_r(dms_to_d(23, 26, 21.448)),
+-	d_to_r(dms_to_d(0, 0, -46.8150)),
+-	d_to_r(dms_to_d(0, 0, -0.00059)),
+-	d_to_r(dms_to_d(0, 0, 0.001813))
+-    };
++    /* Initialise the array on the first call. */
++    static double _el0[4];
++    static bool initialised = false;
++    if (!initialised) {
++	initialised = true;
++	_el0[0] = d_to_r(dms_to_d(23, 26, 21.448));
++	_el0[1] = d_to_r(dms_to_d(0, 0, -46.8150));
++	_el0[2] = d_to_r(dms_to_d(0, 0, -0.00059));
++	_el0[3] = d_to_r(dms_to_d(0, 0, 0.001813));
++    }
+ 
+     const double T = jd_to_jcent(jd);
+     return polynomial(_el0, sizeof(_el0) / sizeof(*_el0), T);
+@@ -324,9 +376,7 @@
+  *
+  *  @return        Obliquity, in radians.
+  *
+- *  @sa dynamical::deltaT_seconds for calculating %dynamical time offset.
+- *
+- *  @todo Fix values that should be static, but haven't been since the C port.
++ *  @sa deltaT_seconds for calculating %dynamical time offset.
+  */
+ double obliquity_hi(double jd)
+ {
+@@ -334,24 +384,24 @@
+      * Constant terms:
+      */
+ 
+-    /* The following should be static, but that was removed from the C
+-       port (hopefully temporary) because it can't be done at compile
+-       time.
+-     */
+-    const double _el1[] = {
+-	d_to_r(dms_to_d(23, 26, 21.448)),
+-	d_to_r(dms_to_d(0, 0, -4680.93)),
+-	d_to_r(dms_to_d(0, 0, -1.55)),
+-	d_to_r(dms_to_d(0, 0, 1999.25)),
+-	d_to_r(dms_to_d(0, 0, -51.38)),
+-	d_to_r(dms_to_d(0, 0, -249.67)),
+-	d_to_r(dms_to_d(0, 0, -39.05)),
+-	d_to_r(dms_to_d(0, 0, 7.12)),
+-	d_to_r(dms_to_d(0, 0, 27.87)),
+-	d_to_r(dms_to_d(0, 0, 5.79)),
+-	d_to_r(dms_to_d(0, 0, 2.45))
+-    };
++    /* Initialise the array on the first call. */
++    static double _el1[11];
++    static bool initialised = false;
++    if (!initialised) {
++	_el1[0] = d_to_r(dms_to_d(23, 26, 21.448));
++	_el1[1] = d_to_r(dms_to_d(0, 0, -4680.93));
++	_el1[2] = d_to_r(dms_to_d(0, 0, -1.55));
++	_el1[3] = d_to_r(dms_to_d(0, 0, 1999.25));
++	_el1[4] = d_to_r(dms_to_d(0, 0, -51.38));
++	_el1[5] = d_to_r(dms_to_d(0, 0, -249.67));
++	_el1[6] = d_to_r(dms_to_d(0, 0, -39.05));
++	_el1[7] = d_to_r(dms_to_d(0, 0, 7.12));
++	_el1[8] = d_to_r(dms_to_d(0, 0, 27.87));
++	_el1[9] = d_to_r(dms_to_d(0, 0, 5.79));
++	_el1[10] = d_to_r(dms_to_d(0, 0, 2.45));
++    }
+ 
++
+     const double U = jd_to_jcent(jd) / 100;
+     return polynomial(_el1, sizeof(_el1) / sizeof(*_el1), U);
+ }
+
+Modified: trunk/src/c/libephemeritis/precession.c
+===================================================================
+--- trunk/src/c/libephemeritis/precession.c	2005-12-25 02:43:38 UTC (rev 190)
++++ trunk/src/c/libephemeritis/precession.c	2006-01-05 08:27:10 UTC (rev 191)
+@@ -56,20 +56,16 @@
+  *
+  *  @param[in]  JDinitial  The initial Julian Day, in dynamical time.
+  *  @param[in]  JDfinal    The final Julian Day, in dynamical time.
+- *  @param[out] pceq       A struct to hold the calculated elements, to
+- *                         be passed to the precession routine.
+  *
+- *  @return A pointer to the precession elements that was passed
+- *  (returned for convenience purposes).
++ *  @return A struct to hold the calculated elements, to be passed to
++ *  the precession routine.
+  *
+  *  @see precession_eq, precession_elements_ecl
+  *
+  *  @author Mike McGavin.
+  */
+-precession_elements_eq *precession_get_elements_eq(const double JDinitial,
+-						   const double JDfinal,
+-						   precession_elements_eq *
+-						   pceq)
++precession_elements_eq precession_get_elements_eq(const double JDinitial,
++						  const double JDfinal)
+ {
+ 
+     double T = (JDinitial - 2451545.0) / 36525.0;
+@@ -80,25 +76,29 @@
+     double data2[] = { 0.30188, -0.000344 };
+     double data3[] =
+ 	{ 0.0, polynomial(data1, 3, T), polynomial(data2, 2, T),
+-0.017998 };
++	0.017998
++    };
+     double zeta = polynomial(data3, 4, t);
+ 
+     double data4[] = { 1.09468, 0.000066 };
+     double data5[] =
+ 	{ 0.0, polynomial(data1, 3, T), polynomial(data4, 2, T),
+-0.018203 };
++	0.018203
++    };
+     double z = polynomial(data5, 4, t);
+ 
+     double data6[] = { 2004.3109, -0.85330, -0.000217 };
+     double data7[] = { 0.42665, 0.000217 };
+     double data8[] =
+ 	{ 0.0, polynomial(data6, 3, T), -1 * polynomial(data7, 2, T),
+-0.041833 };
++	0.041833
++    };
+     double theta = polynomial(data8, 4, t);
+ 
+-    pceq-&gt;zeta_rad = modpi2((zeta * 2 * pi) / (3600.0 * 360.0));
+-    pceq-&gt;z_rad = modpi2((z * 2 * pi) / (3600.0 * 360.0));
+-    pceq-&gt;theta_rad = modpi2((theta * 2 * pi) / (3600.0 * 360.0));
++    precession_elements_eq pceq;
++    pceq.zeta_rad = modpi2((zeta * 2 * pi) / (3600.0 * 360.0));
++    pceq.z_rad = modpi2((z * 2 * pi) / (3600.0 * 360.0));
++    pceq.theta_rad = modpi2((theta * 2 * pi) / (3600.0 * 360.0));
+     return pceq;
+ }
+ 
+@@ -123,23 +123,23 @@
+  *
+  *  @author Mike McGavin.
+  */
+-void precession_eq(const precession_elements_eq * pceq,
++void precession_eq(const precession_elements_eq pceq,
+ 		   const double raInitial,
+ 		   const double decInitial,
+ 		   double *raFinal, double *decFinal)
+ {
+-    double A = cos(decInitial) * sin(raInitial + pceq-&gt;zeta_rad);
++    double A = cos(decInitial) * sin(raInitial + pceq.zeta_rad);
+     double B =
+-	cos(pceq-&gt;theta_rad) * cos(decInitial) * cos(raInitial +
+-						     pceq-&gt;zeta_rad) -
+-	sin(pceq-&gt;theta_rad) * sin(decInitial);
++	cos(pceq.theta_rad) * cos(decInitial) * cos(raInitial +
++						    pceq.zeta_rad) -
++	sin(pceq.theta_rad) * sin(decInitial);
+     double C =
+-	sin(pceq-&gt;theta_rad) * cos(decInitial) * cos(raInitial +
+-						     pceq-&gt;zeta_rad) +
+-	cos(pceq-&gt;theta_rad) * sin(decInitial);
++	sin(pceq.theta_rad) * cos(decInitial) * cos(raInitial +
++						     pceq.zeta_rad) +
++	cos(pceq.theta_rad) * sin(decInitial);
+ 
+-    *raFinal = modpi2(atan2(A, B) + pceq-&gt;z_rad);
+-    *decFinal = modpi2(asin(C));
++    *raFinal = modpi2(atan2(A, B) + pceq.z_rad);
++    *decFinal = circumpi(asin(C));
+ }
+ 
+ /*! @brief Calculates certain values related to the precession
+@@ -159,21 +159,17 @@
+  *
+  *  @param[in]  JDinitial  The initial Julian Day, in dynamical time.
+  *  @param[in]  JDfinal    The final Julian Day, in dynamical time.
+- *  @param[out] pcecl      A struct to hold the calculated elements, to
+- *                         be passed to the precession routine.
+  *
+- *  @return A pointer to the precession elements that was passed
+- *  (returned for convenience purposes).
++ *  @return A struct to hold the calculated elements, to be passed to
++ *  the precession routine.
+  *
+  *  @see precession_ecl, precession_elements_eq
+  *
+  *  @author Mike McGavin.
+  */
+-precession_elements_ecl *precession_get_elements_ecl(const double
+-						     JDinitial,
+-						     const double JDfinal,
+-						     precession_elements_ecl
+-						     * pcecl)
++precession_elements_ecl precession_get_elements_ecl(const double
++						    JDinitial,
++						    const double JDfinal)
+ {
+ 
+     double T = (JDinitial - 2451545.0) / 36525.0;
+@@ -184,7 +180,8 @@
+     double data2[] = { -0.03302, 0.000598 };
+     double data3[] =
+ 	{ 0.0, polynomial(data1, 3, T), polynomial(data2, 2, T),
+-0.000060 };
++	0.000060
++    };
+     double n = polynomial(data3, 4, t);
+ 
+     double data4[] = { 174.876384 * 60.0 * 60.0, 3289.4789, 0.60622 };
+@@ -197,12 +194,14 @@
+     double data8[] = { 1.11113, 0.000042 };
+     double data9[] =
+ 	{ 0.0, polynomial(data7, 3, T), polynomial(data8, 2, T),
+--0.000006 };
++	-0.000006
++    };
+     double p = polynomial(data9, 4, t);
+ 
+-    pcecl-&gt;n_rad = modpi2((n * 2 * pi) / (3600.0 * 360.0));
+-    pcecl-&gt;II_rad = modpi2((II * 2 * pi) / (3600.0 * 360.0));
+-    pcecl-&gt;p_rad = modpi2((p * 2 * pi) / (3600.0 * 360.0));
++    precession_elements_ecl pcecl;
++    pcecl.n_rad = modpi2((n * 2 * pi) / (3600.0 * 360.0));
++    pcecl.II_rad = modpi2((II * 2 * pi) / (3600.0 * 360.0));
++    pcecl.p_rad = modpi2((p * 2 * pi) / (3600.0 * 360.0));
+     return pcecl;
+ }
+ 
+@@ -216,7 +215,7 @@
+  *  This routine uses Meuus' Rigorous method of calculating
+  *  precession.  [Meeus-1998: equations 21.2 to 21.4]
+  *
+- *  @param[in]  pcecl       The elements related to the time of the precession, calculated by precession_get_elements_ecl.
++ *  @param[in]  pcecl        The elements related to the time of the precession, calculated by precession_get_elements_ecl.
+  *  @param[in]  longInitial  The initial celestial longitude, in radians.
+  *  @param[in]  latInitial   The initial celestial latitude, in radians.
+  *  @param[out] longFinal    The final right ascension, in radians.
+@@ -228,29 +227,29 @@
+  *
+  *  @author Mike McGavin.
+  */
+-void precession_ecl(const precession_elements_ecl * pcecl,
++void precession_ecl(const precession_elements_ecl pcecl,
+ 		    const double longInitial,
+ 		    const double latInitial,
+ 		    double *longFinal, double *latFinal)
+ {
+ 
+     double A =
+-	(cos(pcecl-&gt;n_rad) * cos(latInitial) *
+-	 sin(pcecl-&gt;II_rad - longInitial)) -
+-	(sin(pcecl-&gt;n_rad) * sin(latInitial));
+-    double B = cos(latInitial) * cos(pcecl-&gt;II_rad - longInitial);
++	(cos(pcecl.n_rad) * cos(latInitial) *
++	 sin(pcecl.II_rad - longInitial)) -
++	(sin(pcecl.n_rad) * sin(latInitial));
++    double B = cos(latInitial) * cos(pcecl.II_rad - longInitial);
+     double C =
+-	((cos(pcecl-&gt;n_rad) * sin(latInitial))) +
+-	(sin(pcecl-&gt;n_rad) * cos(latInitial) *
+-	 sin(pcecl-&gt;II_rad - longInitial));
++	((cos(pcecl.n_rad) * sin(latInitial))) +
++	(sin(pcecl.n_rad) * cos(latInitial) *
++	 sin(pcecl.II_rad - longInitial));
+ 
+-    *longFinal = modpi2(-1 * (atan2(A, B) - pcecl-&gt;p_rad - pcecl-&gt;II_rad));
+-    *latFinal = modpi2(asin(C));
++    *longFinal = modpi2(-1 * (atan2(A, B) - pcecl.p_rad - pcecl.II_rad));
++    *latFinal = circumpi(asin(C));
+ }
+ 
+ /*! @brief Calculates proper motion in ecliptical coordinates, given
+  *  proper motion in equatorial coordinates.
+- * 
++ *
+  *  Based on Meeus' formula, 1998, p138.
+  *
+  *  @param[in]  ra         Right ascension of the star, in radians.
+
+Modified: trunk/src/c/libephemeritis/solar.c
+===================================================================
+--- trunk/src/c/libephemeritis/solar.c	2005-12-25 02:43:38 UTC (rev 190)
++++ trunk/src/c/libephemeritis/solar.c	2006-01-05 08:27:10 UTC (rev 191)
+@@ -105,10 +105,10 @@
+  */
+ void sol_dimension3_fk5(double jd, double *L, double *B, double *R)
+ {
+-  sol_dimension3_vsop(jd, L, B, R);
++    sol_dimension3_vsop(jd, L, B, R);
+ 
+-  /* Transform to FK5 ecliptic and equinox. */
+-  vsop_to_fk5(jd, L, B);
++    /* Transform to FK5 ecliptic and equinox. */
++    vsop_to_fk5(jd, L, B);
+ }
+ 
+ 
+@@ -205,30 +205,29 @@
+  *  ecliptic, at the time in question.  These can be calculated using
+  *  sol_dimension3_fk5 and obliquity_hi.
+  *
+- *  @param[in]  L  Geometric longitude of the Sun, in radians/fk5.
+- *  @param[in]  B  Geometric latitude of the Sun, in radians/fk5.
+- *  @param[in]  R  Geometric radius of the Sun, in radians/fk5.
+- *  @param[in]  E  The mean obliquity of the ecliptic.
+- *  @param[out] rc  The x, y and z coordinates, in astronomical units.
++ *  @param[in]  L    Geometric longitude of the Sun, in radians/fk5.
++ *  @param[in]  B    Geometric latitude of the Sun, in radians/fk5.
++ *  @param[in]  R    Geometric radius of the Sun, in radians/fk5.
++ *  @param[in]  obl  The mean obliquity of the ecliptic.
+  *
+- *  @return A pointer to the rc structure that was passed. (This
+- *  return value is for convenience only.)
++ *  @return The x, y and z coordinates, in astronomical units.
+  *
+  *  @sa sol_dimension3_fk5
+- *  @sa obliquity
++ *  @sa obliquity_low
+  *  @sa obliquity_hi
+  *
+  *  @author Mike McGavin.
+  */
+-rec_coords *sol_rectangular(double L, double B, double R, double E, rec_coords *rc)
++rec_coords sol_rectangular(double L, double B, double R, double obl)
+ {
+     double cosB = cos(B);
+     double sinL = sin(L);
+     double sinB = sin(B);
+-    double sinE = sin(E);
+-    double cosE = cos(E);
+-    rc-&gt;x = R * (cosB * cos(L));
+-    rc-&gt;y = R * ((cosB * sinL * cosE) - (sinB * sinE));
+-    rc-&gt;z = R * ((cosB * sinL * sinE) + (sinB * cosE));
++    double sinobl = sin(obl);
++    double cosobl = cos(obl);
++    rec_coords rc;
++    rc.x = R * (cosB * cos(L));
++    rc.y = R * ((cosB * sinL * cosobl) - (sinB * sinobl));
++    rc.z = R * ((cosB * sinL * sinobl) + (sinB * cosobl));
+     return rc;
+ }
+
+Modified: trunk/src/c/libephemeritis/vsop87d.c
+===================================================================
+--- trunk/src/c/libephemeritis/vsop87d.c	2005-12-25 02:43:38 UTC (rev 190)
++++ trunk/src/c/libephemeritis/vsop87d.c	2006-01-05 08:27:10 UTC (rev 191)
+@@ -60,7 +60,8 @@
+  *  processing time.  According to Meeus, much fewer than available
+  *  elements are actually required unless great accuracy is wanted.
+  */
+-double vsop_dimension_vsop(double jd, enum vPlanets planet, enum Coords dim)
++double vsop_dimension_vsop(double jd, enum vPlanets planet,
++			   enum Coords dim)
+ {
+     /* The idea here is to sum the results of A*cos(B+(C*tau)) for
+      * each series, combine the result for each series together in
+@@ -124,7 +125,8 @@
+  */
+ void vsop_dimension3_vsop(double jd,
+ 			  enum vPlanets planet,
+-			  double *longitude, double *latitude, double *radius)
++			  double *longitude, double *latitude,
++			  double *radius)
+ {
+     *longitude = vsop_dimension_vsop(jd, planet, vL);
+     *latitude = vsop_dimension_vsop(jd, planet, vB);
+@@ -155,12 +157,13 @@
+  */
+ void vsop_dimension3_fk5(double jd,
+ 			 enum vPlanets planet,
+-			 double *longitude, double *latitude, double *radius)
++			 double *longitude, double *latitude,
++			 double *radius)
+ {
+-  vsop_dimension3_vsop(jd, planet, longitude, latitude, radius);
++    vsop_dimension3_vsop(jd, planet, longitude, latitude, radius);
+ 
+-  /* Transform to FK5 ecliptic and equinox. */
+-  vsop_to_fk5(jd, longitude, latitude);
++    /* Transform to FK5 ecliptic and equinox. */
++    vsop_to_fk5(jd, longitude, latitude);
+ }
+ 
+ 
+
+Modified: trunk/src/c/tests/validate_meeus.c
+===================================================================
+--- trunk/src/c/tests/validate_meeus.c	2005-12-25 02:43:38 UTC (rev 190)
++++ trunk/src/c/tests/validate_meeus.c	2006-01-05 08:27:10 UTC (rev 191)
+@@ -27,9 +27,9 @@
+  *  &lt;em&gt;Astronomical Algorithms&lt;/em&gt; by Jean Meeus, second edition
+  *  1998, Willmann-Bell Inc.
+  *
+- *  Where testing shows no differences between Meeus and the Astrolabe
+- *  results (to the precision printed in Meeus), I have used the
+- *  report() routine to verify the results.
++ *  Where testing shows no differences between Meeus and the
++ *  Ephemeritis results (to the precision printed in Meeus), I have
++ *  used the report() routine to verify the results.
+  *
+  *  In some cases I do show small differences and display these with
+  *  the report_diff() routine. The differences do not seem to be of
+@@ -68,9 +68,9 @@
+     if (diff &gt; delta) {
+ 	printf(&quot;%s%s\n&quot;, tab, label);
+ 	printf(&quot;%s%sERROR:\n&quot;, tab, tab);
+-	printf(&quot;%s%s%scomputed   = %f\n&quot;, tab, tab, tab, computed);
+-	printf(&quot;%s%s%sreference  = %f\n&quot;, tab, tab, tab, reference);
+-	printf(&quot;%s%s%sdifference = %f %s\n&quot;, tab, tab, tab, diff, units);
++	printf(&quot;%s%s%scomputed   = %.10f\n&quot;, tab, tab, tab, computed);
++	printf(&quot;%s%s%sreference  = %.10f\n&quot;, tab, tab, tab, reference);
++	printf(&quot;%s%s%sdifference = %.10f %s\n&quot;, tab, tab, tab, diff, units);
+     } else {
+     }
+ }
+@@ -81,10 +81,6 @@
+     printf(&quot;%s%s\n&quot;, tab, label);
+     printf(&quot;%s%sDifference: %f %s\n&quot;, tab, tab, computed - reference,
+ 	   units);
+-    /*
+-       cout &lt;&lt; tab &lt;&lt; label &lt;&lt; endl;
+-       cout &lt;&lt; tab &lt;&lt; tab &lt;&lt;  &quot;Difference: &quot; &lt;&lt; setprecision(2) &lt;&lt; computed - reference &lt;&lt; &quot; &quot; &lt;&lt; units &lt;&lt; endl;
+-     */
+ }
+ 
+ /*
+@@ -556,9 +552,7 @@
+ 		   dms_to_d(0.0, 0.0, 0.0895) * 28.86705);
+ 	double a1;
+ 	double d1;
+-	precession_elements_eq pceq;
+-	precession_eq(precession_get_elements_eq
+-		      (2451545.0, 2462088.69, &amp;pceq), a0, d0, &amp;a1, &amp;d1);
++	precession_eq(precession_get_elements_eq(2451545.0, 2462088.69), a0, d0, &amp;a1, &amp;d1);
+ 
+ 	report(&quot;RA&quot;, a1, fday_to_r(hms_to_fday(2, 46, 11.331)), 0.00001,
+ 	       &quot;radians&quot;);
+@@ -571,10 +565,7 @@
+ 	double lat = d_to_r(1.76549);
+ 	double lon1;
+ 	double lat1;
+-	precession_elements_ecl pcecl;
+-	precession_ecl(precession_get_elements_ecl
+-		       (je_to_jd(2000.0), 1643074.5, &amp;pcecl), lon, lat,
+-		       &amp;lon1, &amp;lat1);
++	precession_ecl(precession_get_elements_ecl(je_to_jd(2000.0), 1643074.5), lon, lat, &amp;lon1, &amp;lat1);
+ 	report(&quot;Longitude&quot;, lon1, d_to_r(118.704), 0.00001, &quot;radians&quot;);
+ 	report(&quot;Latitude&quot;, lat1, d_to_r(1.615), 0.0001, &quot;radians&quot;);
+     }
+@@ -602,7 +593,7 @@
+     }
+     printf(&quot;22.a Nutation (epsilon)\n&quot;);
+     {
+-	const double eps = obliquity(2446895.5);
++	const double eps = obliquity_low(2446895.5);
+ 	int d, m;
+ 	double s;
+ 	d_to_dms(r_to_d(eps), &amp;d, &amp;m, &amp;s);
+@@ -621,6 +612,64 @@
+ 	report(&quot;seconds&quot;, s, 27.407, 0.001, &quot;seconds&quot;);
+     }
+ 
++    printf(&quot;23.a Apparent place of a star\n&quot;);
++    {
++      double jd = ut_to_dt(cal_to_jd(2028, 11, 13.19, true));
++      double ra = hms_to_r(2,46,11.331);
++      double dec = d_to_r(dms_to_d(49,20,54.54));
++
++      double n_in_l = nut_in_lon(jd);
++      /*
++	d_to_r(dms_to_d(0,0,14.861));
++      */
++
++      double n_in_o = nut_in_obl(jd);
++      /*
++	d_to_r(dms_to_d(0,0,2.705));
++      */
++
++      double obl = obliquity_hi(jd);
++      /*
++	d_to_r(23.436);
++      */
++
++      double sol_lon, sol_rad;
++      longitude_radius_low(jd, &amp;sol_lon, &amp;sol_rad);
++      /*
++      sol_lon = d_to_r(231.328);
++      */
++
++      double n_in_ra, n_in_dec;
++      nut_in_ra_dec(ra, dec, obl, n_in_l, n_in_o, &amp;n_in_ra, &amp;n_in_dec);
++
++      double a_in_ra, a_in_dec;
++      aberration_in_ra_dec_low(jd, ra, dec, obl, sol_lon, &amp;a_in_ra, &amp;a_in_dec);
++
++      /*
++      int d1, m1, d2, m2;
++      double s1, s2;
++      d_to_dms(r_to_d(n_in_ra), &amp;d1, &amp;m1, &amp;s1);
++      d_to_dms(r_to_d(n_in_dec), &amp;d2, &amp;m2, &amp;s2);
++      printf(&quot;%d:%d:%.10f$$$%d:%d:%.10f\n&quot;, d1,m1,s1,d2,m2,s2);
++      */
++
++      report(&quot;nutation in longitude&quot;, n_in_l, d_to_r(dms_to_d(0,0,14.861)), 0.000001, &quot;radians&quot;);
++      report(&quot;nutation in obliquity&quot;, n_in_o, d_to_r(dms_to_d(0,0,2.705)), 0.000001, &quot;radians&quot;);
++      report(&quot;obliquity&quot;, obl, d_to_r(23.436), 0.0001, &quot;radians&quot;);
++      report(&quot;sun's true longitude&quot;, sol_lon, d_to_r(231.328), 0.0001, &quot;radians&quot;);
++      report(&quot;nutation in ra&quot;, n_in_ra, d_to_r(dms_to_d(0,0,15.843)), 0.000001, &quot;radians&quot;);
++      report(&quot;nutation in dec&quot;, n_in_dec, d_to_r(dms_to_d(0,0,6.218)), 0.000001, &quot;radians&quot;);
++      report(&quot;aberration in ra&quot;, a_in_ra, d_to_r(dms_to_d(0,0,30.045)), 0.000001, &quot;radians&quot;);
++      report(&quot;aberration in dec&quot;, a_in_dec, d_to_r(dms_to_d(0,0,6.697)), 0.000001, &quot;radians&quot;);
++
++      double new_ra = ra + n_in_ra + a_in_ra;
++      double new_dec = dec + n_in_dec + a_in_dec;
++
++      report(&quot;ra&quot;, new_ra, hms_to_r(2, 46, 14.390), 0.000001, &quot;radians&quot;);
++      report(&quot;dec&quot;, new_dec, d_to_r(dms_to_d(49, 21, 07.45)), 0.000001, &quot;radians&quot;);
++
++    }
++
+     printf(&quot;25.a Sun position, low precision\n&quot;);
+     {
+ 	double L, R;
+@@ -671,8 +720,7 @@
+ 	B = d_to_r(dms_to_d(0, 0, 0.62));
+ 	R = 0.99760775;
+ 	double E = obliquity_hi(jd);
+-	rec_coords rc;
+-	sol_rectangular(L, B, R, E, &amp;rc);
++	rec_coords rc = sol_rectangular(L, B, R, E);
+ 	report(&quot;X&quot;, rc.x, -0.9379952, 0.0000001, &quot;AU&quot;);
+ 	report(&quot;Y&quot;, rc.y, -0.3116544, 0.0000001, &quot;AU&quot;);
+ 	report(&quot;Z&quot;, rc.z, -0.1351215, 0.0000001, &quot;AU&quot;);
+@@ -821,16 +869,50 @@
+ 	el.n = 0.01720209895 / (el.a * sqrt(el.a));
+ 	el.M = mean_anomoly(jd, T, el.n);
+ 
+-	rec_coords rc;
+ 	double r_sun;
+-	element_constants ec;
+-	elliptical_orbit_rectangular(get_element_constants
+-				     (obliquity_hi(je_to_jd(2000.0)), &amp;el,
+-				      53, &amp;ec), &amp;rc, &amp;r_sun);
++	double obl2000 = obliquity_hi(je_to_jd(2000.0));
++	element_constants ec = get_element_constants(obl2000, el, 53);
++	r_sun = get_r_sun(ec);
++	rec_coords rc = elliptical_orbit_rectangular(ec, r_sun);
+ 
+ 	report(&quot;x&quot;, rc.x, 0.2508066, 0.0000001, &quot;AU&quot;);
+ 	report(&quot;y&quot;, rc.y, 0.4849175, 0.0000001, &quot;AU&quot;);
+ 	report(&quot;z&quot;, rc.z, 0.3573373, 0.0000001, &quot;AU&quot;);
++
++	double L, B, R;
++	sol_dimension3_fk5(jd, &amp;L, &amp;B, &amp;R);
++	rec_coords src = sol_rectangular(L, B, R, obl2000);
++	report(&quot;solar x&quot;, src.x, -0.9756732, 0.0000001, &quot;AU&quot;);
++	report(&quot;solar y&quot;, src.y, -0.2003254, 0.0000001, &quot;AU&quot;);
++	report(&quot;solar z&quot;, src.z, -0.0868566, 0.0000001, &quot;AU&quot;);
++
++	printf(&quot;Resetting sol values to those in example (because VSOP isn't calculating them properly as above)&quot;);
++	src.x = -0.9756732;
++	src.y = -0.2003254;
++	src.z = -0.0868566;
++
++	double ra, dec, elongation, phase_angle, body_r_earth;
++	elliptical_orbit_ecliptical(src, rc, r_sun, &amp;ra, &amp;dec, &amp;elongation, &amp;phase_angle, &amp;body_r_earth);
++
++	report(&quot;delta-earth&quot;, body_r_earth, 0.8243689, 0.0000001, &quot;AU&quot;);
++
++	double tau = 0.0057755183 * body_r_earth;
++	jd = jd - tau;
++	el.M = mean_anomoly(jd, T, el.n);
++	ec = get_element_constants(obl2000, el, 53);
++	r_sun = get_r_sun(ec);
++	rc = elliptical_orbit_rectangular(ec, r_sun);
++
++	report(&quot;recalc-x&quot;, rc.x, 0.2509310, 0.0000001, &quot;AU&quot;);
++	report(&quot;recalc-y&quot;, rc.y, 0.4849477, 0.0000001, &quot;AU&quot;);
++	report(&quot;recalc-z&quot;, rc.z, 0.3573712, 0.0000001, &quot;AU&quot;);
++
++	elliptical_orbit_ecliptical(src, rc, r_sun, &amp;ra, &amp;dec, &amp;elongation, &amp;phase_angle, &amp;body_r_earth);
++
++	report(&quot;recalc-delta-earth&quot;, body_r_earth, 0.8242811, 0.0000001, &quot;AU&quot;);
++	report(&quot;ra&quot;, ra, d_to_r(158.558965), 0.0000001, &quot;radians&quot;);
++	report(&quot;dec&quot;, dec, d_to_r(19.158496), 0.0000001, &quot;radians&quot;);
++	report(&quot;elongation&quot;, elongation, d_to_r(40.51), 0.0000001, &quot;radians&quot;);
+     }
+ 
+     printf(&quot;47.a Moon position\n&quot;);
+@@ -855,61 +937,174 @@
+ 
+ 
+ 
++    printf(&quot;33.x Elliptical orbit calculation (from IBAT figures)\n&quot;);
++    {
++	typedef struct {
++	    char *name;
++	    double epoch;
++	    double M;
++	    double a;
++	    double e;
++	    double i;
++	    double w;
++	    double L;
++	    double H;
++	    double G;
++	    double n;
++	} orbit_s;
+ 
++	typedef struct {
++	    orbit_s *orbit;
++	    double jd;
++	    double ra;
++	    double dec;
++	    double r_earth;
++	    double r_sun;
++	    double mag;
++	} jd_test_values;
+ 
+-    printf(&quot;Additional tests - NOT DONE YET\n&quot;);
+-    {
+-	/* Ceres data. */
+-	double jd = cal_to_jd(2005, 5, 1, true);
+-	double ep = cal_to_jd(2005, 1, 30, true);
+-	orbital_elements cd;
+-	cd.a = 2.7673017;
+-	cd.e = 0.0800887;
+-	cd.i = d_to_r(10.58276);
+-	cd.w = d_to_r(73.72889);
+-	cd.L = d_to_r(80.42334);
+-	cd.magdatatype = iau_s;
+-	cd.magdata._iau.H = 3.34;
+-	cd.magdata._iau.G = 0.12;
+ 
+-	double n = d_to_r(0.21410131);
+-	cd.M = d_to_r(43.77971) + n * (jd - ep);
++	orbit_s orbits[] = {
++	    {
++	     &quot;Ceres&quot;,
++	     cal_to_jd(2005, 1, 30, true), d_to_r(43.77971), 2.7673017,
++	     0.0800887, d_to_r(10.58276), d_to_r(73.72889),
++	     d_to_r(80.42334), 3.34, 0.12, d_to_r(0.21410131)
++	     },
+ 
+-	rec_coords ceres_rec;
+-	double ceres_r_sun;
+-	element_constants ec;
+-	elliptical_orbit_rectangular(get_element_constants
+-				     (obliquity_hi(je_to_jd(2000)), &amp;cd,
+-				      53, &amp;ec), &amp;ceres_rec, &amp;ceres_r_sun);
++	    {
++	     &quot;Pallas&quot;,
++	     cal_to_jd(2005, 1, 30, true), d_to_r(28.70170), 2.7732372,
++	     0.2302220, d_to_r(34.85083), d_to_r(310.54489),
++	     d_to_r(173.16604), 4.13, 0.11, d_to_r(0.21341432)
++	     },
+ 
+-	rec_coords sun_rec;
+-	double L, B, R;
+-	sol_dimension3_fk5(jd, &amp;L, &amp;B, &amp;R);
+-	sol_rectangular(L, B, R, obliquity_hi(je_to_jd(2000)), &amp;sun_rec);
++	    {
++	     &quot;Juno&quot;,
++	     cal_to_jd(2005, 1, 30, true), d_to_r(300.24990), 2.6681509,
++	     0.2584015, d_to_r(12.97175), d_to_r(247.86205),
++	     d_to_r(170.12682), 5.33, 0.32, d_to_r(0.22614578)
++	     }
++	};
+ 
+-	double ra;
+-	double dec;
+-	double elongation;
+-	double phase_angle;
+-	double r_earth;
+-	elliptical_orbit_ecliptical(&amp;sun_rec, &amp;ceres_rec, ceres_r_sun, &amp;ra,
+-				    &amp;dec, &amp;elongation, &amp;phase_angle,
+-				    &amp;r_earth);
++	jd_test_values tests[] = {
++	    {&amp;orbits[0], ut_to_dt(cal_to_jd(2005, 5, 1, true)),
++	     hms_to_r(15, 20, 0.07 * 60.0),
++	     d_to_r(dms_to_d(-8.0, 33, 0.9 * 60.0)), 1.692, 2.683, 7.1},
++	    {&amp;orbits[0], ut_to_dt(cal_to_jd(2005, 6, 10, true)),
++	     hms_to_r(14, 47, 0.78 * 60.0),
++	     d_to_r(dms_to_d(-9.0, 8, 0.4 * 60.0)), 1.837, 2.715, 7.6},
+ 
+-	double mag =
+-	    mag_iau(cd.magdata._iau.H, cd.magdata._iau.G, ceres_r_sun,
+-		    r_earth, phase_angle);
++	    {&amp;orbits[1], ut_to_dt(cal_to_jd(2005, 2, 5, true)),
++	     hms_to_r(12, 42, 0.98 * 60.0),
++	     d_to_r(dms_to_d(-6.0, 39, 0.1 * 60.0)), 1.570, 2.271, 8.0},
++	    {&amp;orbits[1], ut_to_dt(cal_to_jd(2005, 5, 1, true)),
++	     hms_to_r(12, 07, 0.76 * 60.0),
++	     d_to_r(dms_to_d(19.0, 20, 0.4 * 60.0)), 1.672, 2.449, 8.2},
+ 
+-	printf(&quot;Ceres -- RA=%f, Dec=%f, Distance=%fAU, Mag=%f\n&quot;,
+-	       r_to_d(modpi2(ra)), r_to_d(modpi2(dec)), r_earth, mag);
++	    {&amp;orbits[2], ut_to_dt(cal_to_jd(2005, 9, 8, true)),
++	     hms_to_r(4, 44, 0.23 * 60.0),
++	     d_to_r(dms_to_d(10.0, 2, 0.1 * 60.0)), 1.649, 1.997, 9.0},
++	    {&amp;orbits[2], ut_to_dt(cal_to_jd(2005, 11, 12, true)),
++	     hms_to_r(5, 31, 0.69 * 60.0),
++	     d_to_r(dms_to_d(0.0, 24, 0.1 * 60.0)), 1.115, 1.984, 7.8}
++
++	};
++	int tests_size = sizeof(tests) / sizeof(*tests);
++
++	int o;
++	for (o = 0; o &lt; tests_size; o++) {
++	    jd_test_values *test = &amp;tests[o];
++	    orbit_s *or = test-&gt;orbit;
++	    printf(&quot;Testing %s, test %d\n&quot;, or-&gt;name, o);
++
++
++	    double L, B, R;
++	    sol_dimension3_fk5(test-&gt;jd, &amp;L, &amp;B, &amp;R);
++	    rec_coords sun_rec = sol_rectangular(L, B, R, obliquity_hi(je_to_jd(2000)));
++
++
++	    double ra;
++	    double dec;
++	    double elongation;
++	    double phase_angle;
++	    double body_r_earth;
++	    double body_r_sun;
++	    orbital_elements cd;
++
++	    double this_jd = test-&gt;jd;
++	    int c;
++	    for(c=0;c&lt;5;c++) {
++	      cd = populate_orbital_elements(or-&gt;epoch, or-&gt;M, this_jd, or-&gt;n,
++					     or-&gt;a, or-&gt;e, or-&gt;i, or-&gt;w, or-&gt;L,
++					     iau_s, or-&gt;H, or-&gt;G);
++
++	      element_constants ec = get_element_constants(obliquity_hi(je_to_jd(2000)), cd, 53);
++	      body_r_sun = get_r_sun(ec);
++	      rec_coords body_rec = elliptical_orbit_rectangular(ec, body_r_sun);
++
++	      elliptical_orbit_ecliptical(sun_rec, body_rec, body_r_sun,
++					  &amp;ra, &amp;dec, &amp;elongation,
++					  &amp;phase_angle, &amp;body_r_earth);
++
++	      double tau = 0.0057755183 * body_r_earth;
++
++	      this_jd = test-&gt;jd - tau;
++
++	    }
++
++
++	    double mag =
++		mag_iau(cd.magdata._iau.H, cd.magdata._iau.G, body_r_sun,
++			body_r_earth, phase_angle);
++
++	    int h, m;
++	    double s;
++	    r_to_hms(ra, &amp;h, &amp;m, &amp;s);
++
++
++	    /* Things to do:
++	     *   correct for light time.
++	     *   correct for nutation.
++	     *   correct for precession.
++	     *   correct for aberration.
++	     */
++
++	    /* Adjust for nutation. */
++	    double a_in_ra, a_in_dec;
++	    aberration_in_ra_dec_low(test-&gt;jd, ra, dec, obliquity_hi(test-&gt;jd), L, &amp;a_in_ra, &amp;a_in_dec);
++	    ra  += a_in_ra;
++	    dec += a_in_dec;
++
++	    precession_eq(precession_get_elements_eq(je_to_jd(2000.0), test-&gt;jd), ra, dec, &amp;ra, &amp;dec);
++
++	    double n_in_ra, n_in_dec;
++	    nut_in_ra_dec(ra, dec, obliquity_hi(test-&gt;jd), nut_in_lon(test-&gt;jd), nut_in_obl(test-&gt;jd), &amp;n_in_ra, &amp;n_in_dec);
++	    ra  += n_in_ra ;
++	    dec += n_in_dec;
++
++
++
++	    printf(&quot;$$$$ %f:%f $$$$\n&quot;, (n_in_ra * (360.0 * 60.0 * 60.0) / (2*pi)), (n_in_dec * (360.0 * 60.0 * 60.0) / (2*pi)));
++	    printf(&quot;$$$$ %f:%f $$$$\n&quot;, (a_in_ra * (360.0 * 60.0 * 60.0) / (2*pi)), (a_in_dec * (360.0 * 60.0 * 60.0) / (2*pi)));
++
++	    report(&quot;RA&quot;, (ra * (360.0 * 60.0 * 60.0) / (2*pi)), (test-&gt;ra * (360.0 * 60.0 * 60.0) / (2*pi)), 0.00030, &quot;arc-sec&quot;);
++	    report(&quot;Declination&quot;, (dec * (360.0 * 60.0 * 60.0) / (2*pi)), (test-&gt;dec * (360.0 * 60.0 * 60.0) / (2*pi)), 0.00030, &quot;arc-sec&quot;);
++	    report(&quot;Distance (Earth)&quot;, body_r_earth, test-&gt;r_earth, 0.000001,
++		   &quot;AU&quot;);
++	    report(&quot;Distance (Sun)&quot;, body_r_sun, test-&gt;r_sun, 0.000001,
++		   &quot;AU&quot;);
++	    report(&quot;Magnitude&quot;, mag, test-&gt;mag, 1.0, &quot;&quot;);
++	}
+     }
+ }
+ 
+-int main()
++int main(int argc, char *argv[])
+ {
+     _main();
+     printf
+-	(&quot;\nWarning: Former exception throws (now error return values) have not been checked for.\n&quot;);
++	(&quot;\nWarning: Former exception throws (now error return values)&quot;
++	 &quot; have not been checked for.\n&quot;);
+     /*
+        try {
+        _main();
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	
+	<LI>Next message: <A HREF="000045.html">[Ephemeritis-svn] r192 - in trunk/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#44">[ date ]</a>
+              <a href="thread.html#44">[ thread ]</a>
+              <a href="subject.html#44">[ subject ]</a>
+              <a href="author.html#44">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

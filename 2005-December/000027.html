@@ -1,0 +1,375 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r171 - in trunk/src/c: libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2005-December/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r171%20-%20in%20trunk/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200512180622.jBI6MG4K001415%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000026.html">
+   <LINK REL="Next"  HREF="000028.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r171 - in trunk/src/c: libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r171%20-%20in%20trunk/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200512180622.jBI6MG4K001415%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r171 - in trunk/src/c: libephemeritis tests">izogi at berlios.de
+       </A><BR>
+    <I>Sun Dec 18 07:22:16 CET 2005</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000026.html">[Ephemeritis-svn] r170 - trunk/src/c/libephemeritis
+</A></li>
+        <LI>Next message: <A HREF="000028.html">[Ephemeritis-svn] r172 - in trunk/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#27">[ date ]</a>
+              <a href="thread.html#27">[ thread ]</a>
+              <a href="subject.html#27">[ subject ]</a>
+              <a href="author.html#27">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2005-12-18 07:21:39 +0100 (Sun, 18 Dec 2005)
+New Revision: 171
+
+Modified:
+   trunk/src/c/libephemeritis/constellations.c
+   trunk/src/c/libephemeritis/elliptical.c
+   trunk/src/c/libephemeritis/ephemeritis.h
+   trunk/src/c/libephemeritis/equationoftime.c
+   trunk/src/c/libephemeritis/equinox.c
+   trunk/src/c/libephemeritis/solar.c
+   trunk/src/c/tests/validate_meeus.c
+Log:
+More tidying up of code generally, including making some functions and structures static (to hide them), adding _fk5 code to solar.c, adding a stub function for rectangular solar coordinates, etc.
+
+
+Modified: trunk/src/c/libephemeritis/constellations.c
+===================================================================
+--- trunk/src/c/libephemeritis/constellations.c	2005-12-17 09:13:57 UTC (rev 170)
++++ trunk/src/c/libephemeritis/constellations.c	2005-12-18 06:21:39 UTC (rev 171)
+@@ -149,14 +149,16 @@
+  *  searching.  The last boundary is labelled NoConstellation, and
+  *  indicates the end of the array.
+  */
+-typedef struct {
++const typedef struct {
+     double lower_ra;
+     double upper_ra;
+     double lower_dec;
+     const_id constid;
+ } constellation_boundary;
+ 
+-#define CONSTELLATION_POSITIONS_EQUINOX 1950.0	/* The equinox for these positions. */
++/*! @brief The equinox for these positions.
++ */
++static const constellation_positions_equinox = 1950.0;
+ 
+ static constellation_boundary const_data[] = {
+     {0.0000, 24.0000, 88.0000, UMi},
+@@ -534,7 +536,7 @@
+  *
+  *  @return          The index of the list at which the position has been found.
+  */
+-int raw_scan_boundaries(const constellation_boundary * list,
++static int raw_scan_boundaries(const constellation_boundary * list,
+ 			const double ra, const double dec)
+ {
+     /* Scan through the list until NoConstellation is encountered, or
+
+Modified: trunk/src/c/libephemeritis/elliptical.c
+===================================================================
+--- trunk/src/c/libephemeritis/elliptical.c	2005-12-17 09:13:57 UTC (rev 170)
++++ trunk/src/c/libephemeritis/elliptical.c	2005-12-18 06:21:39 UTC (rev 171)
+@@ -48,9 +48,11 @@
+  *
+  *  @param[in]  jd        Julian Day of an approximate time of the event
+  *                        in dynamical time.
+- *  @param[in]  basePlanet      The planet from which the observation takes place.
+- *  @param[in]  targetPlanet    The planet for which the position should be calculated.
+- *  @param[in]  heliocentric_f  A function to calculate three heliocentric dimensions, returning the results in fk5 coordinates.
++ *  @param[in]  basePlanet        The planet from which the observation takes
++ *                                place.  This is likely to always be Earth, and hasn't been
++ *                                seriously tested from any other planets.
++ *  @param[in]  targetPlanet      The planet for which the position should be calculated.
++ *  @param[in]  (*heliocentic_f)  A function to calculate three heliocentric dimensions, returning the results in fk5 coordinates.
+  *  @param[in]  deltaPsi  Nutation in longitude, in radians.
+  *  @param[in]  epsilon   True obliquity (corrected for nutation), in radians.
+  *  @param[in]  delta     Desired accuracy, in days.
+@@ -159,42 +161,6 @@
+ 
+ 
+ 
+-/*! @brief Calculates the equatorial coordinates of a planet.
+- *
+- *  The results will be geocentric, corrected for light-time and
+- *  aberration.
+- *
+- *  @param[in]  jd        Julian Day of an approximate time of the event
+- *                        in dynamical time.
+- *  @param[in]  planet    The planet for which to calculate.
+- *  @param[in]  deltaPsi  Nutation in longitude, in radians.
+- *  @param[in]  epsilon   True obliquity (corrected for nutation), in radians.
+- *  @param[in]  delta     Desired accuracy, in days.
+- *
+- *  @param[out] ra        Right ascension, in radians.
+- *  @param[out] dec       Declination, in radians.
+- *
+- *  @returns             Returns  0 if successful.
+- *                       Returns -1 if bailing out as calculated angle was invalid for some reason.
+- *
+- *  @sa deltaT_seconds for calculating %dynamical time offset.
+- *  @sa nut_in_lon for calculating %nutation in longitude.
+- *  @sa (obliquity or obliquity_hi) + nut_in_obl for calculating true obliquity.
+- */
+-/*
+-int geocentric_planet_old(double jd,
+-		      enum vPlanets planet,
+-		      double deltaPsi,
+-		      double epsilon,
+-		      double delta, double *ra, double *dec)
+-{
+-  return geocentric_planet_f(jd, vEarth, planet, vsop_dimension3_fk5, deltaPsi, epsilon, delta, ra, dec);
+-}
+-*/
+-
+-
+-
+-
+ /*! @brief A private helper function to return the sign of a variable.
+  *
+  *  The main reason this function exists is because ANSI C doesn't
+@@ -207,7 +173,7 @@
+  *  @return -1 for a negative value, +1 for a positive value, and 0
+  *  for 0.
+  */
+-int eph_sgn(double x) {
++static int eph_sgn(double x) {
+   if(x &gt; 0) return 1;
+   if(x &lt; 0) return -1;
+   return 0;
+@@ -259,3 +225,4 @@
+   double E = e0 * f;
+   return E;
+ }
++
+
+Modified: trunk/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- trunk/src/c/libephemeritis/ephemeritis.h	2005-12-17 09:13:57 UTC (rev 170)
++++ trunk/src/c/libephemeritis/ephemeritis.h	2005-12-18 06:21:39 UTC (rev 171)
+@@ -296,9 +296,11 @@
+ 			double *ra, double *dec);
+ 
+ /* solar.c */
+-double sol_dimension(double jd, enum Coords dim);
+-void sol_dimension3(double jd, double *longitude, double *latitude,
+-		    double *radius);
++double sol_dimension_vsop(double jd, enum Coords dim);
++void sol_dimension3_vsop(double jd, double *longitude, double *latitude,
++			 double *radius);
++void sol_dimension3_fk5(double jd, double *L, double *B, double *R);
++
+ void longitude_radius_low(double jd, double *L, double *R);
+ double apparent_longitude_low(double jd, double L);
+ double aberration_low(double R);
+
+Modified: trunk/src/c/libephemeritis/equationoftime.c
+===================================================================
+--- trunk/src/c/libephemeritis/equationoftime.c	2005-12-17 09:13:57 UTC (rev 170)
++++ trunk/src/c/libephemeritis/equationoftime.c	2005-12-18 06:21:39 UTC (rev 171)
+@@ -53,7 +53,7 @@
+   double longitude;
+   double latitude;
+   double radius;
+-  sol_dimension3(jd, &amp;longitude, &amp;latitude, &amp;radius);
++  sol_dimension3_vsop(jd, &amp;longitude, &amp;latitude, &amp;radius);
+ 
+   double aberration = aberration_low(radius);
+ 
+
+Modified: trunk/src/c/libephemeritis/equinox.c
+===================================================================
+--- trunk/src/c/libephemeritis/equinox.c	2005-12-17 09:13:57 UTC (rev 170)
++++ trunk/src/c/libephemeritis/equinox.c	2005-12-18 06:21:39 UTC (rev 171)
+@@ -78,7 +78,7 @@
+     double B, C;
+ };
+ 
+-const struct eqTerm _terms[] = {
++static const struct eqTerm _terms[] = {
+     {485, 5.6716219372807730, 33.7570413813530479},
+     {203, 5.8857738365004781, 575.3384853150175786},
+     {199, 5.9704223052222023, 0.3523121628075754},
+@@ -257,7 +257,7 @@
+     for (i = 0; i &lt; 20; i++) {
+ 	const double jd0 = jd;
+ 	double L, B, R;
+-	sol_dimension3(jd, &amp;L, &amp;B, &amp;R);
++	sol_dimension3_vsop(jd, &amp;L, &amp;B, &amp;R);
+ 	L += nut_in_lon(jd) + aberration_low(R);
+ 	vsop_to_fk5(jd, &amp;L, &amp;B);
+ 
+
+Modified: trunk/src/c/libephemeritis/solar.c
+===================================================================
+--- trunk/src/c/libephemeritis/solar.c	2005-12-17 09:13:57 UTC (rev 170)
++++ trunk/src/c/libephemeritis/solar.c	2005-12-18 06:21:39 UTC (rev 171)
+@@ -40,7 +40,7 @@
+ #include &lt;math.h&gt;
+ 
+ /*! @brief Returns one of geocentric ecliptic longitude,
+- *  latitude and radius.
++ *  latitude and radius as VSOP coordinates.
+  *
+  *  @param[in]  jd        Julian Day in dynamical time.
+  *  @param[in] dim        A value to indicate whether longitude,
+@@ -50,8 +50,13 @@
+  *                        radius (in astronomical units).
+  *
+  *  @sa dynamical::deltaT_seconds for calculating %dynamical time offset.
++ *
++ *  @warning This function returns the coordinates in the vsop frame
++ *  of reference, which is very slightly different from fk5.  To
++ *  convert the longitude and latitude to fk5 coordinates, use
++ *  vsop_to_fk5.  Alternatively, call sol_dimension3_fk5.
+  */
+-double sol_dimension(double jd, enum Coords dim)
++double sol_dimension_vsop(double jd, enum Coords dim)
+ {
+     double X = vsop_dimension_vsop(jd, vEarth, dim);
+     if (dim == vL) {
+@@ -62,7 +67,8 @@
+     return X;
+ }
+ 
+-/*! @brief Returns geocentric ecliptic longitude, latitude and radius.
++/*! @brief Returns geocentric ecliptic longitude, latitude and radius
++ *  as VSOP coordinates.
+  *
+  *  The code in this function very simply calls sol_dimension for each
+  *  value, so it is no more efficient to call this.  It's provided for
+@@ -74,20 +80,44 @@
+  *  @param[out] R   Radius, in astronomical units.
+  *
+  *  @sa dynamical::deltaT_seconds for calculating %dynamical time offset.
++ *
++ *  @warning This function returns the coordinates in the vsop frame
++ *  of reference, which is very slightly different from fk5.  To
++ *  convert the longitude and latitude to fk5 coordinates, use
++ *  vsop_to_fk5.  Alternatively, call sol_dimension3_fk5.
+  */
+-void sol_dimension3(double jd, double *L, double *B, double *R)
++void sol_dimension3_vsop(double jd, double *L, double *B, double *R)
+ {
+-    *L = sol_dimension(jd, vL);
+-    *B = sol_dimension(jd, vB);
+-    *R = sol_dimension(jd, vR);
++    *L = sol_dimension_vsop(jd, vL);
++    *B = sol_dimension_vsop(jd, vB);
++    *R = sol_dimension_vsop(jd, vR);
+ }
+ 
+-/*! @brief Returns geometric longitude and radius vector.
++/*! @brief Returns geocentric ecliptic longitude, latitude and radius
++ *  as fk5 coordinates.
+  *
+- *  Low precision. The longitude is accurate to 0.01 degree.
+- *  The latitude should be presumed to be 0.0. [Meeus-1998:
+- *  equations 25.2 through 25.5.
++ *  @param[in]  jd  Julian Day in dynamical time.
++ *  @param[out] L   Longitude, in radians.
++ *  @param[out] B   Latitude, in radians.
++ *  @param[out] R   Radius, in astronomical units.
+  *
++ *  @sa dynamical::deltaT_seconds for calculating %dynamical time offset.
++ */
++void sol_dimension3_fk5(double jd, double *L, double *B, double *R)
++{
++  sol_dimension3_vsop(jd, L, B, R);
++
++  /* Transform to FK5 ecliptic and equinox. */
++  vsop_to_fk5(jd, L, B);
++}
++
++
++/*! @brief Returns geometric longitude and radius vector, low
++ *  precision.
++ *
++ *  The longitude is accurate to 0.01 degree.  The latitude should be
++ *  presumed to be 0.0. [Meeus-1998: equations 25.2 through 25.5.
++ *
+  *  @param[in]  jd        Julian Day in dynamical time.
+  *  @param[out] L         Longitude, in radians.
+  *  @param[out] R         Radius, in astronomical units.
+@@ -165,3 +195,24 @@
+     const double _lk4 = d_to_r(dms_to_d(0, 0, 20.4898));
+     return -_lk4 / R;
+ }
++
++/*! @brief Calculates the rectangular geocentric coordinates of the Sun.
++ *
++ *  The rectangular geocentric coordinates of the Sun are centred on
++ *  the Earth as a point of origin.  The X axis is directed towards
++ *  the vernal equinox at 0 degrees longitude, the Y axis is in the
++ *  plane of the equator, towards 90 degrees longitude, and the Z axis
++ *  is pointed towards the north celestial pole.
++ *
++ *  @param[in]  jd Julian Day, in dynamical time.
++ *  @param[out] X  The X coordinate, in astronomical units.
++ *  @param[out] Y  The Y coordinate, in astronomical units.
++ *  @param[out] Z  The Z coordinate, in astronomical units.
++ *
++ *  @bugs No actual code.
++ *
++ *  @author Mike McGavin.
++ */
++void sol_rectangular(double jd, double *X, double *Y, double *Z)
++{
++}
+
+Modified: trunk/src/c/tests/validate_meeus.c
+===================================================================
+--- trunk/src/c/tests/validate_meeus.c	2005-12-17 09:13:57 UTC (rev 170)
++++ trunk/src/c/tests/validate_meeus.c	2005-12-18 06:21:39 UTC (rev 171)
+@@ -634,7 +634,7 @@
+     printf(&quot;25.b Sun position, high precision\n&quot;);
+     {
+ 	double L, B, R;
+-	sol_dimension3(2448908.5, &amp;L, &amp;B, &amp;R);
++	sol_dimension3_vsop(2448908.5, &amp;L, &amp;B, &amp;R);
+ 	report_diff(&quot;longitude&quot;, r_to_d(L) * 3600, 199.907372 * 3600,
+ 		    &quot;arc-seconds&quot;);
+ 	report_diff(&quot;latitude&quot;, r_to_d(B) * 3600, 0.644, &quot;arc-seconds&quot;);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000026.html">[Ephemeritis-svn] r170 - trunk/src/c/libephemeritis
+</A></li>
+	<LI>Next message: <A HREF="000028.html">[Ephemeritis-svn] r172 - in trunk/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#27">[ date ]</a>
+              <a href="thread.html#27">[ thread ]</a>
+              <a href="subject.html#27">[ subject ]</a>
+              <a href="author.html#27">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

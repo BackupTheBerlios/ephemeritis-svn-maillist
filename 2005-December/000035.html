@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r179 - trunk/src/c/libephemeritis
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2005-December/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r179%20-%20trunk/src/c/libephemeritis&In-Reply-To=%3C200512201041.jBKAfjSr021055%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000034.html">
+   <LINK REL="Next"  HREF="000036.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r179 - trunk/src/c/libephemeritis</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r179%20-%20trunk/src/c/libephemeritis&In-Reply-To=%3C200512201041.jBKAfjSr021055%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r179 - trunk/src/c/libephemeritis">izogi at berlios.de
+       </A><BR>
+    <I>Tue Dec 20 11:41:45 CET 2005</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000034.html">[Ephemeritis-svn] r178 - trunk/src/c/libephemeritis
+</A></li>
+        <LI>Next message: <A HREF="000036.html">[Ephemeritis-svn] r180 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#35">[ date ]</a>
+              <a href="thread.html#35">[ thread ]</a>
+              <a href="subject.html#35">[ subject ]</a>
+              <a href="author.html#35">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2005-12-20 11:41:34 +0100 (Tue, 20 Dec 2005)
+New Revision: 179
+
+Modified:
+   trunk/src/c/libephemeritis/elliptical.c
+Log:
+Minor additional tidy-up -- renaming get_anomolies() to get_common_calc(), as it gets some data that's not really anomolies.
+
+
+Modified: trunk/src/c/libephemeritis/elliptical.c
+===================================================================
+--- trunk/src/c/libephemeritis/elliptical.c	2005-12-20 10:29:00 UTC (rev 178)
++++ trunk/src/c/libephemeritis/elliptical.c	2005-12-20 10:41:34 UTC (rev 179)
+@@ -252,6 +252,10 @@
+  *  @return  E, expressed in radians, for the Equation of Kepler.
+  *
+  *  @todo Write test code.
++ *
++ *  @todo Consider if this should be local/static (which would
++ *  incidentally break the unit test code in validate_meeus, but
++ *  perhaps with good cause).
+  */
+ double eccentricity_anomoly(double M, double e, int iterations)
+ {
+@@ -286,7 +290,8 @@
+ }
+ 
+ 
+-/*! @brief A helper function to get the various anomoly values involved in orbital elements.
++/*! @brief A helper function to get some of the various calculated
++ *  values involved in orbital elements.
+  *
+  *  @param[in]  jd       The time at which to calculate the position, in dynamical time.
+  *  @param[in]  elements The known elements for the orbit to calculate.
+@@ -295,12 +300,9 @@
+  *  @param[out] v        The true anomoly.
+  *  @param[out] r        The radius vector (distance from the Sun), in Astronomical Units.
+  */
+-/*
+-static void get_anomolies(const double jd, const orbital_elements *elements, double *M, double *E, double *v, double *r)
+-*/
+-static void get_anomolies(const double jd,
+-			  const orbital_elements * elements,
+-			  orbital_calc * calcvals)
++static void get_common_calc(const double jd,
++			    const orbital_elements * elements,
++			    orbital_calc * calcvals)
+ {
+     calcvals-&gt;M = mean_anomoly(jd, elements-&gt;T, elements-&gt;n);
+     calcvals-&gt;E = eccentricity_anomoly(calcvals-&gt;M, elements-&gt;e, 53);
+@@ -345,7 +347,7 @@
+     double c_ = sqrt(H * H + R * R);
+ 
+     orbital_calc calcvals;
+-    get_anomolies(jd, elements, &amp;calcvals);
++    get_common_calc(jd, elements, &amp;calcvals);
+ 
+     rc-&gt;x = calcvals.r * a_ * sin(A + elements-&gt;w + calcvals.v);
+     rc-&gt;y = calcvals.r * b_ * sin(B + elements-&gt;w + calcvals.v);
+@@ -368,7 +370,7 @@
+ 
+ 
+     orbital_calc calcvals;
+-    get_anomolies(jd, elements, &amp;calcvals);
++    get_common_calc(jd, elements, &amp;calcvals);
+ 
+     double x = calcvals.r * ((Px * cos(calcvals.v)) + (Qx * sin(calcvals.v)));
+     double y = calcvals.r * ((Py * cos(calcvals.v)) + (Qy * sin(calcvals.v)));
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000034.html">[Ephemeritis-svn] r178 - trunk/src/c/libephemeritis
+</A></li>
+	<LI>Next message: <A HREF="000036.html">[Ephemeritis-svn] r180 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#35">[ date ]</a>
+              <a href="thread.html#35">[ thread ]</a>
+              <a href="subject.html#35">[ subject ]</a>
+              <a href="author.html#35">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

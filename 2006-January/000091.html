@@ -1,0 +1,557 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r238 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-January/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r238%20-%20in%20branches/new-vsop-prepare/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200601310143.k0V1hEVk012951%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000090.html">
+   <LINK REL="Next"  HREF="000092.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r238 - in branches/new-vsop-prepare/src/c: libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r238%20-%20in%20branches/new-vsop-prepare/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200601310143.k0V1hEVk012951%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r238 - in branches/new-vsop-prepare/src/c: libephemeritis tests">izogi at berlios.de
+       </A><BR>
+    <I>Tue Jan 31 02:43:14 CET 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000090.html">[Ephemeritis-svn] r237 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000092.html">[Ephemeritis-svn] r239 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#91">[ date ]</a>
+              <a href="thread.html#91">[ thread ]</a>
+              <a href="subject.html#91">[ subject ]</a>
+              <a href="author.html#91">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-01-31 02:43:01 +0100 (Tue, 31 Jan 2006)
+New Revision: 238
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+   branches/new-vsop-prepare/src/c/libephemeritis/solar.c
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+Replaced sol_rectangular() with sol_sph_to_rec(), which cnverts spherical to rectangular for j2000 and date.
+More adjustments to tests in validate_meeus for correct use.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-01-30 21:13:16 UTC (rev 237)
++++ branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-01-31 01:43:01 UTC (rev 238)
+@@ -548,7 +548,7 @@
+ 
+     double R = sqrt(sol.x * sol.x + sol.y * sol.y + sol.z * sol.z);
+     *elongation =
+-	acos((R * R + r_e * r_e - r_sun * r_sun) / (2 * R * r_e));
++      acos( ( (R*R) + (r_e*r_e) - (r_sun*r_sun)) / (2*R*r_e) );
+     *phase_angle =
+ 	acos((r_sun * r_sun + r_e * r_e - R * R) / (2 * r_sun * r_e));
+ }
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-01-30 21:13:16 UTC (rev 237)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-01-31 01:43:01 UTC (rev 238)
+@@ -422,7 +422,7 @@
+ void longitude_radius_low(double jd, double *L, double *R);
+ double apparent_longitude_low(double jd, double L);
+ double aberration_low(double R);
+-rec_coords sol_rectangular(double L, double B, double R, double obl);
++/* rec_coords sol_rectangular(double L, double B, double R, double obl); */
+ 
+ 
+ /* constellations.c */
+@@ -503,10 +503,11 @@
+ 
+ 				            0 indicates no error.
+ 				            -1 (vsop_get_rectangular) indicates a vsop_handle error.  (Data referenced by this handle wasn't found - perhaps it was unloaded.)
+-				            -2 (vsop_get_rectangular) indicates that a vsop_handle referenced data that wasn't rectangular, or otherwise not suitable for providing rectangular coordinates.
++				            -2 (vsop_get_rectangular, sol_sph_to_rec) indicates that a vsop_handle referenced data that wasn't rectangular, or otherwise not suitable for providing rectangular coordinates.
+ 				            -3 (vsop_rec_vsop_to_fk5) indicates that supplied coordinates were unsuitable for converting to FK5.
+ 					    -4 (vsop_rec_sol) indicates that supplied coordinates were not Earth coordinates, and therefore unsuitable for converting to solar coordinates.  Note that even if the input planet is vsop_earth, is_inverted must be set to 0 or this error will be returned.
+ 					    -5 (vsop_rec_sol) indicates that supplied coordinates were not rectangular J2000 or date coordinates.
++					    -6 (sol_sph_to_rec) indicates that the incoming spherical coordinates were not solar coordinates.
+ 				 */
+ } vsop_rec_coords;
+ 
+@@ -536,10 +537,11 @@
+ 
+ 				   0 indicates no error.
+ 				   -1 (vsop_get_spherical) indicates a vsop_handle error.  (Data referenced by this handle wasn't found - perhaps it was unloaded.)
+-				   -2 (vsop_get_spherical) indicates that a vsop_handle referenced data that wasn't spherical, or otherwise not suitable for providing spherical coordinates.  (This should really only happen if the data in the struct has been corrupted somehow.)
++				   -2 (vsop_get_spherical, sol_sph_to_rec) indicates that a vsop_handle referenced data that wasn't spherical, or otherwise not suitable for providing spherical coordinates.  (This should really only happen if the data in the struct has been corrupted somehow.)
+ 				   -3 (vsop_sph_vsop_to_fk5) indicates that supplied coordinates were unsuitable for converting to FK5.
+ 				   -4 (vsop_sph_sol) indicates that supplied coordinates were not Earth coordinates, and therefore unsuitable for converting to solar coordinates.  Note that even if the input planet is vsop_earth, is_inverted must be set to 0 or this error will be returned.
+ 				   -5 (vsop_sph_sol) indicates that supplied coordinates were not rectangular J2000 or date coordinates.
++				   -6 (sol_sph_to_rec) indicates that the incoming spherical coordinates were not solar coordinates.
+ 				 */
+ } vsop_sph_coords;
+ 
+@@ -559,5 +561,6 @@
+ vsop_sph_coords vsop_sph_to_fk5(const vsop_sph_coords vsc);
+ vsop_sph_coords vsop_sph_sol(const vsop_sph_coords earth_vsc);
+ 
++vsop_rec_coords sol_sph_to_rec(vsop_sph_coords vsc);
+ 
+ #endif
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/solar.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/solar.c	2006-01-30 21:13:16 UTC (rev 237)
++++ branches/new-vsop-prepare/src/c/libephemeritis/solar.c	2006-01-31 01:43:01 UTC (rev 238)
+@@ -39,8 +39,8 @@
+ #include &lt;math.h&gt;
+ 
+ 
+-/*! @brief Returns geometric longitude and radius vector, low
+- *  precision.
++/*! @brief Returns geometric longitude and radius vector of the Sun,
++ *  low precision.
+  *
+  *  The longitude is accurate to 0.01 degree.  The latitude should be
+  *  presumed to be 0.0. [Meeus-1998: equations 25.2 through 25.5.]
+@@ -80,7 +80,8 @@
+     *R = 1.000001018 * (1 - e * e) / (1 + e * cos(v));
+ }
+ 
+-/*! @brief Corrects the geometric longitude for nutation and aberration.
++/*! @brief Corrects the geometric longitude of the Sun for nutation
++ *  and aberration.
+  *
+  *  Low precision. [Meeus-1998: pg 164]
+  *
+@@ -150,20 +151,20 @@
+  *
+  *  @author Mike McGavin.
+  */
+-rec_coords sol_rectangular(double L, double B, double R, double obl)
+-{
+-    double cosL = cos(L);
+-    double cosB = cos(B);
+-    double sinL = sin(L);
+-    double sinB = sin(B);
+-    double sinobl = sin(obl);
+-    double cosobl = cos(obl);
+-    rec_coords rc;
+-    rc.x = R * (cosB * cosL);
+-    rc.y = R * ((cosB * sinL * cosobl) - (sinB * sinobl));
+-    rc.z = R * ((cosB * sinL * sinobl) + (sinB * cosobl));
+-    return rc;
+-}
++/* rec_coords sol_rectangular(double L, double B, double R, double obl) */
++/* { */
++/*     double cosL = cos(L); */
++/*     double cosB = cos(B); */
++/*     double sinL = sin(L); */
++/*     double sinB = sin(B); */
++/*     double sinobl = sin(obl); */
++/*     double cosobl = cos(obl); */
++/*     rec_coords rc; */
++/*     rc.x = R * (cosB * cosL); */
++/*     rc.y = R * ((cosB * sinL * cosobl) - (sinB * sinobl)); */
++/*     rc.z = R * ((cosB * sinL * sinobl) + (sinB * cosobl)); */
++/*     return rc; */
++/* } */
+ 
+ /*! @brief Returns one of geocentric ecliptic longitude,
+  *  latitude and radius as VSOP coordinates.
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-01-30 21:13:16 UTC (rev 237)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-01-31 01:43:01 UTC (rev 238)
+@@ -470,3 +470,76 @@
+     output = vsop_sph_invert(output);
+     return output;
+ }
++
++
++
++/*! @brief Converts spherical geocentric coordinates of the Sun to
++ *  rectangular geocentric coordinates of the Sun.
++ *
++ *  [Meeus-1998: equation 26.1 and 26.2.]  (26.1 is a more general
++ *  form of 26.2.)
++ *
++ *  This function requires the spherical geometric coordinates of the
++ *  Sun.  These can be provided for either the ecliptic and equinox of
++ *  J2000, or for the ecliptic and equinox of the date.  When provided
++ *  for the date, the obliquity of the ecliptic for that date is
++ *  calculated using high precision (obliquity_hi).
++ *
++ *  @param[in]  vsc  Geometric spherical coordinates of the Sun.
++ *
++ *  @return The geometric rectangular coordinates of the Sun.
++ *
++ *  @note Meeus provides formula 26.2 for converting to rectangular
++ *  coordinates in J2000, which places obliquity of the ecliptic at 0.
++ *  This doesn't seem to work for the standard VSOP data provided in
++ *  J2000, though, possibly (but not definitely) because Meeus'
++ *  appendix data is engineered a little differently.  Instead, the
++ *  obliquity at epoch 2000.0 is used in Meeus' original 26.1 formula,
++ *  and this appears to work fine.
++ *
++ *  @todo Make more efficient -- in the current state, obliquity is
++ *  possibly being calculated for 2 dates instead of just the one
++ *  required.
++ *
++ *  @author Mike McGavin.
++ */
++vsop_rec_coords sol_sph_to_rec(vsop_sph_coords vsc)
++{
++  vsop_rec_coords vrc;
++  memset(&amp;vrc, '\0', sizeof(vrc));
++  vrc.vh = vsc.vh;
++  vrc.jd = vsc.jd;
++  vrc.is_inverted = vsc.is_inverted;
++  vrc.error_state = vsc.error_state;
++
++  /* Bail out now if things are in an error state. */
++  if(0 != vrc.error_state) {
++    return vrc;
++  }
++
++  /* Make sure these are spherical coordinates for j2 or the date. */
++  if(!(hel_sph_j2 == vrc.vh.version || hel_sph_date == vrc.vh.version)) {
++    vrc.error_state = -2;
++    return vrc;
++  }
++
++  /* Make sure these are geometric solar coordinates.  (ie. Inverted Earth.) */
++  if(!(vsop_earth == vrc.vh.planet &amp;&amp; vrc.is_inverted)) {
++    vrc.error_state = -6;
++    return vrc;
++  }
++
++  double obl = vrc.vh.version == hel_sph_j2 ? obliquity_hi(je_to_jd(2000.0)) : obliquity_hi(vrc.jd);
++
++  double cosL = cos(vsc.sc.L);
++  double cosB = cos(vsc.sc.B);
++  double sinL = sin(vsc.sc.L);
++  double sinB = sin(vsc.sc.B);
++  double sinobl = sin(obl);
++  double cosobl = cos(obl);
++  
++  vrc.rc.x = vsc.sc.R * (cosB * cosL);
++  vrc.rc.y = vsc.sc.R * ((cosB * sinL * cosobl) - (sinB * sinobl));
++  vrc.rc.z = vsc.sc.R * ((cosB * sinL * sinobl) + (sinB * cosobl));
++  return vrc;
++}
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-01-30 21:13:16 UTC (rev 237)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-01-31 01:43:01 UTC (rev 238)
+@@ -760,6 +760,7 @@
+ 		 199.907347 * 3600, 0.5, &quot;arc-seconds&quot;);
+ 	  report(&quot;corrected fk5 latitude&quot;, r_to_d(vsc.sc.B) * 3600, 0.644 - 0.023,
+ 		 0.5, &quot;arc-seconds&quot;);
++	    printf(&quot;%.10f %.10f %.10f\n&quot;, r_to_d(vsc.sc.L), r_to_d(vsc.sc.B) * 3600.0, vsc.sc.R);
+ 
+ 
+ 	  printf
+@@ -797,41 +798,9 @@
+ 
+     printf(&quot;26.a Rectangular coordinates of the Sun\n&quot;);
+     {
+-        printf(&quot;This code appears to have all sorts of problems matching Meeus exactly.  I think it's because Meeus uses non-complete VSOP data in the example, though he doesn't say clearly.\n&quot;);
++        printf(&quot;This code appears to have all sorts of problems matching Meeus exactly.\nI think it's because Meeus uses non-complete VSOP data in the example, though he doesn't say clearly.\n&quot;);
+ 	double jd = 2448908.5;
+ 
+-/* 	printf(&quot;\t- Calculating rectangular coordinates directly:\n&quot;); */
+-/* 	vsop_handle vh; */
+-/* 	if(0 == get_vsop_data_handle(vsop_earth, hel_rec_date, &amp;vh)) { */
+-/* 	  vsop_rec_coords vrc = vsop_rec_sol(vsop_rec_to_fk5(vsop_get_rectangular(vh, jd))); */
+-/* 	  printf(&quot;Error value of vrc is: %d\n&quot;, vrc.error_state); */
+-/* 	  report_diff(&quot;rec-X&quot;, vrc.rc.x * km_per_au, -0.9379952 * km_per_au, &quot;km&quot;); */
+-/* 	  report_diff(&quot;rec-Y&quot;, vrc.rc.y * km_per_au, -0.3116544 * km_per_au, &quot;km&quot;); */
+-/* 	  report_diff(&quot;rec-Z&quot;, vrc.rc.z * km_per_au, -0.1351215 * km_per_au, &quot;km&quot;); */
+-	  
+-/* 	} else { */
+-/* 	  printf(&quot;Problem getting a data handle.\n&quot;); */
+-/* 	} */
+-
+-
+-
+-
+-/* 	double L, B, R; */
+-/* 	sol_dimension3_fk5(jd, &amp;L, &amp;B, &amp;R); */
+-
+-/* 	/\* VSOP calculates slightly different values from the book, so */
+-/* 	   L, B and R will, here, be overridden from those stated on */
+-/* 	   p172. *\/ */
+-/* /\* 	L = d_to_r(199.907347); *\/ */
+-/* /\* 	B = d_to_r(dms_to_d(0, 0, 0.62)); *\/ */
+-/* /\* 	R = 0.99760775; *\/ */
+-
+-/* 	double E = obliquity_hi(jd); */
+-/* 	rec_coords rc = sol_rectangular(L, B, R, E); */
+-/* 	report(&quot;aX&quot;, rc.x * km_per_au, -0.9379952 * km_per_au, 5.0, &quot;km&quot;); */
+-/* 	report(&quot;aY&quot;, rc.y * km_per_au, -0.3116544 * km_per_au, 5.0, &quot;km&quot;); */
+-/* 	report(&quot;aZ&quot;, rc.z * km_per_au, -0.1351215 * km_per_au, 5.0, &quot;km&quot;); */
+-
+ 	int result;
+ 	vsop_handle vh;
+ 	if (0 !=
+@@ -842,20 +811,18 @@
+ 	    vsop_sph_coords vsc = vsop_get_spherical(vh, jd);
+ 
+ 	    vsc = vsop_sph_to_fk5(vsc);
+-
++	    vsc = vsop_sph_sol(vsc);
++	    /*
+ 	    double obl = obliquity_hi(jd);
++	    */
++	    report_diff(&quot;L&quot;, r_to_d(vsc.sc.L) * 3600.0, 199.907347 * 3600.0, &quot;arc-seconds&quot;);
++	    report_diff(&quot;B&quot;, r_to_d(vsc.sc.B) * 3600.0, dms_to_d(0,0,0.62) * 3600.0, &quot;arc-seconds&quot;);
++	    report_diff(&quot;R&quot;, vsc.sc.R * km_per_au, 0.99760775 * km_per_au, &quot;km&quot;);
+ 
+-	    rec_coords rc =
+-		sol_rectangular(vsc.sc.L, vsc.sc.B, vsc.sc.R, obl);
+-
+-	    report_diff(&quot;X&quot;, -rc.x * km_per_au, -0.9379952 * km_per_au, &quot;km&quot;);
+-	    report_diff(&quot;Y&quot;, -rc.y * km_per_au, -0.3116544 * km_per_au, &quot;km&quot;);
+-	    report_diff(&quot;Z&quot;, -rc.z * km_per_au, -0.1351215 * km_per_au, &quot;km&quot;);
+-
+-/* 	    report(&quot;lX&quot;, -rc.x, -0.9379952, 1e-9, &quot;au&quot;); */
+-/* 	    report(&quot;lY&quot;, -rc.y, -0.3116544, 1e-9, &quot;au&quot;); */
+-/* 	    report(&quot;lZ&quot;, -rc.z, -0.1351215, 1e-9, &quot;au&quot;); */
+-
++	    vsop_rec_coords vrc = sol_sph_to_rec(vsc);
++	    report_diff(&quot;X&quot;, vrc.rc.x * km_per_au, -0.9379952 * km_per_au, &quot;km&quot;);
++	    report_diff(&quot;Y&quot;, vrc.rc.y * km_per_au, -0.3116544 * km_per_au, &quot;km&quot;);
++	    report_diff(&quot;Z&quot;, vrc.rc.z * km_per_au, -0.1351215 * km_per_au, &quot;km&quot;);
+ 	}
+ 
+     }
+@@ -1032,31 +999,23 @@
+ 	    (result = get_vsop_data_handle(vsop_earth, hel_sph_j2, &amp;vh))) {
+ 	    printf(&quot;Problem opening file: %s&quot;, strerror(result));
+ 	} else {
+-	    vsop_sph_coords vsc =
+-		vsop_sph_to_fk5(vsop_get_spherical(vh, jd));
++/* 	    vsop_rec_coords vrc = vsop_rec_to_fk5(vsop_rec_sol(vsop_get_rectangular(vh, jd))); */
++/* 	    /\* */
++/* 	    double E = obliquity_hi(jd); */
++/* 	    *\/ */
++/* 	    rec_coords src = vrc.rc; */
+ 
+-	    double E = obliquity_hi(jd);
+-	    rec_coords src =
+-		sol_rectangular(vsc.sc.L, vsc.sc.B, vsc.sc.R, E);
+-	    src.x = -src.x;
+-	    src.y = -src.y;
+-	    src.z = -src.z;
++	    vsop_sph_coords vsc = vsop_sph_to_fk5(vsop_sph_sol(vsop_get_spherical(vh, jd)));
++	    vsop_rec_coords vrc = sol_sph_to_rec(vsc);
++	    rec_coords src = vrc.rc;
+ 
+-/* 	double L, B, R; */
+-/* 	sol_dimension3_fk5(jd, &amp;L, &amp;B, &amp;R); */
+-/* 	rec_coords src = sol_rectangular(L, B, R, obl2000); */
+-	    report(&quot;solar x&quot;, src.x * km_per_au, -0.9756732 * km_per_au,
+-		   800, &quot;km&quot;);
+-	    report(&quot;solar y&quot;, src.y * km_per_au, -0.2003254 * km_per_au,
+-		   800, &quot;km&quot;);
+-	    report(&quot;solar z&quot;, src.z * km_per_au, -0.0868566 * km_per_au,
+-		   800, &quot;km&quot;);
++	    report(&quot;solar x&quot;, src.x * km_per_au, -0.9756732 * km_per_au, 0.0000001 * km_per_au,
++		   &quot;km&quot;);
++	    report(&quot;solar y&quot;, src.y * km_per_au, -0.2003254 * km_per_au, 0.0000001 * km_per_au,
++		   &quot;km&quot;);
++	    report(&quot;solar z&quot;, src.z * km_per_au, -0.0868566 * km_per_au, 0.0000001 * km_per_au,
++		   &quot;km&quot;);
+ 
+-/* 	printf(&quot;Resetting sol values to those in example (because VSOP isn't calculating them properly as above)\n&quot;); */
+-/* 	src.x = -0.9756732; */
+-/* 	src.y = -0.2003254; */
+-/* 	src.z = -0.0868566; */
+-
+ 	    double ra, dec, elongation, phase_angle, body_r_earth;
+ 	    elliptical_orbit_ecliptical(src, rc, r_sun, &amp;ra, &amp;dec,
+ 					&amp;elongation, &amp;phase_angle,
+@@ -1081,10 +1040,10 @@
+ 
+ 	    report(&quot;recalc-delta-earth&quot;, body_r_earth, 0.8242811, 0.000001,
+ 		   &quot;AU&quot;);
+-	    report(&quot;ra&quot;, ra, d_to_r(158.558965), 0.00001, &quot;radians&quot;);
+-	    report(&quot;dec&quot;, dec, d_to_r(19.158496), 0.00001, &quot;radians&quot;);
+-	    report(&quot;elongation&quot;, elongation, d_to_r(40.51), 0.00001,
+-		   &quot;radians&quot;);
++	    report(&quot;ra&quot;, r_to_d(ra) * 3600.0, 158.558965 * 3600.0, 0.01, &quot;arc-seconds&quot;);
++	    report(&quot;dec&quot;, r_to_d(dec) * 3600.0, 19.158496 * 3600.0, 0.01, &quot;arc-seconds&quot;);
++	    report(&quot;elongation&quot;, r_to_d(elongation), 40.51, 0.01,
++		   &quot;degrees&quot;);
+ 	}
+ 
+     }
+@@ -1192,25 +1151,20 @@
+ 	    orbit_s *or = test-&gt;orbit;
+ 	    printf(&quot;Testing %s, test %d\n&quot;, or-&gt;name, o);
+ 
+-
+ 	    vsop_handle vh;
+ 	    get_vsop_data_handle(vsop_earth, hel_sph_j2, &amp;vh);
+ 	    vsop_sph_coords vsc =
+-		vsop_sph_to_fk5(vsop_get_spherical(vh, test-&gt;jd));
++	      vsop_sph_sol(vsop_sph_to_fk5(vsop_get_spherical(vh, test-&gt;jd)));
++	    vsop_rec_coords vrc = sol_sph_to_rec(vsc);
++	    rec_coords sun_rec = vrc.rc;
+ 
+-	    double E = obliquity_hi(test-&gt;jd);
+-	    vsc.sc.L = modpi2(vsc.sc.L + pi);
+-	    vsc.sc.B = -vsc.sc.B;
+-	    rec_coords sun_rec =
+-		sol_rectangular(vsc.sc.L, vsc.sc.B, vsc.sc.R, E);
+-
+-
+-
+ 	    /*
+-	       double L, B, R;
+-	       sol_dimension3_fk5(test-&gt;jd, &amp;L, &amp;B, &amp;R);
+-	       rec_coords sun_rec = sol_rectangular(L, B, R, obliquity_hi(je_to_jd(2000)));
+-	     */
++	    vsop_handle vh2;
++	    get_vsop_data_handle(vsop_earth, hel_rec_j2, &amp;vh2);
++	    vsop_rec_coords vrc =
++	      vsop_rec_to_fk5(vsop_rec_sol(vsop_get_rectangular(vh2, test-&gt;jd)));
++	    rec_coords sun_rec = vrc.rc;
++	    */
+ 
+ 	    double ra;
+ 	    double dec;
+@@ -1261,8 +1215,7 @@
+ 	     *   correct for precession.
+ 	     *   correct for aberration.
+ 	     */
+-
+-	    /* Adjust for nutation. */
++	    /*
+ 	    double a_in_ra, a_in_dec;
+ 	    aberration_in_ra_dec_low(test-&gt;jd, ra, dec,
+ 				     obliquity_hi(test-&gt;jd), vsc.sc.L,
+@@ -1280,50 +1233,54 @@
+ 			  &amp;n_in_ra, &amp;n_in_dec);
+ 	    ra += n_in_ra;
+ 	    dec += n_in_dec;
++	    */
+ 
+-
+-
++	    /*
+ 	    printf(&quot;$$$$ %f:%f $$$$\n&quot;,
+ 		   (n_in_ra * (360.0 * 60.0 * 60.0) / (2 * pi)),
+ 		   (n_in_dec * (360.0 * 60.0 * 60.0) / (2 * pi)));
+ 	    printf(&quot;$$$$ %f:%f $$$$\n&quot;,
+ 		   (a_in_ra * (360.0 * 60.0 * 60.0) / (2 * pi)),
+ 		   (a_in_dec * (360.0 * 60.0 * 60.0) / (2 * pi)));
++	    */
+ 
+-	    report(&quot;RA&quot;, (ra * (360.0 * 60.0 * 60.0) / (2 * pi)),
+-		   (test-&gt;ra * (360.0 * 60.0 * 60.0) / (2 * pi)), 0.00030,
++	    report_diff(&quot;RA              &quot;, r_to_d(ra) * 3600,
++			r_to_d(test-&gt;ra) * 3600,
+ 		   &quot;arc-sec&quot;);
+-	    report(&quot;Declination&quot;, (dec * (360.0 * 60.0 * 60.0) / (2 * pi)),
+-		   (test-&gt;dec * (360.0 * 60.0 * 60.0) / (2 * pi)), 0.00030,
++	    report_diff(&quot;Declination     &quot;, (dec * (360.0 * 60.0 * 60.0) / (2 * pi)),
++		   (test-&gt;dec * (360.0 * 60.0 * 60.0) / (2 * pi)),
+ 		   &quot;arc-sec&quot;);
+-	    report(&quot;Distance (Earth)&quot;, body_r_earth, test-&gt;r_earth,
+-		   0.000001, &quot;AU&quot;);
+-	    report(&quot;Distance (Sun)&quot;, body_r_sun, test-&gt;r_sun, 0.000001,
+-		   &quot;AU&quot;);
+-	    report(&quot;Magnitude&quot;, mag, test-&gt;mag, 1.0, &quot;&quot;);
++	    report_diff(&quot;Distance (Earth)&quot;, body_r_earth * km_per_au, test-&gt;r_earth * km_per_au,
++		   &quot;km&quot;);
++	    report_diff(&quot;Distance (Sun)  &quot;, body_r_sun * km_per_au, test-&gt;r_sun * km_per_au,
++		   &quot;km&quot;);
++	    report_diff(&quot;Magnitude       &quot;, mag, test-&gt;mag, &quot;&quot;);
+ 	}
+     }
+ 
+-    {
+-	printf(&quot;Checking new VSOP routines\n&quot;);
+-	{
+-	    vsop_handle vh;
++/*     { */
++/* 	printf(&quot;Checking new VSOP routines\n&quot;); */
++/* 	{ */
++/* 	    vsop_handle vh; */
+ 
+-	    if (0 != get_vsop_data_handle(vsop_earth, hel_rec_j2, &amp;vh)) {
+-		printf(&quot;\t\tError loading Earth handle.\n&quot;);
+-	    } else {
+-		double jd = 2448170.5;
+-		vsop_rec_coords vrc = vsop_rec_sol(vsop_rec_to_fk5(vsop_get_rectangular(vh, jd)));
++/* 	    if (0 != get_vsop_data_handle(vsop_earth, hel_rec_j2, &amp;vh)) { */
++/* 		printf(&quot;\t\tError loading Earth handle.\n&quot;); */
++/* 	    } else { */
++/* 		double jd = 2448170.5; */
++/* 		vsop_rec_coords vrc = vsop_rec_sol(vsop_rec_to_fk5(vsop_get_rectangular(vh, jd))); */
+ 
+-		report(&quot;X&quot;, vrc.rc.x * km_per_au,
+-		       -0.975673220683 * km_per_au, 1.0e-4, &quot;km&quot;);
+-		report(&quot;Y&quot;, vrc.rc.y * km_per_au,
+-		       -0.200325394065 * km_per_au, 1.0e-4, &quot;km&quot;);
+-		report(&quot;Z&quot;, vrc.rc.z * km_per_au,
+-		       -0.0868565820014 * km_per_au, 1.0e-4, &quot;km&quot;);
+-	    }
+-	}
+-    }
++/* 		report(&quot;X&quot;, vrc.rc.x * km_per_au, */
++/* 		       -0.975673220683 * km_per_au, 1.0e-4, &quot;km&quot;); */
++/* 		report(&quot;Y&quot;, vrc.rc.y * km_per_au, */
++/* 		       -0.200325394065 * km_per_au, 1.0e-4, &quot;km&quot;); */
++/* 		report(&quot;Z&quot;, vrc.rc.z * km_per_au, */
++/* 		       -0.0868565820014 * km_per_au, 1.0e-4, &quot;km&quot;); */
++/* 	    } */
++/* 	} */
++/*     } */
++
++
++
+ /* 	{ */
+ /* 	  printf(&quot;Venus spherical\n&quot;); */
+ /* 	  vsop_handle vh; */
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000090.html">[Ephemeritis-svn] r237 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000092.html">[Ephemeritis-svn] r239 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#91">[ date ]</a>
+              <a href="thread.html#91">[ thread ]</a>
+              <a href="subject.html#91">[ subject ]</a>
+              <a href="author.html#91">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

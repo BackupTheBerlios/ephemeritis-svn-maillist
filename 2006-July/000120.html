@@ -1,0 +1,239 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r267 - branches/new-vsop-prepare/src/c/tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-July/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r267%20-%20branches/new-vsop-prepare/src/c/tests&In-Reply-To=%3C200607260951.k6Q9pBD5017541%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000119.html">
+   <LINK REL="Next"  HREF="000121.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r267 - branches/new-vsop-prepare/src/c/tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r267%20-%20branches/new-vsop-prepare/src/c/tests&In-Reply-To=%3C200607260951.k6Q9pBD5017541%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r267 - branches/new-vsop-prepare/src/c/tests">izogi at mail.berlios.de
+       </A><BR>
+    <I>Wed Jul 26 11:51:11 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000119.html">[Ephemeritis-svn] r266 - branches/new-vsop-prepare
+</A></li>
+        <LI>Next message: <A HREF="000121.html">[Ephemeritis-svn] r268 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#120">[ date ]</a>
+              <a href="thread.html#120">[ thread ]</a>
+              <a href="subject.html#120">[ subject ]</a>
+              <a href="author.html#120">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-07-26 11:51:10 +0200 (Wed, 26 Jul 2006)
+New Revision: 267
+
+Modified:
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+Adding a temporary test to validate_meeus that investigates converting VSOP87D to VSOP87B by applying precession.
+
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-25 10:44:32 UTC (rev 266)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-26 09:51:10 UTC (rev 267)
+@@ -86,21 +86,26 @@
+ 
+ int vsop_dimension3_vsop_new(double jd,
+ 			     EPH_VsopBody planet,
+-			     double *longitude, double *latitude,
++                             EPH_VsopSphCoords *sph_pos)
++        /*		     
++        double *longitude, double *latitude,
+ 			     double *radius)
++        */
+ {
+     EPH_VsopHandle vh;
+     if (0 == ephGetVsopDataHandle(planet, hel_sph_date, &amp;vh)) {
+-        EPH_VsopSphCoords vsc = ephVsopGetSpherical(vh, jd);
+-	if (vsc.error_state != ok) {
++        *sph_pos = ephVsopGetSpherical(vh, jd);
++	if (sph_pos-&gt;error_state != ok) {
+ 	    printf(&quot;Error calculating spherical coordinates: %d\n&quot;,
+-		   vsc.error_state);
++		   sph_pos-&gt;error_state);
+ 	    return 0;
+ 	}
+-	*longitude = vsc.sc.ecl.longitude;
++        /*
++        *longitude = vsc.sc.ecl.longitude;
+ 	*latitude = vsc.sc.ecl.latitude;
+ 	*radius = vsc.sc.R;
+-	return 1;
++        */
++        return 1;
+     } else {
+ 	printf(&quot;Unable to allocate the VSOP handle.\n&quot;);
+ 	return 0;
+@@ -969,20 +974,25 @@
+ 	double e = 0.100;
+ 	double M = ephDToR(5.0);
+         double eok_result = ephEccentricityAnomoly(M, e, 33);
+-	report(&quot;Eccentricity anoomly&quot;, eok_result, ephDToR(5.554589),
++	report(&quot;Eccentricity anomoly&quot;, eok_result, ephDToR(5.554589),
+ 	       0.0000001, &quot;radians&quot;);
+     }
+ 
+     printf(&quot;32.a Planet position\n&quot;);
+     {
+-	double L, B, R;
++        EPH_VsopSphCoords vsc;
+ 	/*
+ 	   vsop_dimension3_vsop(2448976.5, vVenus, &amp;L, &amp;B, &amp;R);
+ 	 */
+-	if (vsop_dimension3_vsop_new(2448976.5, vsop_venus, &amp;L, &amp;B, &amp;R)) {
+-	    report(&quot;longitude&quot;, ephRToD(L), 26.11428, 1.0, &quot;deg&quot;);
+-	    report(&quot;latitude&quot;, ephRToD(B), -2.62070, 1.0, &quot;deg&quot;);
+-	    report(&quot;radius&quot;, R * km_per_au, 0.724603 * km_per_au, 200.0,
++	if (vsop_dimension3_vsop_new(2448976.5, vsop_venus, &amp;vsc)) {
++            /*
++            *longitude = vsc.sc.ecl.longitude;
++            *latitude = vsc.sc.ecl.latitude;
++            *radius = vsc.sc.R;
++            */
++            report(&quot;longitude&quot;, ephRToD(vsc.sc.ecl.longitude), 26.11428, 1.0, &quot;deg&quot;);
++            report(&quot;latitude&quot;, ephRToD(vsc.sc.ecl.latitude), -2.62070, 1.0, &quot;deg&quot;);
++            report(&quot;radius&quot;, vsc.sc.R * km_per_au, 0.724603 * km_per_au, 200.0,
+ 		   &quot;km&quot;);
+ 	} else {
+ 	    printf(&quot;There was a problem with the VSOP code or data.\n&quot;);
+@@ -1054,8 +1064,25 @@
+         double obl2000 = ephObliquityHi(ephJeToJd(2000.0));
+         EPH_ElementConstants ec = ephGetElementConstants(obl2000, el, 53);
+         r_sun = ephGetRSun(ec);
++        
++        
++        
++        /*        
++        EPH_VsopSphCoords vsc;
++        EPH_VsopRecCoords vrc_sun;
++        if (vsop_dimension3_vsop_new(2448976.5, vsop_earth, &amp;vsc)) {
++            vrc_sun = ephSolSphToRec(ephVsopSphSol(vsc));
++        
++        } else {
++            printf(&quot;There was a problem with the VSOP code or data.\n&quot;);
++            goto test_failed33b;
++        }
++        EPH_RecCoords rc = vrc_sun.rc;
++        */
++        
++        
+         EPH_RecCoords rc = ephEllipticalOrbitRectangular(ec, r_sun);
+-
++        
+ 	report(&quot;x&quot;, rc.x, 0.2508066, 0.0000001, &quot;AU&quot;);
+ 	report(&quot;y&quot;, rc.y, 0.4849175, 0.0000001, &quot;AU&quot;);
+ 	report(&quot;z&quot;, rc.z, 0.3573373, 0.0000001, &quot;AU&quot;);
+@@ -1065,7 +1092,7 @@
+ 	int result;
+ 	if (0 !=
+                    (result = ephGetVsopDataHandle(vsop_earth, hel_sph_j2, &amp;vh))) {
+-	    printf(&quot;Problem opening file: %s&quot;, strerror(result));
++	    printf(&quot;Problem opening file: %s\n&quot;, strerror(result));
+ 	} else {
+             /* 	    EPH_VsopRecCoords vrc = ephVsopRecToFk5(ephVsopRecSol(ephVsopGetRectangular(vh, jd))); */
+ /* 	    /\* */
+@@ -1114,9 +1141,60 @@
+ 	    report(&quot;elongation&quot;, ephRToD(elongation), 40.51, 0.01,
+ 		   &quot;degrees&quot;);
+ 	}
++        /*
++        test_failed33b:
++                ;
++        */
++    }
+ 
++    printf(&quot;NOTHING -- Comparing J2000 earth with earth/date-precession&quot;);
++    {
++        EPH_CalDate calDateJD = {1990, 10, 6, true};
++        double jd = ephCalToJd(calDateJD);
++        EPH_VsopHandle vh_earthDate;
++        EPH_VsopHandle vh_earthJ2;
++        int resultED, resultJ2;
++        resultED = ephGetVsopDataHandle(vsop_earth, hel_sph_date, &amp;vh_earthDate);
++        resultJ2 = ephGetVsopDataHandle(vsop_earth, hel_sph_j2, &amp;vh_earthJ2);
++        
++        if (0 != (resultED | resultJ2)) {
++            printf(&quot;Problem opening file.\n&quot;);
++        } else {
++            EPH_VsopSphCoords vscED = ephVsopSphToFk5(ephVsopSphSol(ephVsopGetSpherical(vh_earthDate, jd)));
++            EPH_VsopSphCoords vscJ2 = ephVsopSphToFk5(ephVsopSphSol(ephVsopGetSpherical(vh_earthJ2, jd)));
++        
++            /*
++            EPH_PrecessionElEcliptical ephPrecessionGetElementsEcl(const double JDinitial,
++                    const double JDfinal);
++
++            void ephPrecessionEcl(const EPH_PrecessionElEcliptical pcecl,
++                                  const EPH_EclipticalCoords eclInitial,
++                                  EPH_EclipticalCoords *eclFinal);
++            */
++            
++            EPH_EclipticalCoords tempecl;
++            EPH_CalDate calDate2000 = {2000.0, 1, 1.0, true};
++            double jdnow, jd2000;
++            jdnow = jd;
++            jd2000 = ephCalToJd( calDate2000 );
++            
++            ephPrecessionEcl(
++                    ephPrecessionGetElementsEcl(jd2000, jdnow),
++                    vscJ2.sc.ecl,
++                    &amp;tempecl
++                            );
++            
++            vscJ2.sc.ecl = tempecl;
++            
++            EPH_SphCoords scED, scJ2;
++            scED = vscED.sc;
++            scJ2 = vscJ2.sc;
++            report(&quot;lat&quot;, scJ2.ecl.latitude, scED.ecl.latitude, 0.0000000001, &quot;radians&quot;);
++            report(&quot;long&quot;, scJ2.ecl.longitude, scED.ecl.longitude, 0.0000000001, &quot;radians&quot;);
++            report(&quot;radius&quot;, scJ2.R, scED.R, 0.0000001, &quot;au&quot;);
++        }
+     }
+-
++    
+     printf(&quot;47.a Moon position\n&quot;);
+     {
+ 	double L, B, R;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000119.html">[Ephemeritis-svn] r266 - branches/new-vsop-prepare
+</A></li>
+	<LI>Next message: <A HREF="000121.html">[Ephemeritis-svn] r268 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#120">[ date ]</a>
+              <a href="thread.html#120">[ thread ]</a>
+              <a href="subject.html#120">[ subject ]</a>
+              <a href="author.html#120">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,366 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r175 - trunk/src/c/libephemeritis
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2005-December/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r175%20-%20trunk/src/c/libephemeritis&In-Reply-To=%3C200512190753.jBJ7rrsh004870%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000030.html">
+   <LINK REL="Next"  HREF="000032.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r175 - trunk/src/c/libephemeritis</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r175%20-%20trunk/src/c/libephemeritis&In-Reply-To=%3C200512190753.jBJ7rrsh004870%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r175 - trunk/src/c/libephemeritis">izogi at berlios.de
+       </A><BR>
+    <I>Mon Dec 19 08:53:53 CET 2005</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000030.html">[Ephemeritis-svn] r174 - in trunk/src/c: libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000032.html">[Ephemeritis-svn] r176 - in trunk/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#31">[ date ]</a>
+              <a href="thread.html#31">[ thread ]</a>
+              <a href="subject.html#31">[ subject ]</a>
+              <a href="author.html#31">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2005-12-19 08:53:50 +0100 (Mon, 19 Dec 2005)
+New Revision: 175
+
+Modified:
+   trunk/src/c/libephemeritis/elliptical.c
+   trunk/src/c/libephemeritis/ephemeritis.h
+Log:
+Piped through 'indent -kr' to tidy up indentation.  Also added a struct for orbital elements, but it's not yet implemented.
+
+
+Modified: trunk/src/c/libephemeritis/elliptical.c
+===================================================================
+--- trunk/src/c/libephemeritis/elliptical.c	2005-12-19 07:45:29 UTC (rev 174)
++++ trunk/src/c/libephemeritis/elliptical.c	2005-12-19 07:53:50 UTC (rev 175)
+@@ -76,10 +76,9 @@
+ int geocentric_planet(double jd,
+ 		      enum vPlanets basePlanet,
+ 		      enum vPlanets targetPlanet,
+-		      void (*heliocentic_f)(double, enum vPlanets, double*, double*, double*),
+-		      double deltaPsi,
+-		      double epsilon,
+-		      double delta,
++		      void (*heliocentic_f) (double, enum vPlanets,
++					     double *, double *, double *),
++		      double deltaPsi, double epsilon, double delta,
+ 		      double *ra, double *dec)
+ {
+     double t = jd;
+@@ -101,7 +100,7 @@
+ 	/* Heliocentric geometric ecliptic coordinates of the planet. */
+ 	double L, B, R;
+ 	heliocentic_f(t, targetPlanet, &amp;L, &amp;B, &amp;R);
+-	
++
+ 	/* Rectangular offset. */
+ 	const double cosB0 = cos(B0);
+ 	const double cosB = cos(B);
+@@ -143,11 +142,11 @@
+ 
+     /* Transform to FK5 ecliptic and equinox. */
+     /*
+-      --- This is now done within the vsop function.  It's probably slightly less efficient that
+-      --- way, but it keeps all the vsop code bundled together, allowing for the layer of abstraction
+-      --- between the geocentric and heliocentric coordinate calculations.
+-    vsop_to_fk5(jd, &amp;l, &amp;b);
+-    */
++       --- This is now done within the vsop function.  It's probably slightly less efficient that
++       --- way, but it keeps all the vsop code bundled together, allowing for the layer of abstraction
++       --- between the geocentric and heliocentric coordinate calculations.
++       vsop_to_fk5(jd, &amp;l, &amp;b);
++     */
+ 
+     /* Nutation in longitude. */
+     l += deltaPsi;
+@@ -173,10 +172,13 @@
+  *  @return -1 for a negative value, +1 for a positive value, and 0
+  *  for 0.
+  */
+-static int eph_sgn(double x) {
+-  if(x &gt; 0) return 1;
+-  if(x &lt; 0) return -1;
+-  return 0;
++static int eph_sgn(double x)
++{
++    if (x &gt; 0)
++	return 1;
++    if (x &lt; 0)
++	return -1;
++    return 0;
+ }
+ 
+ 
+@@ -189,8 +191,9 @@
+  *
+  *  @return         The mean anomoly.
+  */
+-static double mean_anomoly(double jd, double T, double n) {
+-  return (jd - T) * n;
++static double mean_anomoly(double jd, double T, double n)
++{
++    return (jd - T) * n;
+ }
+ 
+ /*! @brief Returns the true anomoly.
+@@ -202,8 +205,9 @@
+  *
+  *  @return         The true anomoly.
+  */
+-static double true_anomoly(double e, double E) {
+-  return 2 * atan(sqrt((1 + e) / (1 - e)) * tan(E / 2));
++static double true_anomoly(double e, double E)
++{
++    return 2 * atan(sqrt((1 + e) / (1 - e)) * tan(E / 2));
+ }
+ 
+ /*! @brief Returns the radius vector.
+@@ -216,8 +220,9 @@
+  *
+  *  @return       The radius vector.
+  */
+-static double radius_vector(double a, double e, double E) {
+-  return a * (1 - (e * cos(E)));
++static double radius_vector(double a, double e, double E)
++{
++    return a * (1 - (e * cos(E)));
+ }
+ 
+ /*! @brief Calculates E for the Equation of Kepler.
+@@ -236,35 +241,36 @@
+  *
+  *  @todo Write test code.
+  */
+-double eccentricity_anomoly(double M, double e, int iterations) {
+-  int f = eph_sgn(M);
++double eccentricity_anomoly(double M, double e, int iterations)
++{
++    int f = eph_sgn(M);
+ 
+-  double m;
+-  m = fabs(M) / (2*pi);
+-  m = (m - (int)m) * 2 * pi * f;
++    double m;
++    m = fabs(M) / (2 * pi);
++    m = (m - (int) m) * 2 * pi * f;
+ 
+-  if(m &lt; 0) {
+-    m = m + (2 * pi);
+-  }
+-  f = 1;
++    if (m &lt; 0) {
++	m = m + (2 * pi);
++    }
++    f = 1;
+ 
+-  if(m &gt; pi) {
+-    f = -1;
+-    m = (2 * pi) - m;
+-  }
++    if (m &gt; pi) {
++	f = -1;
++	m = (2 * pi) - m;
++    }
+ 
+-  double e0 = pi / 2;
+-  double d  = pi / 4;
+-  double m1 = 0;
+-  int j;
+-  for(j = 1; j &lt; iterations; j++) {
+-    m1 = e0 - (e * sin(e0));
+-    e0 = e0 + (d * eph_sgn(m - m1));
+-    d = d / 2;
+-  }
++    double e0 = pi / 2;
++    double d = pi / 4;
++    double m1 = 0;
++    int j;
++    for (j = 1; j &lt; iterations; j++) {
++	m1 = e0 - (e * sin(e0));
++	e0 = e0 + (d * eph_sgn(m - m1));
++	d = d / 2;
++    }
+ 
+-  double E = e0 * f;
+-  return E;
++    double E = e0 * f;
++    return E;
+ }
+ 
+ /*! @brief Calculates the rectangular coordinates of a body, given
+@@ -284,7 +290,10 @@
+  *  @return A pointer to the rc structure that was passed in.  This
+  *  return value is for convenience only.
+  */
+-rec_coords *elliptical_orbit_rectangular(double jd, double obl, double T, double a, double e, double i, double w, double L, double n, rec_coords *rc)
++rec_coords *elliptical_orbit_rectangular(double jd, double obl, double T,
++					 double a, double e, double i,
++					 double w, double L, double n,
++					 rec_coords * rc)
+ {
+     double F = cos(L);
+     double G = sin(L) * cos(obl);
+@@ -299,9 +308,9 @@
+     double B = atan2(G, Q);
+     double C = atan2(H, R);
+ 
+-    double a_ = sqrt(F*F + P*P);
+-    double b_ = sqrt(G*G + Q*Q);
+-    double c_ = sqrt(H*H + R*R);
++    double a_ = sqrt(F * F + P * P);
++    double b_ = sqrt(G * G + Q * Q);
++    double c_ = sqrt(H * H + R * R);
+ 
+     double M = mean_anomoly(jd, T, n);
+     double E = eccentricity_anomoly(M, e, 53);
+
+Modified: trunk/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- trunk/src/c/libephemeritis/ephemeritis.h	2005-12-19 07:45:29 UTC (rev 174)
++++ trunk/src/c/libephemeritis/ephemeritis.h	2005-12-19 07:53:50 UTC (rev 175)
+@@ -92,9 +92,9 @@
+  *  the function for information about what each field refers to.
+  */
+ typedef struct {
+-  double x;                     /*!&lt; The x coordinate. */
+-  double y;                     /*!&lt; The y coordinate. */
+-  double z;                     /*!&lt; The z coordinate. */
++    double x;			/*!&lt; The x coordinate. */
++    double y;			/*!&lt; The y coordinate. */
++    double z;			/*!&lt; The z coordinate. */
+ } rec_coords;
+ 
+ 
+@@ -270,36 +270,43 @@
+ double polynomial(const double terms[], const int len, double x);
+ 
+ /* vsop87d.c */
+-double vsop_dimension_vsop(double jd, enum vPlanets planet, enum Coords dim);
+-void vsop_dimension3_vsop(double jd,
+-			  enum vPlanets planet,
+-			  double *longitude, double *latitude, double *radius);
+-void vsop_dimension3_fk5(double jd,
+-			 enum vPlanets planet,
+-			 double *longitude, double *latitude, double *radius);
++double vsop_dimension_vsop(double jd, enum vPlanets planet,
++			   enum Coords dim);
++void vsop_dimension3_vsop(double jd, enum vPlanets planet,
++			  double *longitude, double *latitude,
++			  double *radius);
++void vsop_dimension3_fk5(double jd, enum vPlanets planet,
++			 double *longitude, double *latitude,
++			 double *radius);
+ void vsop_to_fk5(double jd, double *L, double *B);
+ 
+ 
+ /* elliptical.c */
++
++/*! @brief Struct to contain orbital elements.
++ */
++typedef struct {
++  double T;              /*!&lt; The time of passage through the perihelion. */
++  double a;              /*!&lt; The length of the semi-major axis, in astronomical units. */
++  double e;              /*!&lt; The orbital eccentricity. */
++  double i;              /*!&lt; The orbital inclination, in radians.  Note that an inclination above 90 degrees implies a retrograde orbit. */
++  double w;              /*!&lt; The argument of perihelion, in radians. */
++  double L;              /*!&lt; Longitude of the ascending node, in radians. */
++  double n;              /*!&lt; Mean motion, in radians per day. */
++} orbital_elements;
++
+ double eccentricity_anomoly(double M, double e, int iterations);
+ int geocentric_planet(double jd,
+ 		      enum vPlanets basePlanet,
+ 		      enum vPlanets targetPlanet,
+-		      void (*heliocentic_f)(double, enum vPlanets, double*, double*, double*),
+-		      double deltaPsi,
+-		      double epsilon,
+-		      double delta,
++		      void (*heliocentic_f) (double, enum vPlanets,
++					     double *, double *, double *),
++		      double deltaPsi, double epsilon, double delta,
+ 		      double *ra, double *dec);
+-rec_coords *elliptical_orbit_rectangular(double jd,
+-				  double obl,
+-				  double T,
+-				  double a,
+-				  double e,
+-				  double i,
+-				  double w,
+-				  double L,
+-				  double n,
+-				  rec_coords *rc);
++rec_coords *elliptical_orbit_rectangular(double jd, double obl, double T,
++					 double a, double e, double i,
++					 double w, double L, double n,
++					 rec_coords * rc);
+ 
+ /* solar.c */
+ double sol_dimension_vsop(double jd, enum Coords dim);
+@@ -310,19 +317,20 @@
+ void longitude_radius_low(double jd, double *L, double *R);
+ double apparent_longitude_low(double jd, double L);
+ double aberration_low(double R);
+-rec_coords *sol_rectangular(double L, double B, double R, double E, rec_coords *rc);
++rec_coords *sol_rectangular(double L, double B, double R, double E,
++			    rec_coords * rc);
+ 
+ 
+ /* constellations.c */
+ #include &quot;ephemeritis_constid.h&quot;
+ 
+ typedef struct {
+-  const_id constid;   /* As defined in constel_data.c.                   */
+-  char *abb;          /* Points to a string containing the abbreviation. */
+-  char *name;         /* Points to a string containing the name.         */
++    const_id constid;		/* As defined in constel_data.c.                   */
++    char *abb;			/* Points to a string containing the abbreviation. */
++    char *name;			/* Points to a string containing the name.         */
+ } constellation_name;
+ 
+-void constid_name(const const_id constid, constellation_name *namedata);
++void constid_name(const const_id constid, constellation_name * namedata);
+ int get_const_id(const double ra, const double dec, const double epoch);
+ 
+ #endif
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000030.html">[Ephemeritis-svn] r174 - in trunk/src/c: libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000032.html">[Ephemeritis-svn] r176 - in trunk/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#31">[ date ]</a>
+              <a href="thread.html#31">[ thread ]</a>
+              <a href="subject.html#31">[ subject ]</a>
+              <a href="author.html#31">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

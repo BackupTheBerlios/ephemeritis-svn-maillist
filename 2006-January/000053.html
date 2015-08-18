@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r200 - branches/new-vsop-prepare/src/c/utils
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-January/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r200%20-%20branches/new-vsop-prepare/src/c/utils&In-Reply-To=%3C200601090938.k099cZkj007717%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000052.html">
+   <LINK REL="Next"  HREF="000054.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r200 - branches/new-vsop-prepare/src/c/utils</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r200%20-%20branches/new-vsop-prepare/src/c/utils&In-Reply-To=%3C200601090938.k099cZkj007717%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r200 - branches/new-vsop-prepare/src/c/utils">izogi at berlios.de
+       </A><BR>
+    <I>Mon Jan  9 10:38:35 CET 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000052.html">[Ephemeritis-svn] r199 - in branches/new-vsop-prepare/src/c: libephemeritis utils
+</A></li>
+        <LI>Next message: <A HREF="000054.html">[Ephemeritis-svn] r201 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#53">[ date ]</a>
+              <a href="thread.html#53">[ thread ]</a>
+              <a href="subject.html#53">[ subject ]</a>
+              <a href="author.html#53">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-01-09 10:38:32 +0100 (Mon, 09 Jan 2006)
+New Revision: 200
+
+Modified:
+   branches/new-vsop-prepare/src/c/utils/build_vsop_data.c
+Log:
+More minor changes to program.
+
+
+Modified: branches/new-vsop-prepare/src/c/utils/build_vsop_data.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/utils/build_vsop_data.c	2006-01-09 09:17:33 UTC (rev 199)
++++ branches/new-vsop-prepare/src/c/utils/build_vsop_data.c	2006-01-09 09:38:32 UTC (rev 200)
+@@ -22,6 +22,11 @@
+  * A program to build binary VSOP87 data files, based on the
+  * text-based source files.
+  *
++ * The following command, in a bash shell, will convert all files to
++ * their ephemeritis binary equivalents:
++ *
++ *    find source_path -name &quot;VSOP87*&quot; -exec build_vsop_data {} {}.eph.bin \;
++ *
+  * @author Mike McGavin.
+  */
+ 
+@@ -275,7 +280,9 @@
+ int main(int argc, char *argv[])
+ {
+   if(3 != argc) {
+-    fprintf(stderr, &quot;Usage: build_vsop_data &lt;input_file&gt; &lt;output_file&gt;\n&quot;);
++    fprintf(stderr,
++	    &quot;Usage: build_vsop_data &lt;input_file&gt; &lt;output_file&gt;\n&quot;
++	    &quot;Specifying - for either file will respectively represent stdin and stdout.\n&quot;);
+     return 1;
+   }
+   char* input_file = argv[1];
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000052.html">[Ephemeritis-svn] r199 - in branches/new-vsop-prepare/src/c: libephemeritis utils
+</A></li>
+	<LI>Next message: <A HREF="000054.html">[Ephemeritis-svn] r201 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#53">[ date ]</a>
+              <a href="thread.html#53">[ thread ]</a>
+              <a href="subject.html#53">[ subject ]</a>
+              <a href="author.html#53">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,144 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r217 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-January/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r217%20-%20in%20branches/new-vsop-prepare/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200601181003.k0IA3oQB001812%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000069.html">
+   <LINK REL="Next"  HREF="000071.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r217 - in branches/new-vsop-prepare/src/c: libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r217%20-%20in%20branches/new-vsop-prepare/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200601181003.k0IA3oQB001812%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r217 - in branches/new-vsop-prepare/src/c: libephemeritis tests">izogi at berlios.de
+       </A><BR>
+    <I>Wed Jan 18 11:03:50 CET 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000069.html">[Ephemeritis-svn] r216 - in branches/new-vsop-prepare/src: c/libephemeritis c/tests python
+</A></li>
+        <LI>Next message: <A HREF="000071.html">[Ephemeritis-svn] r218 - in branches/new-vsop-prepare: . src/c/utils
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#70">[ date ]</a>
+              <a href="thread.html#70">[ thread ]</a>
+              <a href="subject.html#70">[ subject ]</a>
+              <a href="author.html#70">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-01-18 11:03:50 +0100 (Wed, 18 Jan 2006)
+New Revision: 217
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+Added vsop_sph_invert() for inverting spherical coordinates.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h	2006-01-18 09:57:28 UTC (rev 216)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h	2006-01-18 10:03:50 UTC (rev 217)
+@@ -132,6 +132,7 @@
+ vsop_rec_coords vsop_rec_invert(const vsop_rec_coords vrc);
+ vsop_sph_coords vsop_get_spherical(const vsop_handle vh, const double jd);
+ vsop_sph_coords vsop_sph_vsop_to_fk5(const vsop_sph_coords vsc);
++vsop_sph_coords vsop_sph_invert(const vsop_sph_coords vsc);
+ 
+ 
+ /* Stuff below here should probably be in a header file that's local to the internal code. */
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-01-18 09:57:28 UTC (rev 216)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-01-18 10:03:50 UTC (rev 217)
+@@ -343,3 +343,32 @@
+   output.sc.B += deltaB;
+   return output;
+ }
++
++/*! @brief Given a set of spherical VSOP coordinates, invert them.
++ *  This is useful, for instance, to convert rectangular Earth
++ *  coordinates to Sun coordinates.
++ *
++ *  The is_inverted property of the coordinates structure is flipped
++ *  in the returned value of this function.  If the provided
++ *  coordinates are in an error state, they are returned immediately
++ *  without any additional operations being performed.
++ *
++ *  @param[in]  vrc A set of spherical coordinates.
++ *
++ *  @return A set of spherical coordinates identical to those
++ *  provided, but inverted.
++ */
++vsop_sph_coords vsop_sph_invert(const vsop_sph_coords vsc)
++{
++  vsop_sph_coords output = vsc;
++
++  /* Stop right here if the incoming coordinates are in an error state. */
++  if(output.error_state != 0) {
++    return output;
++  }
++
++  output.sc.L = modpi2(output.sc.L + pi);
++  output.sc.B = -output.sc.B;
++  output.is_inverted = output.is_inverted ^ 0x01;
++  return output;
++}
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-01-18 09:57:28 UTC (rev 216)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-01-18 10:03:50 UTC (rev 217)
+@@ -1230,14 +1230,11 @@
+ 	  } else {
+ 	    double jd = 2448170.5;
+ 	    vsop_rec_coords vrc = vsop_get_rectangular(vh, jd);
+-	    
+ 	    vrc = vsop_rec_invert(vsop_rec_vsop_to_fk5(vrc));
+-	  
+ 
+ 	    report(&quot;X&quot;, vrc.rc.x * km_per_au, -0.975673220683  * km_per_au, 1.0e-4, &quot;km&quot;);
+ 	    report(&quot;Y&quot;, vrc.rc.y * km_per_au, -0.200325394065  * km_per_au, 1.0e-4, &quot;km&quot;);
+ 	    report(&quot;Z&quot;, vrc.rc.z * km_per_au, -0.0868565820014 * km_per_au, 1.0e-4, &quot;km&quot;);
+-	  
+ 	  }
+ 	}
+     }
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000069.html">[Ephemeritis-svn] r216 - in branches/new-vsop-prepare/src: c/libephemeritis c/tests python
+</A></li>
+	<LI>Next message: <A HREF="000071.html">[Ephemeritis-svn] r218 - in branches/new-vsop-prepare: . src/c/utils
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#70">[ date ]</a>
+              <a href="thread.html#70">[ thread ]</a>
+              <a href="subject.html#70">[ subject ]</a>
+              <a href="author.html#70">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

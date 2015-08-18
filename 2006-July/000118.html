@@ -1,0 +1,788 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r265 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-July/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r265%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607251001.k6PA1oPo008194%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000117.html">
+   <LINK REL="Next"  HREF="000119.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r265 - in branches/new-vsop-prepare/src/c:	libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r265%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607251001.k6PA1oPo008194%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r265 - in branches/new-vsop-prepare/src/c:	libephemeritis tests">izogi at mail.berlios.de
+       </A><BR>
+    <I>Tue Jul 25 12:01:50 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000117.html">[Ephemeritis-svn] r264 - in branches/new-vsop-prepare/src/c:	libephemeritis utils
+</A></li>
+        <LI>Next message: <A HREF="000119.html">[Ephemeritis-svn] r266 - branches/new-vsop-prepare
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#118">[ date ]</a>
+              <a href="thread.html#118">[ thread ]</a>
+              <a href="subject.html#118">[ subject ]</a>
+              <a href="author.html#118">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-07-25 12:01:49 +0200 (Tue, 25 Jul 2006)
+New Revision: 265
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/calendar.c
+   branches/new-vsop-prepare/src/c/libephemeritis/dynamical.c
+   branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+Adding the EPH_CalDate type, and adjusting functions to utilise it.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/calendar.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/calendar.c	2006-07-25 08:30:44 UTC (rev 264)
++++ branches/new-vsop-prepare/src/c/libephemeritis/calendar.c	2006-07-25 10:01:49 UTC (rev 265)
+@@ -44,30 +44,28 @@
+ /*! @brief Converts a date in the Julian or Gregorian calendars to the
+  *  Julian Day Number (Meeus 7.1).
+  *
+- *  @param[in] yr        Year, 2BC is -1, 1BC is 0, 1AD is 1, 1998AD is 1998, etc.
+- *  @param[in] mo        Month, with January being 1, February 2, etc.
+- *  @param[in] dy        Day, may be fractional day.  1 is the first day of the month.
+- *  @param[in] gregorian If true, use the Gregorian calendar, else use
+- *                       Julian calendar.
++ *  @param[in] calDate   The calendar date to convert to a Julian Day number.
+  *
+  *  @return              The julian day number that matches the calendar
+  *                       date provided.
+  */
+-double ephCalToJd(int yr, int mo, double dy, EPH_Bool gregorian)
++double ephCalToJd(const EPH_CalDate calDate)
+ {
+-    if (mo &lt;= 2) {
+-	yr--;
+-	mo += 12;
++    EPH_CalDate working;
++    working = calDate;
++    if (working.month &lt;= 2) {
++	working.year--;
++	working.month += 12;
+     }
+ 
+     int B;
+-    if (gregorian) {
+-	const int A = yr / 100;
++    if (working.gregorian) {
++	const int A = working.year / 100;
+ 	B = 2 - A + (A / 4);
+     } else {
+ 	B = 0;
+     }
+-    return (int) (365.25 * (yr + 4716)) + (int) (30.6001 * (mo + 1)) + dy +
++    return (int) (365.25 * (working.year + 4716)) + (int) (30.6001 * (working.month + 1)) + working.day +
+ 	B - 1524.5;
+ }
+ 
+@@ -76,25 +74,20 @@
+ /*! @brief Converts a date in the Julian or Gregorian calendars
+  *  to day of the year (Meeus 7.1).
+  *
+- *  @param[in] yr        Year, 2BC is -1, 1BC is 0, 1AD is 1, 1998AD is 1998, etc.
+- *  @param[in] mo        Month, with January being 1, February 2, etc.
+- *  @param[in] dy        Day.  1 is the first day of the month.
+- *  @param[in] gregorian If true, use Gregorian calendar, else use
+- *                       Julian calendar.
++ *  @param[in] calDate   The calendar date.
+  *
+  *  @return              The day number, 1 = Jan 1...365 (or 366 for leap
+  *                       years) = Dec 31.
+  */
+-int ephCalToDayOfYear(int yr, int mo, int dy, EPH_Bool gregorian)
++int ephCalToDayOfYear(EPH_CalDate calDate)
+ {
+     int K;
+-    if (ephIsLeapYear(yr, gregorian)) {
++    if (ephIsLeapYear(calDate.year, calDate.gregorian)) {
+ 	K = 1;
+     } else {
+ 	K = 2;
+     }
+-    return (int) (275 * mo / 9.0) - (K * (int) ((mo + 9) / 12.0)) + dy -
+-	30;
++    return (int) (275 * calDate.month / 9.0) - (K * (int) ((calDate.month + 9) / 12.0)) + (int)(calDate.day) - 30;
+ }
+ 
+ /*! @brief Convert a day of year number to a month and day in
+@@ -105,11 +98,13 @@
+  *  @param[in] gregorian If true, use Gregorian calendar, else use
+  *                       Julian calendar.
+  *
+- *  @param[out] mo       Month, with January being 1, February 2, etc.
+- *  @param[out] dy       Day.  1 is the first day of the month.
++ *  @param[out] calDate  The calendar date for the specified year and day number.
+  */
+-void ephDayOfYearToCal(int yr, int N, EPH_Bool gregorian, int *mo, int *dy)
++void ephDayOfYearToCal(int yr, int N, EPH_Bool gregorian, EPH_CalDate *calDate)
+ {
++    calDate-&gt;year = yr;
++    calDate-&gt;gregorian = gregorian;
++
+     int K;
+     if (ephIsLeapYear(yr, gregorian)) {
+ 	K = 1;
+@@ -117,13 +112,13 @@
+ 	K = 2;
+     }
+     if (N &lt; 32) {
+-	*mo = 1;
++	calDate-&gt;month = 1;
+     } else {
+-	*mo = (int) (9 * (K + N) / 275.0 + 0.98);
++	calDate-&gt;month = (int) (9 * (K + N) / 275.0 + 0.98);
+     }
+-    *dy =
+-	(int) (N - (int) (275 * (*mo) / 9.0) +
+-	       K * (int) ((*mo + 9) / 12.0) + 30);
++    calDate-&gt;day =
++	(int) (N - (int) (275 * (calDate-&gt;month) / 9.0) +
++	       K * (int) ((calDate-&gt;month + 9) / 12.0) + 30);
+ }
+ 
+ /*! @brief Returns the date of Western ecclesiastical %Easter for
+@@ -133,12 +128,15 @@
+  *  @param[in] gregorian If true, use Gregorian calendar, else use
+  *                       Julian calendar.
+  *
+- *  @param[out] mo       Month, with January being 1, February 2, etc.
+- *  @param[out] dy       Day.  1 is the first day of the month.
++ *  @param[out] calDate  The date of Easter for the requested year.
+  */
+-void ephEaster(int yr, EPH_Bool gregorian, int *mo, int *dy)
++void ephEaster(int yr, EPH_Bool gregorian, EPH_CalDate *calDate)
+ {
+     int tmp;
++    
++    calDate-&gt;year = yr;
++    calDate-&gt;gregorian = gregorian;
++    
+     if (gregorian) {
+ 	const int a = yr % 19;
+ 	const int b = yr / 100;
+@@ -161,8 +159,8 @@
+ 	const int e = (2 * a + 4 * b - d + 34) % 7;
+ 	tmp = d + e + 114;
+     }
+-    *mo = tmp / 31;
+-    *dy = (tmp % 31) + 1;
++    calDate-&gt;month = tmp / 31;
++    calDate-&gt;day = (tmp % 31) + 1;
+ }
+ 
+ 
+@@ -190,15 +188,16 @@
+  *  @param[in] gregorian If true, use Gregorian calendar, else use
+  *                       Julian calendar.
+  *
+- *  @param[out] yr       Year, 2BC is -1, 1BC is 0, 1AD is 1, 1998AD is 1998, etc.
+- *  @param[out] mo       Month, with January being 1, February 2, etc.
+- *  @param[out] day      Day (may be fractional).  1 is the first day of the month.
++ *  @param[out] calDate  The calendar date converted from the julian day.
+  */
+-void ephJdToCal(double jd, EPH_Bool gregorian, int *yr, int *mo, double *day)
++void ephJdToCal(double jd, EPH_Bool gregorian, EPH_CalDate *calDate)
+ {
+     double Z;
+     const double F = modf(jd + 0.5, &amp;Z);
+     int A;
++    
++    calDate-&gt;gregorian = gregorian;
++    
+     if (gregorian) {
+ 	int alpha = (int) ((Z - 1867216.25) / 36524.25);
+ 	A = (int) (Z + 1 + alpha - (int) (alpha / 4));
+@@ -209,16 +208,16 @@
+     const int C = (int) ((B - 122.1) / 365.25);
+     const int D = (int) (365.25 * C);
+     const int E = (int) ((B - D) / 30.6001);
+-    *day = B - D - (int) (30.6001 * E) + F;
++    calDate-&gt;day = B - D - (int) (30.6001 * E) + F;
+     if (E &lt; 14) {
+-	*mo = E - 1;
++	calDate-&gt;month = E - 1;
+     } else {
+-	*mo = E - 13;
++	calDate-&gt;month = E - 13;
+     }
+-    if (*mo &gt; 2) {
+-	*yr = C - 4716;
++    if (calDate-&gt;month &gt; 2) {
++	calDate-&gt;year = C - 4716;
+     } else {
+-	*yr = C - 4715;
++	calDate-&gt;year = C - 4715;
+     }
+ }
+ 
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/dynamical.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/dynamical.c	2006-07-25 08:30:44 UTC (rev 264)
++++ branches/new-vsop-prepare/src/c/libephemeritis/dynamical.c	2006-07-25 10:01:49 UTC (rev 265)
+@@ -284,16 +284,19 @@
+  */
+ double ephDeltaTSeconds(double jd)
+ {
+-    int yr;
+-    int mo;
+-    double day;
+-    ephJdToCal(jd, true, &amp;yr, &amp;mo, &amp;day);
++    EPH_CalDate calDate;
++    ephJdToCal(jd, true, &amp;calDate);
+ 
+     /* Determine the JD equivalents of the start and end of the table.
+        1620 - 20xx */
+-    const double _jdstart = ephCalToJd(_tbl_start, 1, 1, true);
+-    const double _jdend = ephCalToJd(_tbl_end, 1, 1, true);
+-    if (_tbl_start &lt; yr &amp;&amp; yr &lt; _tbl_end) {
++    EPH_CalDate calStart, calEnd;
++    calStart.year = _tbl_start;
++    calEnd.year = _tbl_end;
++    calStart.month = calStart.day = calEnd.month = calEnd.day = 1;
++    calStart.gregorian = calEnd.gregorian = true;
++    const double _jdstart = ephCalToJd(calStart);
++    const double _jdend = ephCalToJd(calEnd);
++    if (_tbl_start &lt; calDate.year &amp;&amp; calDate.year &lt; _tbl_end) {
+ 	double jd0 = _jdstart;
+ 	double jd1 = _jdend;
+ 	double secs0 = 0.0;
+@@ -374,12 +377,12 @@
+ 
+ 
+     /* Not in the available frame, so make an estimate. */
+-    const double t = (yr - 2000) / 100.0;
++    const double t = (calDate.year - 2000) / 100.0;
+ 
+     /*
+      * before 948 [Meeus-1998: equation 10.1]
+      */
+-    if (yr &lt; 948) {
++    if (calDate.year &lt; 948) {
+ 	static const double _ktbl[] = { 2177, 497, 44.1 };
+         return ephPolynomial(_ktbl, 3, t);
+     }
+@@ -393,8 +396,8 @@
+     /*
+      * correction for 2000-2100 [Meeus-1998: pg 78]
+      */
+-    if ((_tbl_end &lt; yr) &amp;&amp; (yr &lt; 2100)) {
+-	result += 0.37 * (yr - 2100);
++    if ((_tbl_end &lt; calDate.year) &amp;&amp; (calDate.year &lt; 2100)) {
++	result += 0.37 * (calDate.year - 2100);
+     }
+     return result;
+ }
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-07-25 08:30:44 UTC (rev 264)
++++ branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-07-25 10:01:49 UTC (rev 265)
+@@ -76,7 +76,7 @@
+ /*  *  @todo Compare the loop in this code with the notes on pp224-226, */
+ /*  *  and decide if the iteration is necessary.  It might be that the */
+ /*  *  iteration and corrections for things really belong outside this */
+-/*  *  function, as happens in elliptical_orbit_ecliptical. */
++/*  *  function, as happens in ephEllipticalOrbitEcliptical. */
+ /*  * */
+ /*  *  @todo Adjust parameters so that r_earth gets passed back too. */
+ /*  * */
+@@ -627,7 +627,7 @@
+  *
+  *  @author Mike McGavin.
+  */
+-void elliptical_orbit_ecliptical(const EPH_RecCoords sol,
++void ephEllipticalOrbitEcliptical(const EPH_RecCoords sol,
+ 				 const EPH_RecCoords body,
+ 				 const double r_sun,
+ 				 EPH_EquatorialCoords *equ_pos,
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-25 08:30:44 UTC (rev 264)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-25 10:01:49 UTC (rev 265)
+@@ -69,6 +69,15 @@
+     true = 1
+ } EPH_Bool;
+ 
++/*! @brief Represents a calendar date in the Gregorian or Julian calendar.
++ */
++typedef struct {
++    int year;   /*!&lt; @brief Year.  Year, 2BC is -1, 1BC is 0, 1AD is 1, 1998AD is 1998, etc. */
++    int month;  /*!&lt; @brief Month, with January being 1, February 2, etc. */
++    double day; /*!&lt; @brief Day.  1 is the first day of the month. */
++    EPH_Bool gregorian; /*!&lt; @brief True if this date is for the gregorian calendar, false for the Julian calendar. */
++} EPH_CalDate;
++
+ /*! @brief Struct for holding rectangular coordinates.
+  *
+  *  The rectangular geocentric coordinates of a body are centred on
+@@ -186,12 +195,14 @@
+ 
+ 
+ /* calendar.c */
+-double   ephCalToJd(int yr, int mo, double dy, EPH_Bool gregorian);
+-int      ephCalToDayOfYear(int yr, int mo, int dy, EPH_Bool gregorian);
+-void     ephDayOfYearToCal(int yr, int N, EPH_Bool gregorian, int *mo, int *dy);
+-void     ephEaster(int yr, EPH_Bool gregorian, int *mo, int *dy);
++double   ephCalToJd(const EPH_CalDate calDate);
++void     ephJdToCal(double jd, EPH_Bool gregorian, EPH_CalDate *calDate);
++
++int      ephCalToDayOfYear(EPH_CalDate calDate);
++void     ephDayOfYearToCal(int yr, int N, EPH_Bool gregorian, EPH_CalDate *calDate);
++void     ephEaster(int yr, EPH_Bool gregorian, EPH_CalDate *calDate);
+ EPH_Bool ephIsLeapYear(int yr, EPH_Bool gregorian);
+-void     ephJdToCal(double jd, EPH_Bool gregorian, int *yr, int *mo, double *day);
++
+ int      ephJdToDayOfWeek(double jd);
+ double   ephJdToJCent(double jd);
+ double   ephSiderealTimeGreenwich(double jd);
+@@ -602,7 +613,7 @@
+ 
+ double                ephMeanAnomoly(double jd, double T, double n);
+ 
+-void                  elliptical_orbit_ecliptical(const EPH_RecCoords sol,
++void                  ephEllipticalOrbitEcliptical(const EPH_RecCoords sol,
+ 				 const EPH_RecCoords body,
+ 				 const double r_sun,
+ 				 EPH_EquatorialCoords *equ_pos,
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-25 08:30:44 UTC (rev 264)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-25 10:01:49 UTC (rev 265)
+@@ -178,44 +178,43 @@
+     printf(&quot;7.a Convert Gregorian date to Julian day number\n&quot;);
+     {
+ 	/* Main 7.a example. */
+-	const double jd = ephCalToJd(1957, 10, 4.81, true);
++        EPH_CalDate calDate = {1957, 10, 4.81, true};
++        const double jd = ephCalToJd(calDate);
+ 	report(&quot;julian day&quot;, jd, 2436116.31, 0.01, &quot;days&quot;);
+     }
+ 
+     printf(&quot;7.b Convert Julian date to Julian day number\n&quot;);
+     {
+-	const double jd = ephCalToJd(333, 1, 27.5, false);
++        EPH_CalDate calDate = {333, 1, 27.5, false};
++        const double jd = ephCalToJd(calDate);
+ 	report(&quot;julian day&quot;, jd, 1842713.0, 0.01, &quot;days&quot;);
+     }
+ 
+     printf(&quot;7.c Convert Julian day number to Gregorian date\n&quot;);
+     {
+-	int yr, mo;
+-	double day;
+-	ephJdToCal(2436116.31, true, &amp;yr, &amp;mo, &amp;day);
+-	report(&quot;year&quot;, yr, 1957, 0, &quot;years&quot;);
+-	report(&quot;month&quot;, mo, 10, 0, &quot;months&quot;);
+-	report(&quot;day&quot;, day, 4.81, 0.01, &quot;days&quot;);
++        EPH_CalDate calDate;
++        ephJdToCal(2436116.31, true, &amp;calDate);
++	report(&quot;year&quot;, calDate.year, 1957, 0, &quot;years&quot;);
++	report(&quot;month&quot;, calDate.month, 10, 0, &quot;months&quot;);
++	report(&quot;day&quot;, calDate.day, 4.81, 0.01, &quot;days&quot;);
+     }
+ 
+     printf(&quot;7.c(1) Convert Julian day number to Julian date\n&quot;);
+     {
+-	int yr, mo;
+-	double day;
+-	ephJdToCal(1842713.0, false, &amp;yr, &amp;mo, &amp;day);
+-	report(&quot;year&quot;, yr, 333, 0, &quot;years&quot;);
+-	report(&quot;month&quot;, mo, 1, 0, &quot;months&quot;);
+-	report(&quot;day&quot;, day, 27.5, 0.01, &quot;days&quot;);
++        EPH_CalDate calDate;
++	ephJdToCal(1842713.0, false, &amp;calDate);
++	report(&quot;year&quot;, calDate.year, 333, 0, &quot;years&quot;);
++	report(&quot;month&quot;, calDate.month, 1, 0, &quot;months&quot;);
++	report(&quot;day&quot;, calDate.day, 27.5, 0.01, &quot;days&quot;);
+     }
+ 
+     printf(&quot;7.c(2) Convert Julian day number to Julian date\n&quot;);
+     {
+-	int yr, mo;
+-	double day;
+-	ephJdToCal(1507900.13, false, &amp;yr, &amp;mo, &amp;day);
+-	report(&quot;year&quot;, yr, -584, 0, &quot;years&quot;);
+-	report(&quot;month&quot;, mo, 5, 0, &quot;months&quot;);
+-	report(&quot;day&quot;, day, 28.63, 0.01, &quot;days&quot;);
++        EPH_CalDate calDate;
++        ephJdToCal(1507900.13, false, &amp;calDate);
++	report(&quot;year&quot;, calDate.year, -584, 0, &quot;years&quot;);
++	report(&quot;month&quot;, calDate.month, 5, 0, &quot;months&quot;);
++	report(&quot;day&quot;, calDate.day, 28.63, 0.01, &quot;days&quot;);
+     }
+ 
+ 
+@@ -249,9 +248,9 @@
+ 	    int n;
+ 	    for (n = 0; n &lt; dcj_size; n++) {
+ 		const struct Data_Cal_JD *dcj_f = &amp;(dcj[n]);
+-		const double jd =
+-		    ephCalToJd(dcj_f-&gt;yr, dcj_f-&gt;mo, dcj_f-&gt;day,
+-			      dcj_f-&gt;gregorian);
++                EPH_CalDate calDate = {dcj_f-&gt;yr, dcj_f-&gt;mo, dcj_f-&gt;day, dcj_f-&gt;gregorian};
++                const double jd =
++		    ephCalToJd(calDate);
+ 		printf(&quot;  Also testing date: %4.1f:%d:%d\n&quot;, dcj_f-&gt;day,
+ 		       dcj_f-&gt;mo, dcj_f-&gt;yr);
+ 		report(&quot;julian day&quot;, jd, dcj_f-&gt;jd, 0.01, &quot;days&quot;);
+@@ -262,41 +261,44 @@
+ 	{
+ 	    /* Now check the examples from page 62. */
+ 	    int n;
+-	    int yr, mo;
+-	    double day;
+-	    for (n = 0; n &lt; dcj_size; n++) {
++            EPH_CalDate calDate;
++	    
++            for (n = 0; n &lt; dcj_size; n++) {
+ 		const struct Data_Cal_JD *dcj_f = &amp;(dcj[n]);
+-		ephJdToCal(dcj_f-&gt;jd, dcj_f-&gt;gregorian, &amp;yr, &amp;mo, &amp;day);
++		ephJdToCal(dcj_f-&gt;jd, dcj_f-&gt;gregorian, &amp;calDate);
+ 		printf(&quot;  Also testing JD: %9.1f\n&quot;, dcj_f-&gt;jd);
+-		report(&quot;year&quot;, yr, dcj_f-&gt;yr, 0, &quot;years&quot;);
+-		report(&quot;month&quot;, mo, dcj_f-&gt;mo, 0, &quot;months&quot;);
+-		report(&quot;day&quot;, day, dcj_f-&gt;day, 0.01, &quot;days&quot;);
++		report(&quot;year&quot;, calDate.year, dcj_f-&gt;yr, 0, &quot;years&quot;);
++		report(&quot;month&quot;, calDate.month, dcj_f-&gt;mo, 0, &quot;months&quot;);
++		report(&quot;day&quot;, calDate.day, dcj_f-&gt;day, 0.01, &quot;days&quot;);
+ 	    }
+ 	}
+     }
+ 
+     printf(&quot;7.d Time interval in days\n&quot;);
+     {
+-	const double jd0 = ephCalToJd(1910, 4, 20.0, true);
+-	const double jd1 = ephCalToJd(1986, 2, 9.0, true);
++        EPH_CalDate calDate0 = {1910, 4, 20.0, true};
++        EPH_CalDate calDate1 = {1986, 2, 9.0, true};
++        const double jd0 = ephCalToJd(calDate0);
++	const double jd1 = ephCalToJd(calDate1);
+ 	report(&quot;interval&quot;, jd1 - jd0, 27689, 0, &quot;days&quot;);
+     }
+ 
+     printf(&quot;7.d(1) Time interval in days\n&quot;);
+     {
+-	double jd = ephCalToJd(1991, 7, 11, true);
++        EPH_CalDate calDateIn = {1991, 7, 11, true};
++        double jd = ephCalToJd(calDateIn);
+ 	jd += 10000;
+-	int yr, mo;
+-	double day;
+-	ephJdToCal(jd, true, &amp;yr, &amp;mo, &amp;day);
+-	report(&quot;year&quot;, yr, 2018, 0, &quot;years&quot;);
+-	report(&quot;month&quot;, mo, 11, 0, &quot;months&quot;);
+-	report(&quot;day&quot;, day, 26, 0, &quot;days&quot;);
++        EPH_CalDate calDate;
++        ephJdToCal(jd, true, &amp;calDate);
++	report(&quot;year&quot;, calDate.year, 2018, 0, &quot;years&quot;);
++	report(&quot;month&quot;, calDate.month, 11, 0, &quot;months&quot;);
++	report(&quot;day&quot;, calDate.day, 26, 0, &quot;days&quot;);
+     }
+ 
+     printf(&quot;7.e Day of the week\n&quot;);
+     {
+-	const double jd = ephCalToJd(1954, 6, 30.0, true);
++        EPH_CalDate calDate = {1954, 6, 30.0, true};
++        const double jd = ephCalToJd(calDate);
+ 	report(&quot;julian day&quot;, jd, 2434923.5, 0, &quot;days&quot;);
+ 	const int dow = ephJdToDayOfWeek(jd);
+ 	report(&quot;day of week&quot;, dow, 3, 0, &quot;days&quot;);
+@@ -304,30 +306,32 @@
+ 
+     printf(&quot;7.f Day of the year\n&quot;);
+     {
+-	const int N = ephCalToDayOfYear(1978, 11, 14, true);
++        EPH_CalDate cd = {1978, 11, 14, true};
++        const int N = ephCalToDayOfYear(cd);
+ 	report(&quot;day of the year&quot;, N, 318, 0, &quot;days&quot;);
+     }
+ 
+     printf(&quot;7.g Day of the year\n&quot;);
+     {
+-	const int N = ephCalToDayOfYear(1988, 4, 22, true);
++        EPH_CalDate cd = {1988, 4, 22, true};
++	const int N = ephCalToDayOfYear(cd);
+ 	report(&quot;day of the year&quot;, N, 113, 0, &quot;days&quot;);
+     }
+ 
+     printf(&quot;7(pg 66-1) Day of the year to calendar\n&quot;);
+     {
+-	int mo, day;
+-	ephDayOfYearToCal(1978, 318, true, &amp;mo, &amp;day);
+-	report(&quot;month&quot;, mo, 11, 0, &quot;months&quot;);
+-	report(&quot;days&quot;, day, 14, 0, &quot;days&quot;);
++        EPH_CalDate calDate;
++        ephDayOfYearToCal(1978, 318, true, &amp;calDate);
++	report(&quot;month&quot;, calDate.month, 11, 0, &quot;months&quot;);
++	report(&quot;days&quot;, calDate.day, 14, 0, &quot;days&quot;);
+     }
+ 
+     printf(&quot;7(pg 66-2) Day of the year to calendar\n&quot;);
+     {
+-	int mo, day;
+-	ephDayOfYearToCal(1988, 113, true, &amp;mo, &amp;day);
+-	report(&quot;month&quot;, mo, 4, 0, &quot;months&quot;);
+-	report(&quot;day&quot;, day, 22, 0, &quot;days&quot;);
++        EPH_CalDate calDate;
++        ephDayOfYearToCal(1988, 113, true, &amp;calDate);
++	report(&quot;month&quot;, calDate.month, 4, 0, &quot;months&quot;);
++	report(&quot;day&quot;, calDate.day, 22, 0, &quot;days&quot;);
+     }
+ 
+     printf(&quot;8(pg 68) Gregorian Easter (6 times)\n&quot;);
+@@ -342,10 +346,10 @@
+ 	};
+ 	int n;
+ 	for (n = 0; n &lt; 6; n++) {
+-	    int mo, day;
+-	    ephEaster(_tbl[n].yr, true, &amp;mo, &amp;day);
+-	    report(&quot;month&quot;, mo, _tbl[n].mo, 0, &quot;months&quot;);
+-	    report(&quot;day&quot;, day, _tbl[n].day, 0, &quot;days&quot;);
++	    EPH_CalDate calDate;
++	    ephEaster(_tbl[n].yr, true, &amp;calDate);
++	    report(&quot;month&quot;, calDate.month, _tbl[n].mo, 0, &quot;months&quot;);
++	    report(&quot;day&quot;, calDate.day, _tbl[n].day, 0, &quot;days&quot;);
+ 	}
+     }
+ 
+@@ -354,30 +358,33 @@
+ 	const int _tbl[] = { 179, 711, 1243 };
+ 	int n;
+ 	for (n = 0; n &lt; 3; n++) {
+-	    int mo, day;
+-	    ephEaster(_tbl[n], false, &amp;mo, &amp;day);
+-	    report(&quot;month&quot;, mo, 4, 0, &quot;months&quot;);
+-	    report(&quot;day&quot;, day, 12, 0, &quot;days&quot;);
++            EPH_CalDate calDate;
++            ephEaster(_tbl[n], false, &amp;calDate);
++	    report(&quot;month&quot;, calDate.month, 4, 0, &quot;months&quot;);
++	    report(&quot;day&quot;, calDate.day, 12, 0, &quot;days&quot;);
+ 	}
+     }
+ 
+     printf(&quot;10.a DeltaT 1990 (pg 78)\n&quot;);
+     {
+-	const double jd = ephCalToJd(1990, 1, 27, true);
++        EPH_CalDate calDate = {1990, 1, 27, true};
++        const double jd = ephCalToJd(calDate);
+ 	const double secs = ephDeltaTSeconds(jd);
+ 	report(&quot;seconds&quot;, secs, 57, 1, &quot;seconds&quot;);
+     }
+ 
+     printf(&quot;10.a DeltaT 1977\n&quot;);
+     {
+-	const double jd = ephCalToJd(1977, 2, 18, true);
++        EPH_CalDate calDate = {1977, 2, 18, true};
++	const double jd = ephCalToJd(calDate);
+ 	const double secs = ephDeltaTSeconds(jd);
+ 	report(&quot;seconds&quot;, secs, 48, 1, &quot;seconds&quot;);
+     }
+ 
+     printf(&quot;10.b DeltaT 333\n&quot;);
+     {
+-	const double jd = ephCalToJd(333, 2, 6, true);
++        EPH_CalDate calDate = {333, 2, 6, true};
++	const double jd = ephCalToJd(calDate);
+ 	const double secs = ephDeltaTSeconds(jd);
+ 	report(&quot;seconds&quot;, secs, 6146, 1, &quot;seconds&quot;);
+     }
+@@ -440,7 +447,8 @@
+ 	const double latitude = ephDToR(42.3333);
+ 	*/
+ 
+-	const double ut = ephCalToJd(1988, 3, 20, true);
++        EPH_CalDate calDate = {1988, 3, 20, true};
++	const double ut = ephCalToJd(calDate);
+ 	const double _raList[] =
+ 	    { ephDToR(40.68021), ephDToR(41.73129), ephDToR(42.78204) };
+ 	const double _decList[] =
+@@ -675,7 +683,8 @@
+ 
+     printf(&quot;23.a Apparent place of a star\n&quot;);
+     {
+-	double jd = ephUtToDt(ephCalToJd(2028, 11, 13.19, true));
++        EPH_CalDate calDate = {2028, 11, 13.19, true};
++	double jd = ephUtToDt(ephCalToJd(calDate));
+         double ra = ephHmsToR(2, 46, 11.331);
+ 	double dec = ephDToR(ephDmsToD(49, 20, 54.54));
+ 
+@@ -854,8 +863,9 @@
+ 	if(ok != e_state) {
+ 	  printf(&quot;There was some kind of problem calculating the equinox: %d\n&quot;, e_state);
+ 	} else {
++            EPH_CalDate calDate = {1962, 6, 21, true};
+ 	  report(&quot;julian day&quot;, jd,
+-		 ephCalToJd(1962, 6, 21, true) + ephHmsToFday(21, 24, 42),
++		 ephCalToJd(calDate) + ephHmsToFday(21, 24, 42),
+ 		 1e-5, &quot;days&quot;);
+ 	}
+     }
+@@ -933,9 +943,9 @@
+ 	    sprintf(str_buf, &quot;julian day %d %s&quot;, p-&gt;yr,
+ 		    season_names[p-&gt;season]);
+ 
+-	    report(str_buf, jd,
+-		   ephCalToJd(p-&gt;yr, season_months[p-&gt;season],
+-			     p-&gt;day + p-&gt;fday, true), days_per_second,
++            EPH_CalDate calDateOut = {p-&gt;yr, season_months[p-&gt;season], p-&gt;day + p-&gt;fday, true};
++            report(str_buf, jd,
++		   ephCalToJd(calDateOut), days_per_second,
+ 		   &quot;days&quot;);
+ 	}
+     }
+@@ -1028,8 +1038,10 @@
+     printf(&quot;33.b Apparent position (elements)\n&quot;);
+     {
+ 	EPH_OrbitalElements el;
+-	double T = ephCalToJd(1990, 10, 28.54502, true);
+-	double jd = ephCalToJd(1990, 10, 6, true);
++        EPH_CalDate calDateT = {1990, 10, 28.54502, true};
++        EPH_CalDate calDateJD = {1990, 10, 6, true};
++        double T = ephCalToJd(calDateT);
++	double jd = ephCalToJd(calDateJD);
+ 	el.a = 2.2091404;
+ 	el.e = 0.8502196;
+ 	el.i = ephDToR(11.94524);
+@@ -1074,7 +1086,7 @@
+ 
+ 	    EPH_EquatorialCoords equ_pos;
+ 	    double elongation, phase_angle, body_r_earth;
+-	    elliptical_orbit_ecliptical(src, rc, r_sun, &amp;equ_pos,
++            ephEllipticalOrbitEcliptical(src, rc, r_sun, &amp;equ_pos,
+ 					&amp;elongation, &amp;phase_angle,
+ 					&amp;body_r_earth);
+ 
+@@ -1091,7 +1103,7 @@
+ 	    report(&quot;recalc-y&quot;, rc.y, 0.4849477, 0.000001, &quot;AU&quot;);
+ 	    report(&quot;recalc-z&quot;, rc.z, 0.3573712, 0.000001, &quot;AU&quot;);
+ 
+-	    elliptical_orbit_ecliptical(src, rc, r_sun, &amp;equ_pos,
++            ephEllipticalOrbitEcliptical(src, rc, r_sun, &amp;equ_pos,
+ 					&amp;elongation, &amp;phase_angle,
+ 					&amp;body_r_earth);
+ 
+@@ -1154,48 +1166,59 @@
+ 	} jd_test_values;
+ 
+ 
++        EPH_CalDate cdCeres = {2005, 1, 30, true};
++        EPH_CalDate cdPallas = {2005, 1, 30, true};
++        EPH_CalDate cdJuno = {2005, 1, 30, true};
++
+ 	orbit_s orbits[] = {
+ 	    {
+ 	     &quot;Ceres&quot;,
+-	     ephCalToJd(2005, 1, 30, true), ephDToR(43.77971), 2.7673017,
++	     ephCalToJd(cdCeres), ephDToR(43.77971), 2.7673017,
+ 	     0.0800887, ephDToR(10.58276), ephDToR(73.72889),
+ 	     ephDToR(80.42334), 3.34, 0.12, ephDToR(0.21410131)
+ 	     },
+ 
+ 	    {
+ 	     &quot;Pallas&quot;,
+-	     ephCalToJd(2005, 1, 30, true), ephDToR(28.70170), 2.7732372,
++	     ephCalToJd(cdPallas), ephDToR(28.70170), 2.7732372,
+ 	     0.2302220, ephDToR(34.85083), ephDToR(310.54489),
+ 	     ephDToR(173.16604), 4.13, 0.11, ephDToR(0.21341432)
+ 	     },
+ 
+ 	    {
+ 	     &quot;Juno&quot;,
+-	     ephCalToJd(2005, 1, 30, true), ephDToR(300.24990), 2.6681509,
++	     ephCalToJd(cdJuno), ephDToR(300.24990), 2.6681509,
+ 	     0.2584015, ephDToR(12.97175), ephDToR(247.86205),
+ 	     ephDToR(170.12682), 5.33, 0.32, ephDToR(0.22614578)
+ 	     }
+ 	};
+ 
++        EPH_CalDate cdt1 = {2005, 5, 1, true};
++        EPH_CalDate cdt2 = {2005, 6, 10, true};
++        EPH_CalDate cdt3 = {2005, 2, 5, true};
++        EPH_CalDate cdt4 = {2005, 5, 1, true};
++        EPH_CalDate cdt5 = {2005, 9, 8, true};
++        EPH_CalDate cdt6 = {2005, 11, 12, true};
++        
+ 	jd_test_values tests[] = {
+-	    {&amp;orbits[0], ephUtToDt(ephCalToJd(2005, 5, 1, true)),
++	    {&amp;orbits[0], ephUtToDt(ephCalToJd(cdt1)),
+ 	     ephHmsToR(15, 20, 0.07 * 60.0),
+ 	     ephDToR(ephDmsToD(-8.0, 33, 0.9 * 60.0)), 1.692, 2.683, 7.1},
+-	    {&amp;orbits[0], ephUtToDt(ephCalToJd(2005, 6, 10, true)),
++	    {&amp;orbits[0], ephUtToDt(ephCalToJd(cdt2)),
+ 	     ephHmsToR(14, 47, 0.78 * 60.0),
+ 	     ephDToR(ephDmsToD(-9.0, 8, 0.4 * 60.0)), 1.837, 2.715, 7.6},
+ 
+-	    {&amp;orbits[1], ephUtToDt(ephCalToJd(2005, 2, 5, true)),
++	    {&amp;orbits[1], ephUtToDt(ephCalToJd(cdt3)),
+ 	     ephHmsToR(12, 42, 0.98 * 60.0),
+ 	     ephDToR(ephDmsToD(-6.0, 39, 0.1 * 60.0)), 1.570, 2.271, 8.0},
+-	    {&amp;orbits[1], ephUtToDt(ephCalToJd(2005, 5, 1, true)),
++	    {&amp;orbits[1], ephUtToDt(ephCalToJd(cdt4)),
+ 	     ephHmsToR(12, 07, 0.76 * 60.0),
+ 	     ephDToR(ephDmsToD(19.0, 20, 0.4 * 60.0)), 1.672, 2.449, 8.2},
+ 
+-	    {&amp;orbits[2], ephUtToDt(ephCalToJd(2005, 9, 8, true)),
++	    {&amp;orbits[2], ephUtToDt(ephCalToJd(cdt5)),
+ 	     ephHmsToR(4, 44, 0.23 * 60.0),
+ 	     ephDToR(ephDmsToD(10.0, 2, 0.1 * 60.0)), 1.649, 1.997, 9.0},
+-	    {&amp;orbits[2], ephUtToDt(ephCalToJd(2005, 11, 12, true)),
++	    {&amp;orbits[2], ephUtToDt(ephCalToJd(cdt6)),
+ 	     ephHmsToR(5, 31, 0.69 * 60.0),
+ 	     ephDToR(ephDmsToD(0.0, 24, 0.1 * 60.0)), 1.115, 1.984, 7.8}
+ 
+@@ -1244,7 +1267,7 @@
+ 		EPH_RecCoords body_rec =
+                         ephEllipticalOrbitRectangular(ec, body_r_sun);
+ 
+-		elliptical_orbit_ecliptical(sun_rec, body_rec, body_r_sun,
++                ephEllipticalOrbitEcliptical(sun_rec, body_rec, body_r_sun,
+ 					    &amp;equ_pos, &amp;elongation,
+ 					    &amp;phase_angle, &amp;body_r_earth);
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000117.html">[Ephemeritis-svn] r264 - in branches/new-vsop-prepare/src/c:	libephemeritis utils
+</A></li>
+	<LI>Next message: <A HREF="000119.html">[Ephemeritis-svn] r266 - branches/new-vsop-prepare
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#118">[ date ]</a>
+              <a href="thread.html#118">[ thread ]</a>
+              <a href="subject.html#118">[ subject ]</a>
+              <a href="author.html#118">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

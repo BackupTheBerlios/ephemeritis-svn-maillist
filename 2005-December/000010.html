@@ -1,0 +1,142 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r153 - in trunk/src/c: libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2005-December/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r153%20-%20in%20trunk/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200512081050.jB8AoNF3030231%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000009.html">
+   <LINK REL="Next"  HREF="000011.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r153 - in trunk/src/c: libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r153%20-%20in%20trunk/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200512081050.jB8AoNF3030231%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r153 - in trunk/src/c: libephemeritis tests">izogi at berlios.de
+       </A><BR>
+    <I>Thu Dec  8 11:50:23 CET 2005</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000009.html">[Ephemeritis-svn] r152 - in trunk/src/c: libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000011.html">[Ephemeritis-svn] r155 - trunk/src/c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#10">[ date ]</a>
+              <a href="thread.html#10">[ thread ]</a>
+              <a href="subject.html#10">[ subject ]</a>
+              <a href="author.html#10">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2005-12-08 11:50:21 +0100 (Thu, 08 Dec 2005)
+New Revision: 153
+
+Modified:
+   trunk/src/c/libephemeritis/equationoftime.c
+   trunk/src/c/tests/validate_meeus.c
+Log:
+Fixed equation of time calculation, by adding adjustments for longitude nutation and aberration.
+The result is still out very slightly from the book, which seems to be due to a difference in the VSOP
+calculations for solar position.  That should be checked.  I'm leaving the validate_meeus program in a
+state that'll notice the error.
+
+
+Modified: trunk/src/c/libephemeritis/equationoftime.c
+===================================================================
+--- trunk/src/c/libephemeritis/equationoftime.c	2005-12-07 10:32:13 UTC (rev 152)
++++ trunk/src/c/libephemeritis/equationoftime.c	2005-12-08 10:50:21 UTC (rev 153)
+@@ -27,10 +27,8 @@
+  *
+  *  @author Mike McGavin
+  *
+- *  @todo Fix the file description.
+- *
+- *  @todo Check if solar position is calculated correctly, as it's slightly out from Meeus' example.
+- *        This may be because Meeus does everything in degrees rather than radians.
++ *  @todo Write some actual detail for what the equation of time actually
++ *        is.
+  */
+ 
+ #include &quot;ephemeritis.h&quot;
+@@ -38,6 +36,14 @@
+ 
+ #include &lt;math.h&gt;
+ 
++/*! @brief Calculates the equation of time at a given instant.
++ *
++ *  @param[in] jd  The julian date for which to calculate the equation of time.
++ *
++ *  @return        The equation of time for the specified instant.
++ *
++ *  @author Mike McGavin
++ */
+ double equation_of_time(const double jd) {
+   double T = (jd - 2451545.0) / 365250.0;
+   double _terms[] = {280.4664567, 360007.6982779, 0.03032028, 1.0 / 49931.0, 1.0 / 15300.0, 1.0 / 2000000.0};
+@@ -49,13 +55,18 @@
+   double radius;
+   sol_dimension3(jd, &amp;longitude, &amp;latitude, &amp;radius);
+ 
++  double aberration = aberration_low(radius);
++
++  /* Correct the longitude for nutation and aberration. */
++  longitude = longitude + nut_in_lon(jd) + aberration;
++
+   /* Solar ra and dec. */
+   double obl = obliquity_hi(jd) + nut_in_obl(jd);
+   double ra;
+   double dec;
+   ecl_to_equ(longitude, latitude, obl, &amp;ra, &amp;dec);
+ 
++  /* Do the final calculation, and return it. */
+   double E = L0 - d_to_r(0.0057183) - ra + nut_in_lon(jd) * cos(d_to_r(obl));
+-
+   return E;
+ }
+
+Modified: trunk/src/c/tests/validate_meeus.c
+===================================================================
+--- trunk/src/c/tests/validate_meeus.c	2005-12-07 10:32:13 UTC (rev 152)
++++ trunk/src/c/tests/validate_meeus.c	2005-12-08 10:50:21 UTC (rev 153)
+@@ -751,7 +751,7 @@
+     {
+       double jd = 2448908.5;
+       double eot_result = equation_of_time(jd);
+-      report(&quot;Equation of time&quot;, eot_result, fday_to_r(hms_to_fday(0.0,13.0,42.6)), 0.00001, &quot;radians&quot;);
++      report(&quot;Equation of time&quot;, eot_result, fday_to_r(hms_to_fday(0.0,13.0,42.6)), 0.000001, &quot;radians&quot;);
+     }
+ 
+     printf(&quot;32.a Planet position\n&quot;);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000009.html">[Ephemeritis-svn] r152 - in trunk/src/c: libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000011.html">[Ephemeritis-svn] r155 - trunk/src/c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#10">[ date ]</a>
+              <a href="thread.html#10">[ thread ]</a>
+              <a href="subject.html#10">[ subject ]</a>
+              <a href="author.html#10">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

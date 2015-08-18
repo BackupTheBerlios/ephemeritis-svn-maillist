@@ -1,0 +1,233 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r209 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-January/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r209%20-%20in%20branches/new-vsop-prepare/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200601140429.k0E4THc0020016%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000061.html">
+   <LINK REL="Next"  HREF="000063.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r209 - in branches/new-vsop-prepare/src/c: libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r209%20-%20in%20branches/new-vsop-prepare/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200601140429.k0E4THc0020016%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r209 - in branches/new-vsop-prepare/src/c: libephemeritis tests">izogi at berlios.de
+       </A><BR>
+    <I>Sat Jan 14 05:29:17 CET 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000061.html">[Ephemeritis-svn] r208 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+        <LI>Next message: <A HREF="000063.html">[Ephemeritis-svn] r210 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#62">[ date ]</a>
+              <a href="thread.html#62">[ thread ]</a>
+              <a href="subject.html#62">[ subject ]</a>
+              <a href="author.html#62">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-01-14 05:29:13 +0100 (Sat, 14 Jan 2006)
+New Revision: 209
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/Makefile.am
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+Wrote code for getting VSOP spherical coordinates, and began a new vsop_to_fk5 function for spherical coordinates.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/Makefile.am
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/Makefile.am	2006-01-13 10:35:10 UTC (rev 208)
++++ branches/new-vsop-prepare/src/c/libephemeritis/Makefile.am	2006-01-14 04:29:13 UTC (rev 209)
+@@ -1,6 +1,6 @@
+ AUTOMAKE_OPTIONS = gnu
+ 
+-AM_CFLAGS = -ansi -Wall
++AM_CFLAGS = -ansi -Wall -DVSOP_DATA_FILE=&quot;$(pkgdatadir)/vsop87d.txt&quot;
+ 
+ lib_LTLIBRARIES = libephemeritis.la
+ 
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h	2006-01-13 10:35:10 UTC (rev 208)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h	2006-01-14 04:29:13 UTC (rev 209)
+@@ -74,7 +74,8 @@
+   int data_id;          /*!&lt; @brief An internally recognised data identifier to identify where the data is held. */
+ } vsop_handle;
+ 
+-/*! @brief A struct to hold rectangular coordinates from a particular calculation.
++/*! @brief A struct to hold rectangular coordinates from a particular
++ *  calculation, including meta information about their calculation.
+  */
+ typedef struct {
+   vsop_handle vh;       /*!&lt; @brief The VSOP handle representing the data these coordinates were calculated from. */
+@@ -93,11 +94,37 @@
+ 			*/
+ } vsop_rec_coords;
+ 
++/*! @brief Struct for holding spherical coordinates.
++ */
++typedef struct {
++  double L;
++  double B;
++  double R;
++} sph_coords;
++
++/*! @brief A struct to hold spherical coordinates from a particular
++ *  calculation, including meta information about their calculation.
++ */
++typedef struct {
++  vsop_handle vh;       /*!&lt; @brief The VSOP handle representing the data these coordinates were calculated from. */
++  double jd;            /*!&lt; @brief The Julian Date of these coordinates, in dynamical time.                      */
++  sph_coords sc;        /*!&lt; @brief The spherical coordinates.                                                   */
++  int error_state;      /*!&lt; @brief The state of these coordinates,
++                                    indicating if they're okay to use.
++                                    Note that this field is only valid
++                                    once the struct values have been
++                                    calculated at least once.
++
++				    0 indicates no error.
++			*/
++
++} vsop_sph_coords;
++
+ void vsop_data_init();
+ void vsop_data_cleanup();
+ bool get_vsop_data_handle(const vsop_body planet, const vsop_version version, vsop_handle *vh);
+ vsop_rec_coords vsop_get_rectangular(const vsop_handle vh, const double jd);
+-vsop_rec_coords vsop_rec_vsop_to_fk5(vsop_rec_coords vrc);
++vsop_rec_coords vsop_rec_vsop_to_fk5(const vsop_rec_coords vrc);
+ 
+ 
+ /* Stuff below here should probably be in a header file that's local to the internal code. */
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-01-13 10:35:10 UTC (rev 208)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-01-14 04:29:13 UTC (rev 209)
+@@ -756,6 +756,21 @@
+ 	report(&quot;X&quot;, rc.x * km_per_au, -0.9379952 * km_per_au, 5.0, &quot;km&quot;);
+ 	report(&quot;Y&quot;, rc.y * km_per_au, -0.3116544 * km_per_au, 5.0, &quot;km&quot;);
+ 	report(&quot;Z&quot;, rc.z * km_per_au, -0.1351215 * km_per_au, 5.0, &quot;km&quot;);
++
++	printf(&quot;\tUsing the more newly coded method:&quot;);
++	vsop_handle vh;
++	if(!get_vsop_data_handle(vsop_earth, hel_rec_j2, &amp;vh)) {
++	  printf(&quot;\t\tError loading Earth handle.\n&quot;);
++	} else {
++	  vsop_rec_coords vrc = vsop_get_rectangular(vh, jd);
++	  vrc = vsop_rec_vsop_to_fk5(vrc);
++
++	  report(&quot;X&quot;, -vrc.rc.x * km_per_au, -0.9379952 * km_per_au, 5.0, &quot;km&quot;);
++	  report(&quot;Y&quot;, -vrc.rc.y * km_per_au, -0.3116544 * km_per_au, 5.0, &quot;km&quot;);
++	  report(&quot;Z&quot;, -vrc.rc.z * km_per_au, -0.1351215 * km_per_au, 5.0, &quot;km&quot;);
++	  
++	}
++ 
+     }
+ 
+     printf(&quot;27.a Approximate solstice\n&quot;);
+@@ -879,6 +894,7 @@
+ 	report(&quot;longitude&quot;, r_to_d(L) * 3600, 26.11428 * 3600, 1.0, &quot;arc-seconds&quot;);
+ 	report(&quot;latitude&quot;, r_to_d(B) * 3600, -2.62070 * 3600, 1.0, &quot;arc-seconds&quot;);
+ 	report(&quot;radius&quot;, R * km_per_au, 0.724603 * km_per_au, 200.0, &quot;km&quot;);
++	printf(&quot;%.12f : %.12f : %.12f\n&quot;, L, B, R);
+     }
+ 
+     printf(&quot;33.a Apparent position (vsop)\n&quot;);
+@@ -1140,7 +1156,6 @@
+ 
+     printf(&quot;\n\nPlaying with new VSOP methods:\n&quot;);
+     {
+-      vsop_data_init();
+ 
+       vsop_handle vh;
+       bool result;
+@@ -1162,17 +1177,37 @@
+ 	printf(&quot;File didn't load for some reason\n&quot;);
+       }
+ 
+-      vsop_data_cleanup();
++
+     }
++    {
++	printf(&quot;Checking new VSOP routines\n&quot;);
++	vsop_handle vh;
++	if(!get_vsop_data_handle(vsop_earth, hel_rec_j2, &amp;vh)) {
++	  printf(&quot;\t\tError loading Earth handle.\n&quot;);
++	} else {
++	  double jd = 2448170.5;
++	  vsop_rec_coords vrc = vsop_get_rectangular(vh, jd);
++	  
++	  vrc = vsop_rec_vsop_to_fk5(vrc);
++	  
+ 
++	  report(&quot;X&quot;, vrc.rc.x * km_per_au, 0.975673220683  * km_per_au, 1.0e-15, &quot;km&quot;);
++	  report(&quot;Y&quot;, vrc.rc.y * km_per_au, 0.200325394065  * km_per_au, 1.0e-15, &quot;km&quot;);
++	  report(&quot;Z&quot;, vrc.rc.z * km_per_au, 0.0868565820014 * km_per_au, 1.0e-15, &quot;km&quot;);
++	  
++	}
++    }
+ }
+ 
+ int main(int argc, char *argv[])
+ {
+-    _main();
+-    printf
+-	(&quot;\nWarning: Former exception throws (now error return values)&quot;
+-	 &quot; have not been checked for.\n&quot;);
++  vsop_data_init();
++  _main();
++  vsop_data_cleanup();
++
++  printf
++    (&quot;\nWarning: Former exception throws (now error return values)&quot;
++     &quot; have not been checked for.\n&quot;);
+     /*
+        try {
+        _main();
+@@ -1181,5 +1216,5 @@
+        cout &lt;&lt; e.what() &lt;&lt; endl;
+        }
+      */
+-    return 0;
++  return 0;
+ }
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000061.html">[Ephemeritis-svn] r208 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+	<LI>Next message: <A HREF="000063.html">[Ephemeritis-svn] r210 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#62">[ date ]</a>
+              <a href="thread.html#62">[ thread ]</a>
+              <a href="subject.html#62">[ subject ]</a>
+              <a href="author.html#62">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

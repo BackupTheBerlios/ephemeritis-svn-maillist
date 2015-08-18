@@ -1,0 +1,1094 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r220 - in branches/new-vsop-prepare/src/c: libephemeritis tests utils
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-January/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r220%20-%20in%20branches/new-vsop-prepare/src/c%3A%20libephemeritis%20tests%20utils&In-Reply-To=%3C200601230911.k0N9Boo3013622%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000072.html">
+   <LINK REL="Next"  HREF="000074.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r220 - in branches/new-vsop-prepare/src/c: libephemeritis tests utils</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r220%20-%20in%20branches/new-vsop-prepare/src/c%3A%20libephemeritis%20tests%20utils&In-Reply-To=%3C200601230911.k0N9Boo3013622%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r220 - in branches/new-vsop-prepare/src/c: libephemeritis tests utils">izogi at berlios.de
+       </A><BR>
+    <I>Mon Jan 23 10:11:50 CET 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000072.html">[Ephemeritis-svn] r219 - in branches/new-vsop-prepare/src/c: libephemeritis utils
+</A></li>
+        <LI>Next message: <A HREF="000074.html">[Ephemeritis-svn] r221 - in branches/new-vsop-prepare/src/c: libephemeritis utils
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#73">[ date ]</a>
+              <a href="thread.html#73">[ thread ]</a>
+              <a href="subject.html#73">[ subject ]</a>
+              <a href="author.html#73">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-01-23 10:11:48 +0100 (Mon, 23 Jan 2006)
+New Revision: 220
+
+Added:
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c
+Removed:
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.c
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/Makefile.am
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+   branches/new-vsop-prepare/src/c/utils/build_vsop_data.c
+Log:
+More re-arranging of code locations.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/Makefile.am
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/Makefile.am	2006-01-23 08:47:17 UTC (rev 219)
++++ branches/new-vsop-prepare/src/c/libephemeritis/Makefile.am	2006-01-23 09:11:48 UTC (rev 220)
+@@ -13,7 +13,6 @@
+ 	dynamical.c \
+ 	elliptical.c \
+ 	elp2000.c \
+-	ephemeritis_vsop_data.c \
+ 	equationoftime.c \
+ 	equinox.c \
+ 	nutation.c \
+@@ -23,6 +22,7 @@
+ 	separation.c \
+ 	solar.c \
+ 	vsop_calculate.c \
++	vsop_data_handling.c \
+ 	vsopdata.c \
+ 	vsop87d.c \
+ 	util.c
+
+Deleted: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.c	2006-01-23 08:47:17 UTC (rev 219)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.c	2006-01-23 09:11:48 UTC (rev 220)
+@@ -1,400 +0,0 @@
+-/* Copyright 2000, 2001, 2005 William McClain, Mike McGavin
+-
+-This file is part of Ephemeritis.
+-
+-Ephemeritis is free software; you can redistribute it and/or modify
+-it under the terms of the GNU General Public License as published by
+-the Free Software Foundation; either version 2 of the License, or
+-(at your option) any later version.
+-
+-Ephemeritis is distributed in the hope that it will be useful,
+-but WITHOUT ANY WARRANTY; without even the implied warranty of
+-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-GNU General Public License for more details.
+-
+-You should have received a copy of the GNU General Public License
+-along with Ephemeritis; if not, write to the Free Software
+-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+-*/
+-
+-/*! @file ephemeritis_vsop_data.c
+- *
+- * @brief Management of VSOP data files, and in-memory structures.
+- *
+- * @author Mike McGavin.
+- */
+-
+-#include &quot;ephemeritis_vsop_internal.h&quot;
+-#include &quot;ephemeritis.h&quot;
+-
+-#include &lt;errno.h&gt;
+-#include &lt;stdlib.h&gt;
+-#include &lt;string.h&gt;
+-#include &lt;stdio.h&gt;
+-
+-/*! @brief De-allocates the space that was allocated for a series
+- *  structure in memory.
+- *
+- *  @param[in] s The series struct.
+- */
+-static void destroy_series(series s)
+-{
+-  free(s.terms);
+-}
+-
+-/*! @brief De-allocates the space that was allocated for a
+- *  body_elements structure in memory.
+- *
+- *  @param[in] b A pointer to a body_elements object.  This will be
+- *  free()'d, as will the entire strucutre underneath it.  Ensure that
+- *  nothing inside is referenced from elsewhere.
+- */
+-void free_body_elements(body_elements *b)
+-{
+-  int n;
+-  for(n = 0; n &lt; b-&gt;meta.num_variables; n++) {
+-    int o;
+-    for(o = 0; o &lt; b-&gt;variable_list[n].meta.series_count; o++) {
+-      /* Destroy each series. */
+-      destroy_series(b-&gt;variable_list[n].series_list[o]);
+-    }
+-
+-    /* Free the list of series for the variable. */
+-    free(b-&gt;variable_list[n].series_list);
+-  }
+-  
+-  free(b);
+-}
+-
+-/*! @brief Prints details about the body elements in a human readable
+- *  form.
+- *
+- *  @param[in] ostream A stream pointer to which the text should be printed.  (eg. stdin, stderr, or an open file.)
+- *  @param[in] b       Pointer to the body elements.
+- */
+-void print_body_statistics(FILE *ostream, body_elements *b)
+-{
+-  fprintf(ostream, &quot;Ephemeritis Version String: %s.\n&quot;, b-&gt;meta.eph_header_text);
+-  fprintf(ostream, &quot;Data for \&quot;%s\&quot;.\n&quot;, b-&gt;meta.body_name);
+-  fprintf(ostream, &quot;%d variables overall.\n&quot;, b-&gt;meta.num_variables);
+-
+-  int v;
+-  for(v=0; v&lt;b-&gt;meta.num_variables; v++) {
+-    fprintf(ostream, &quot;\nVariable %d contains %d series':\n\n&quot;, v, b-&gt;variable_list[v].meta.series_count);
+-
+-    int s;
+-    for(s=0; s&lt;b-&gt;variable_list[v].meta.series_count; s++) {
+-      series *ser = &amp;(b-&gt;variable_list[v].series_list[s]);
+-      fprintf(ostream, &quot;  Series %d has alpha %d and contains %d terms.\n&quot;, s, ser-&gt;meta.alpha, (ser-&gt;meta.num_terms));
+-    }
+-  }
+-}
+-
+-/*! @brief Given an open output file and a body_elements structure,
+- *  output the body elements in binary format.
+- *
+- *  @param[in] outfile An open file to which the data should be written. The file is not closed after the operation.
+- *  @param[in] b       Pointer to the body elements.
+- */
+-void write_body_elements(FILE *outfile, body_elements *b)
+-{
+-  /* Write the header data. */
+-  fwrite(&amp;b-&gt;meta, sizeof(b-&gt;meta), 1, outfile);
+-
+-  /* Loop through the variables, writing data of each one. */
+-  int v;
+-  for(v = 0; v &lt; b-&gt;meta.num_variables; v++) {
+-    fwrite(&amp;b-&gt;variable_list[v].meta, sizeof(b-&gt;variable_list[v].meta), 1, outfile);
+-
+-    /* Loop through the series variables, writing data of each one. */
+-    int s;
+-    for(s = 0; s &lt; b-&gt;variable_list[v].meta.series_count; s++) {
+-      series *ser = &amp;b-&gt;variable_list[v].series_list[s];
+-      fwrite(&amp;ser-&gt;meta, sizeof(ser-&gt;meta), 1, outfile);
+-
+-      /* Write the list of terms. */
+-      fwrite(ser-&gt;terms, sizeof(*(ser-&gt;terms)), ser-&gt;meta.num_terms, outfile);
+-    }
+-  }
+-}
+-
+-
+-/*! @brief Given an open input file and a body_elements structure,
+- *  read the body elements from binary format.
+- *
+- *  @param[in] infile  An open file from which the data should be
+- *                     read. The file should be set to the beginning of its data, and is
+- *                     not closed after the operation.
+- *
+- *  @return            Pointer to the body elements that have been read.
+- *
+- *  @bug Doesn't indicate if there was an error, such as corrupted
+- *  data.  What should properly happen is that the function should
+- *  clean up whatever memory mess it's caused, and return NULL.
+- */
+-body_elements *read_body_elements(FILE *infile)
+-{
+-  body_elements *b;
+-
+-  /* Allocate memory for the body_elements. */
+-  b = (body_elements *)malloc(sizeof(body_elements));
+-
+-  /* Read the header data. */
+-  fread(&amp;b-&gt;meta, sizeof(b-&gt;meta), 1, infile);
+-
+-  /* Loop through the variables, reading data for each one. */
+-  int v;
+-  for(v = 0; v &lt; b-&gt;meta.num_variables; v++) {
+-    fread(&amp;b-&gt;variable_list[v].meta, sizeof(b-&gt;variable_list[v].meta), 1, infile);
+-
+-    /* Allocate memory to hold the list of series' for this variable. */
+-    b-&gt;variable_list[v].series_list = (series *)calloc(b-&gt;variable_list[v].meta.series_count, sizeof(series));
+-
+-    /* Loop through the series variables, reading data from each one. */
+-    int s;
+-    for(s = 0; s &lt; b-&gt;variable_list[v].meta.series_count; s++) {
+-      /* Read meta data for this series. */
+-      series *ser = &amp;b-&gt;variable_list[v].series_list[s];
+-      fread(&amp;ser-&gt;meta, sizeof(ser-&gt;meta), 1, infile);
+-
+-      /* Allocate memory for the terms. */
+-      ser-&gt;terms = (term_bin *)calloc(ser-&gt;meta.num_terms, sizeof(term_bin));
+-
+-      /* Read the list of terms. */
+-      fread(ser-&gt;terms, sizeof(*(ser-&gt;terms)), ser-&gt;meta.num_terms, infile);
+-    }
+-  }
+-
+-  return b;
+-}
+-
+-
+-
+-
+-
+-/*! @brief Internal struct to hold id data about a vsop_handle.
+- */
+-typedef struct {
+-  vsop_handle h;
+-  body_elements *be;
+-} vsop_handle_wrapper;
+-
+-static vsop_handle_wrapper *vhw_list = NULL;
+-static int vhw_list_size = 0;
+-static int next_data_id = 1;
+-
+-/*! @brief Initialise the VSOP data handling functionality.  This
+-    should be called before using any VSOP data handling routines.
+- *
+- *  Calling this function initialises all the internal memory handling
+- *  overheads, and so on.
+- */
+-void vsop_data_init()
+-{
+-  vhw_list = NULL;
+-  vhw_list_size = 0;
+-}
+-
+-/*! @brief Cleans up the VSOP data handling functionality.  This
+- *  should be called after using any VSOP data handling routines.
+- *
+- *  Calling this function cleans up all the internal memory handling
+- *  overheads, and so on.
+- */
+-void vsop_data_cleanup()
+-{
+-  /* Loop through every loaded data set, and release it. */
+-
+-  /* Release the list, and re-initialise the meta variables. */
+-  free(vhw_list);
+-  vhw_list = NULL;
+-  vhw_list_size = 0;
+-}
+-
+-
+-/*! @brief Check to see if data matching that requested is already in
+- *  memory.  If so, copy it to an output variable, and return true.
+- *
+- *  @param[in] planet  The planet being requested.
+- *  @param[in] version The version of the VSOP data being requested.
+- *
+- *  @param[out] h      A location where the vsop_handle data for the requested planet and version will be copied.
+- *
+- *  @return true if the data was loaded and returned, otherwise false.
+- */
+-static bool get_vsop_handle(const vsop_body planet, const vsop_version version, vsop_handle *h)
+-{
+-  int n;
+-  for(n = 0; n &lt; vhw_list_size; n++) {
+-    if(planet == vhw_list[n].h.planet &amp;&amp; version == vhw_list[n].h.version) {
+-      *h = vhw_list[n].h;
+-      return true;
+-    }
+-  }
+-  return false;
+-}
+-
+-
+-typedef struct {
+-  vsop_version v;
+-  char *str;
+-} version_str_map_type;
+-
+-
+-typedef struct {
+-  vsop_body p;
+-  char *str;
+-} body_str_map_type;
+-
+-static version_str_map_type version_str_map[] = {
+-  {hel_ell_j2,   EPH_VSOP_HEJ2},
+-  {hel_rec_j2,   EPH_VSOP_HRJ2},
+-  {hel_sph_j2,   EPH_VSOP_HSJ2},
+-  {hel_rec_date, EPH_VSOP_HRD },
+-  {hel_sph_date, EPH_VSOP_HSD },
+-  {bar_rec_j2,   EPH_VSOP_BRJ2}
+-};
+-
+-static char *version_map_lookup(vsop_version v)
+-{
+-  int n;
+-  for(n = 0; n &lt; sizeof(version_str_map) / sizeof(*version_str_map); n++) {
+-    if(v == version_str_map[n].v) {
+-      return version_str_map[n].str;
+-    }
+-  }
+-  return NULL;
+-}
+-
+-static body_str_map_type body_str_map[] = {
+-  {vsop_mercury, EPH_MER},
+-  {vsop_venus,   EPH_VEN},
+-  {vsop_earth,   EPH_EAR},
+-  {vsop_mars,    EPH_MAR},
+-  {vsop_jupiter, EPH_JUP},
+-  {vsop_saturn,  EPH_SAT},
+-  {vsop_uranus,  EPH_URA},
+-  {vsop_neptune, EPH_NEP},
+-  {vsop_sun,     EPH_SOL},
+-  {vsop_EMB,     EPH_EMB}
+-};
+-
+-static char *planet_map_lookup(vsop_body p)
+-{
+-  int n;
+-  for(n = 0; n &lt; sizeof(body_str_map) / sizeof(*body_str_map); n++) {
+-    if(p == body_str_map[n].p) {
+-      return body_str_map[n].str;
+-    }
+-  }
+-  return NULL;
+-}
+-
+-/* Assumes that the handle isn't already loaded, and that the data in
+-   the file isn't corrupt, so use with care. */
+-static int load_vsop_handle(const vsop_body planet, const vsop_version version, vsop_handle *vh)
+-{
+-  /* Construct the filename. */
+-  char filename[512];
+-  strncpy(filename, EPH_VSOP_DATA_PATH, 512);
+-  strncat(filename, EPH_VSOP_PREFIX, 512);
+-  strncat(filename, version_map_lookup(version), 512);
+-  strncat(filename, &quot;.&quot;, 512);
+-  strncat(filename, planet_map_lookup(planet), 512);
+-  strncat(filename, EPH_VSOP_SUFFIX, 512);
+-  filename[511] = '\0';
+-
+-  /* Try to open the file. */
+-  FILE *f;
+-  errno = 0;
+-  if(NULL == (f = fopen(filename, &quot;rb&quot;))) {
+-    /* File didn't open for some reason.  Probably not there. */
+-    return errno;
+-  }
+-
+-  /* Attempt to read data from the file. */
+-  body_elements *be = read_body_elements(f);
+-
+-
+-  /* Note that there's no checking to make sure the file was loaded successfully.  This is bad. */
+-
+-
+-  /* Close the file. */
+-  errno = 0;
+-  if(0 != fclose(f)) {
+-    return errno;
+-  }
+-  
+-
+-  /* Allocate more space in the list of vsop handle wrappers. */
+-  vhw_list = (vsop_handle_wrapper *)realloc(vhw_list, ++vhw_list_size * sizeof(vsop_handle_wrapper));
+-
+-  vhw_list[vhw_list_size-1].be = be;
+-  vhw_list[vhw_list_size-1].h.data_id = next_data_id++;
+-  vhw_list[vhw_list_size-1].h.planet = planet;
+-  vhw_list[vhw_list_size-1].h.version = version;
+-
+-  *vh = vhw_list[vhw_list_size-1].h;
+-  return 0;
+-}
+-
+-/*! @brief Returns a handle for accessing available VSOP data.
+- *
+- *  Data is stored in files on disk, with each file containing data
+- *  for a particular planet and a version.  Ephemeritis keeps an
+- *  internal cache of data that's already been loaded, and the cache
+- *  will be checked first to see if a handle for the data is already
+- *  available.  If it's not loaded already, the function will attempt
+- *  to load the data from the file.
+- *
+- *  Note that data may not always be available.  It might not be
+- *  installed (with the data file not being available), or the
+- *  combination of planet and version might not make sense.
+- *
+- *  @param[in] planet  The planet for which the data is being requested.
+- *  @param[in] version The version of VSOP data being requested.
+- *
+- *  @param[out] vh  A location to place the vsop_handle, if it's available.
+- *
+- *  @return 0 if the requested data was available (and returned),
+- *  otherwise an errno value that could have been set by fopen() or
+- *  fclose() is returned.
+- */
+-int get_vsop_data_handle(const vsop_body planet, const vsop_version version, vsop_handle *vh)
+-{
+-  /* Check to see if the data for this planet/series is already loaded. */
+-  if(get_vsop_handle(planet, version, vh)) {
+-    /* If so, return the handle.       */
+-    return 0;
+-  } else {
+-    /* If not, load it, then return it. */
+-    return load_vsop_handle(planet, version, vh);
+-  }
+-}
+-
+-/*! @brief Maps a specified vsop_handle to the loaded body elements that it represents.
+- *
+- *  Given a vsop_handle (which is abstract from the loaded data), this
+- *  function locates the body_elements structure to which the handle
+- *  maps.
+- *
+- *  @param[in] vh The handle that represents the elements to search for.
+- *
+- *  @return A pointer to a structure containing the elements
+- *  associated with the specified vsop_handle, if it exists.
+- *  Otherwise NULL.
+- *
+- */
+-body_elements *get_body_elements_for_handle(const vsop_handle vh)
+-{
+-  int n;
+-  for(n = 0; n &lt; vhw_list_size; n++) {
+-    if(vh.data_id == vhw_list[n].h.data_id) {
+-      /* Found the handle, so return its associated body_elements structure. */
+-      return vhw_list[n].be;
+-    }
+-  }
+-
+-  /* The handle wasn't found in the list of loaded data, so return NULL. */
+-  return NULL;
+-}
+
+Deleted: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h	2006-01-23 08:47:17 UTC (rev 219)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h	2006-01-23 09:11:48 UTC (rev 220)
+@@ -1,135 +0,0 @@
+-/* /\* Copyright 2000, 2001, 2005 William McClain, Mike McGavin */
+-
+-/* This file is part of Ephemeritis. */
+-
+-/* Ephemeritis is free software; you can redistribute it and/or modify */
+-/* it under the terms of the GNU General Public License as published by */
+-/* the Free Software Foundation; either version 2 of the License, or */
+-/* (at your option) any later version. */
+-
+-/* Ephemeritis is distributed in the hope that it will be useful, */
+-/* but WITHOUT ANY WARRANTY; without even the implied warranty of */
+-/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the */
+-/* GNU General Public License for more details. */
+-
+-/* You should have received a copy of the GNU General Public License */
+-/* along with Ephemeritis; if not, write to the Free Software */
+-/* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+-/* *\/ */
+-
+-/* #ifndef _ephemeritis_vsop_data_h_ */
+-/* #define _ephemeritis_vsop_data_h_ */
+-
+-/* /\*! @file ephemeritis_vsop_data.h */
+-/*  * */
+-/*  * Definitions for VSOP data and related functions.  This list is */
+-/*  * included by various parts of the code and utilities to allow them */
+-/*  * to share commonly understood data structures. */
+-/*  * */
+-/*  * @todo Document the structures. */
+-/*  * @todo Figure out which parts of this should be available everywhere, and which parts should be internal to the data-handling code (in a separate header file). */
+-/*  * @todo Update EPHEMERITIS_VSOP_DATA_PATH to make it configurable by the user at installation time. */
+-/*  * */
+-/*  * @author Mike McGavin. */
+-/*  *\/ */
+-
+-/* #include &quot;ephemeritis.h&quot; */
+-
+-/* /\*! @brief A list of bodies recognised by the VSOP model. */
+-/*  *\/ */
+-/* typedef enum { */
+-/*   vsop_mercury,			/\*!&lt; @brief Mercury *\/ */
+-/*   vsop_venus,			/\*!&lt; @brief Venus   *\/ */
+-/*   vsop_earth,			/\*!&lt; @brief Earth   *\/ */
+-/*   vsop_mars,			/\*!&lt; @brief Mars    *\/ */
+-/*   vsop_jupiter,			/\*!&lt; @brief Jupiter *\/ */
+-/*   vsop_saturn,			/\*!&lt; @brief Saturn  *\/ */
+-/*   vsop_uranus,			/\*!&lt; @brief Uranus  *\/ */
+-/*   vsop_neptune,			/\*!&lt; @brief Neptune *\/ */
+-  
+-/*   vsop_sun,                     /\*!&lt; @brief Sun                   *\/ */
+-/*   vsop_EMB                      /\*!&lt; @brief Earth-Moon barycentre *\/ */
+-/* } vsop_body; */
+-
+-/* /\*! @brief A list of versions available for the VSOP model. */
+-/*  *\/ */
+-/* typedef enum { */
+-/*     hel_ell_j2,			/\*!&lt; @brief Heliocentric Elliptic Elements J2000       *\/ */
+-/*     hel_rec_j2,			/\*!&lt; @brief Heliocentric Rectangular Variables J2000   *\/ */
+-/*     hel_sph_j2,			/\*!&lt; @brief Heliocentric Spherical Variables J2000     *\/ */
+-/*     hel_rec_date,		/\*!&lt; @brief Heliocentric Rectangular Variables of date *\/ */
+-/*     hel_sph_date,		/\*!&lt; @brief Heliocentric Spherical Variables of date   *\/ */
+-/*     bar_rec_j2                  /\*!&lt; @brief Barycentric Rectangular Variables J2000    *\/ */
+-/* } vsop_version; */
+-
+-
+-/* /\*! @brief A user-available structure to refer to VSOP data. */
+-/*  *\/ */
+-/* typedef struct { */
+-/*   vsop_body planet;     /\*!&lt; @brief The planet to which this data relates.  *\/ */
+-/*   vsop_version version; /\*!&lt; @brief The series which this data is for.      *\/ */
+-
+-/*   int data_id;          /\*!&lt; @brief An internally recognised data identifier to identify where the data is held. *\/ */
+-/* } vsop_handle; */
+-
+-/* /\*! @brief A struct to hold rectangular coordinates from a particular */
+-/*  *  calculation, including meta information about their calculation. */
+-/*  *\/ */
+-/* typedef struct { */
+-/*   vsop_handle vh;       /\*!&lt; @brief The VSOP handle representing the data these coordinates were calculated from. *\/ */
+-/*   double jd;            /\*!&lt; @brief The Julian Date of these coordinates, in dynamical time.                      *\/ */
+-/*   rec_coords rc;        /\*!&lt; @brief The XYZ coordinates.                                                          *\/ */
+-/*   int is_inverted;      /\*!&lt; @brief Set to 1 if these coordinates are inverted (eg. for Solar coordinates), 0 otherwise. *\/ */
+-/*   int error_state;      /\*!&lt; @brief The state of these coordinates, */
+-/*                                     indicating if they're okay to use. */
+-/*                                     Note that this field is only valid */
+-/*                                     once the struct values have been */
+-/*                                     calculated at least once. */
+-
+-/* 				    0 indicates no error. */
+-/* 				    -1 (vsop_get_rectangular) indicates a vsop_handle error.  (Data referenced by this handle wasn't found - perhaps it was unloaded.) */
+-/* 				    -2 (vsop_get_rectangular) indicates that a vsop_handle referenced data that wasn't rectangular, or otherwise not suitable for providing rectangular coordinates. */
+-/* 				    -3 (vsop_rec_vsop_to_fk5) indicates that supplied coordinates were unsuitable for converting to FK5. */
+-/* 			*\/ */
+-/* } vsop_rec_coords; */
+-
+-/* /\*! @brief Struct for holding spherical coordinates. */
+-/*  *\/ */
+-/* typedef struct { */
+-/*   double L;             /\*!&lt; @brief Heliocentric ecliptical longitude. *\/ */
+-/*   double B;             /\*!&lt; @brief Heliocentric ecliptical latitude.  *\/ */
+-/*   double R;             /\*!&lt; @brief The radius vector (distance to the Sun). *\/ */
+-/* } sph_coords; */
+-
+-/* /\*! @brief A struct to hold spherical coordinates from a particular */
+-/*  *  calculation, including meta information about their calculation. */
+-/*  *\/ */
+-/* typedef struct { */
+-/*   vsop_handle vh;       /\*!&lt; @brief The VSOP handle representing the data these coordinates were calculated from. *\/ */
+-/*   double jd;            /\*!&lt; @brief The Julian Date of these coordinates, in dynamical time.                      *\/ */
+-/*   sph_coords sc;        /\*!&lt; @brief The spherical coordinates.                                                   *\/ */
+-/*   int is_inverted;      /\*!&lt; @brief Set to 1 if these coordinates are inverted (eg. for Solar coordinates), 0 otherwise. *\/ */
+-/*   int error_state;      /\*!&lt; @brief The state of these coordinates, */
+-/*                                     indicating if they're okay to use. */
+-/*                                     Note that this field is only valid */
+-/*                                     once the struct values have been */
+-/*                                     calculated at least once. */
+-
+-/* 				    0 indicates no error. */
+-/* 				    -1 (vsop_get_spherical) indicates a vsop_handle error.  (Data referenced by this handle wasn't found - perhaps it was unloaded.) */
+-/* 				    -2 (vsop_get_spherical) indicates that a vsop_handle referenced data that wasn't spherical, or otherwise not suitable for providing spherical coordinates.  (This should really only happen if the data in the struct has been corrupted somehow.) */
+-/* 				    -3 (vsop_rec_vsop_to_fk5) indicates that supplied coordinates were unsuitable for converting to FK5. */
+-/* 			*\/ */
+-/* } vsop_sph_coords; */
+-
+-/* void vsop_data_init(); */
+-/* void vsop_data_cleanup(); */
+-/* int get_vsop_data_handle(const vsop_body planet, const vsop_version version, vsop_handle *vh); */
+-/* vsop_rec_coords vsop_get_rectangular(const vsop_handle vh, const double jd); */
+-/* vsop_rec_coords vsop_rec_vsop_to_fk5(const vsop_rec_coords vrc); */
+-/* vsop_rec_coords vsop_rec_invert(const vsop_rec_coords vrc); */
+-/* vsop_sph_coords vsop_get_spherical(const vsop_handle vh, const double jd); */
+-/* vsop_sph_coords vsop_sph_vsop_to_fk5(const vsop_sph_coords vsc); */
+-/* vsop_sph_coords vsop_sph_invert(const vsop_sph_coords vsc); */
+-
+-/* #endif */
+
+Copied: branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c (from rev 219, branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.c)
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.c	2006-01-23 08:47:17 UTC (rev 219)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c	2006-01-23 09:11:48 UTC (rev 220)
+@@ -0,0 +1,415 @@
++/* Copyright 2000, 2001, 2005 William McClain, Mike McGavin
++
++This file is part of Ephemeritis.
++
++Ephemeritis is free software; you can redistribute it and/or modify
++it under the terms of the GNU General Public License as published by
++the Free Software Foundation; either version 2 of the License, or
++(at your option) any later version.
++
++Ephemeritis is distributed in the hope that it will be useful,
++but WITHOUT ANY WARRANTY; without even the implied warranty of
++MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++GNU General Public License for more details.
++
++You should have received a copy of the GNU General Public License
++along with Ephemeritis; if not, write to the Free Software
++Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
++*/
++
++/*! @file ephemeritis_vsop_data.c
++ *
++ * @brief Management of VSOP data files, and in-memory structures.
++ *
++ * @author Mike McGavin.
++ */
++
++#include &quot;ephemeritis_vsop_internal.h&quot;
++#include &quot;ephemeritis.h&quot;
++
++#include &lt;errno.h&gt;
++#include &lt;stdlib.h&gt;
++#include &lt;string.h&gt;
++#include &lt;stdio.h&gt;
++
++/*! @brief De-allocates the space that was allocated for a series
++ *  structure in memory.
++ *
++ *  @param[in] s The series struct.
++ */
++static void destroy_series(series s)
++{
++  free(s.terms);
++}
++
++/*! @brief De-allocates the space that was allocated for a
++ *  body_elements structure in memory.
++ *
++ *  @param[in] b A pointer to a body_elements object.  This will be
++ *  free()'d, as will the entire strucutre underneath it.  Ensure that
++ *  nothing inside is referenced from elsewhere.
++ */
++void free_body_elements(body_elements *b)
++{
++  int n;
++  for(n = 0; n &lt; b-&gt;meta.num_variables; n++) {
++    int o;
++    for(o = 0; o &lt; b-&gt;variable_list[n].meta.series_count; o++) {
++      /* Destroy each series. */
++      destroy_series(b-&gt;variable_list[n].series_list[o]);
++    }
++
++    /* Free the list of series for the variable. */
++    free(b-&gt;variable_list[n].series_list);
++  }
++  
++  free(b);
++}
++
++/*! @brief Prints details about the body elements in a human readable
++ *  form.
++ *
++ *  @param[in] ostream A stream pointer to which the text should be printed.  (eg. stdin, stderr, or an open file.)
++ *  @param[in] b       Pointer to the body elements.
++ */
++void print_body_statistics(FILE *ostream, body_elements *b)
++{
++  fprintf(ostream, &quot;Ephemeritis Version String: %s.\n&quot;, b-&gt;meta.eph_header_text);
++  fprintf(ostream, &quot;Data for \&quot;%s\&quot;.\n&quot;, b-&gt;meta.body_name);
++  fprintf(ostream, &quot;%d variables overall.\n&quot;, b-&gt;meta.num_variables);
++
++  int v;
++  for(v=0; v&lt;b-&gt;meta.num_variables; v++) {
++    fprintf(ostream, &quot;\nVariable %d contains %d series':\n\n&quot;, v, b-&gt;variable_list[v].meta.series_count);
++
++    int s;
++    for(s=0; s&lt;b-&gt;variable_list[v].meta.series_count; s++) {
++      series *ser = &amp;(b-&gt;variable_list[v].series_list[s]);
++      fprintf(ostream, &quot;  Series %d has alpha %d and contains %d terms.\n&quot;, s, ser-&gt;meta.alpha, (ser-&gt;meta.num_terms));
++    }
++  }
++}
++
++/*! @brief Given an open output file and a body_elements structure,
++ *  output the body elements in binary format.
++ *
++ *  @param[in] outfile An open file to which the data should be written. The file is not closed after the operation.
++ *  @param[in] b       Pointer to the body elements.
++ */
++void write_body_elements(FILE *outfile, body_elements *b)
++{
++  /* Write the header data. */
++  fwrite(&amp;b-&gt;meta, sizeof(b-&gt;meta), 1, outfile);
++
++  /* Loop through the variables, writing data of each one. */
++  int v;
++  for(v = 0; v &lt; b-&gt;meta.num_variables; v++) {
++    fwrite(&amp;b-&gt;variable_list[v].meta, sizeof(b-&gt;variable_list[v].meta), 1, outfile);
++
++    /* Loop through the series variables, writing data of each one. */
++    int s;
++    for(s = 0; s &lt; b-&gt;variable_list[v].meta.series_count; s++) {
++      series *ser = &amp;b-&gt;variable_list[v].series_list[s];
++      fwrite(&amp;ser-&gt;meta, sizeof(ser-&gt;meta), 1, outfile);
++
++      /* Write the list of terms. */
++      fwrite(ser-&gt;terms, sizeof(*(ser-&gt;terms)), ser-&gt;meta.num_terms, outfile);
++    }
++  }
++}
++
++
++/*! @brief Given an open input file and a body_elements structure,
++ *  read the body elements from binary format.
++ *
++ *  @param[in] infile  An open file from which the data should be
++ *                     read. The file should be set to the beginning of its data, and is
++ *                     not closed after the operation.
++ *
++ *  @return            Pointer to the body elements that have been read.
++ *
++ *  @bug Doesn't indicate if there was an error, such as corrupted
++ *  data or lack of memory.  What should properly happen is that the
++ *  function should clean up whatever memory mess it's caused, and
++ *  return NULL.
++ */
++body_elements *read_body_elements(FILE *infile)
++{
++  body_elements *b;
++
++  /* Allocate memory for the body_elements. */
++  b = (body_elements *)malloc(sizeof(body_elements));
++
++  /* Read the header data. */
++  fread(&amp;b-&gt;meta, sizeof(b-&gt;meta), 1, infile);
++
++  /* Loop through the variables, reading data for each one. */
++  int v;
++  for(v = 0; v &lt; b-&gt;meta.num_variables; v++) {
++    fread(&amp;b-&gt;variable_list[v].meta, sizeof(b-&gt;variable_list[v].meta), 1, infile);
++
++    /* Allocate memory to hold the list of series' for this variable. */
++    b-&gt;variable_list[v].series_list = (series *)calloc(b-&gt;variable_list[v].meta.series_count, sizeof(series));
++
++    /* Loop through the series variables, reading data from each one. */
++    int s;
++    for(s = 0; s &lt; b-&gt;variable_list[v].meta.series_count; s++) {
++      /* Read meta data for this series. */
++      series *ser = &amp;b-&gt;variable_list[v].series_list[s];
++      fread(&amp;ser-&gt;meta, sizeof(ser-&gt;meta), 1, infile);
++
++      /* Allocate memory for the terms. */
++      ser-&gt;terms = (term_bin *)calloc(ser-&gt;meta.num_terms, sizeof(term_bin));
++
++      /* Read the list of terms. */
++      fread(ser-&gt;terms, sizeof(*(ser-&gt;terms)), ser-&gt;meta.num_terms, infile);
++    }
++  }
++
++  return b;
++}
++
++
++
++
++
++/*! @brief Internal struct to hold id data about a vsop_handle.
++ */
++typedef struct {
++  vsop_handle h;
++  body_elements *be;
++} vsop_handle_wrapper;
++
++static vsop_handle_wrapper *vhw_list = NULL;
++static int vhw_list_size = 0;
++static int next_data_id = 1;
++
++/*! @brief Initialise the VSOP data handling functionality.  This
++    should be called before using any VSOP data handling routines.
++ *
++ *  Calling this function initialises all the internal memory handling
++ *  overheads, and so on.
++ */
++void vsop_data_init()
++{
++  vhw_list = NULL;
++  vhw_list_size = 0;
++}
++
++/*! @brief Cleans up the VSOP data handling functionality.  This
++ *  should be called after using any VSOP data handling routines.
++ *
++ *  Calling this function cleans up all the internal memory handling
++ *  overheads, and so on.
++ */
++void vsop_data_cleanup()
++{
++  /* Loop through every loaded data set, and release it. */
++
++  /* Release the list, and re-initialise the meta variables. */
++  free(vhw_list);
++  vhw_list = NULL;
++  vhw_list_size = 0;
++}
++
++
++/*! @brief Check to see if data matching that requested is already in
++ *  memory.  If so, copy it to an output variable, and return true.
++ *
++ *  @param[in] planet  The planet being requested.
++ *  @param[in] version The version of the VSOP data being requested.
++ *
++ *  @param[out] h      A location where the vsop_handle data for the requested planet and version will be copied.
++ *
++ *  @return true if the data was loaded and returned, otherwise false.
++ */
++static bool get_vsop_handle(const vsop_body planet, const vsop_version version, vsop_handle *h)
++{
++  int n;
++  for(n = 0; n &lt; vhw_list_size; n++) {
++    if(planet == vhw_list[n].h.planet &amp;&amp; version == vhw_list[n].h.version) {
++      *h = vhw_list[n].h;
++      return true;
++    }
++  }
++  return false;
++}
++
++
++typedef struct {
++  vsop_version v;
++  char *str;
++} version_str_map_type;
++
++
++typedef struct {
++  vsop_body p;
++  char *str;
++} body_str_map_type;
++
++static version_str_map_type version_str_map[] = {
++  {hel_ell_j2,   EPH_VSOP_HEJ2},
++  {hel_rec_j2,   EPH_VSOP_HRJ2},
++  {hel_sph_j2,   EPH_VSOP_HSJ2},
++  {hel_rec_date, EPH_VSOP_HRD },
++  {hel_sph_date, EPH_VSOP_HSD },
++  {bar_rec_j2,   EPH_VSOP_BRJ2}
++};
++
++static char *version_map_lookup(vsop_version v)
++{
++  int n;
++  for(n = 0; n &lt; sizeof(version_str_map) / sizeof(*version_str_map); n++) {
++    if(v == version_str_map[n].v) {
++      return version_str_map[n].str;
++    }
++  }
++  return NULL;
++}
++
++static body_str_map_type body_str_map[] = {
++  {vsop_mercury, EPH_MER},
++  {vsop_venus,   EPH_VEN},
++  {vsop_earth,   EPH_EAR},
++  {vsop_mars,    EPH_MAR},
++  {vsop_jupiter, EPH_JUP},
++  {vsop_saturn,  EPH_SAT},
++  {vsop_uranus,  EPH_URA},
++  {vsop_neptune, EPH_NEP},
++  {vsop_sun,     EPH_SOL},
++  {vsop_EMB,     EPH_EMB}
++};
++
++static char *planet_map_lookup(vsop_body p)
++{
++  int n;
++  for(n = 0; n &lt; sizeof(body_str_map) / sizeof(*body_str_map); n++) {
++    if(p == body_str_map[n].p) {
++      return body_str_map[n].str;
++    }
++  }
++  return NULL;
++}
++
++/* Assumes that the handle isn't already loaded, and that the data in
++   the file isn't corrupt, so use with care. */
++static int load_vsop_handle(const vsop_body planet, const vsop_version version, vsop_handle *vh)
++{
++  /* Construct the filename. */
++  char filename[512];
++  strncpy(filename, EPH_VSOP_DATA_PATH, 512);
++  strncat(filename, EPH_VSOP_PREFIX, 512);
++  strncat(filename, version_map_lookup(version), 512);
++  strncat(filename, &quot;.&quot;, 512);
++  strncat(filename, planet_map_lookup(planet), 512);
++  strncat(filename, EPH_VSOP_SUFFIX, 512);
++  filename[511] = '\0';
++
++  /* Try to open the file. */
++  FILE *f;
++  errno = 0;
++  if(NULL == (f = fopen(filename, &quot;rb&quot;))) {
++    /* File didn't open for some reason.  Probably not there. */
++    return errno;
++  }
++
++  /* Attempt to read data from the file. */
++  body_elements *be = read_body_elements(f);
++
++
++  /* Note that there's no checking to make sure the file was loaded successfully.  This is bad. */
++
++
++  /* Close the file. */
++  errno = 0;
++  if(0 != fclose(f)) {
++    return errno;
++  }
++  
++  /* Allocate more space in the list of vsop handle wrappers. */
++  vsop_handle_wrapper *realloc_result;
++  realloc_result = (vsop_handle_wrapper *)realloc(vhw_list, ++vhw_list_size * sizeof(vsop_handle_wrapper));
++
++  /* Check to make sure that realloc() found more memory successfully. */
++  if(NULL == realloc_result) {
++    /* Oops, not enough memory, or some other error. */
++
++    /* Free up those elements that were just read, since there's nowhere to put them. */
++    free_body_elements(be);
++
++    /* Return the error value. */
++    return errno;
++  } else {
++    /* Memory was re-allocated fine, so assign the list's address to wherever it's been placed. */
++    vhw_list = realloc_result;
++  }
++
++  vhw_list[vhw_list_size-1].be = be;
++  vhw_list[vhw_list_size-1].h.data_id = next_data_id++;
++  vhw_list[vhw_list_size-1].h.planet = planet;
++  vhw_list[vhw_list_size-1].h.version = version;
++
++  *vh = vhw_list[vhw_list_size-1].h;
++  return 0;
++}
++
++/*! @brief Returns a handle for accessing available VSOP data.
++ *
++ *  Data is stored in files on disk, with each file containing data
++ *  for a particular planet and a version.  Ephemeritis keeps an
++ *  internal cache of data that's already been loaded, and the cache
++ *  will be checked first to see if a handle for the data is already
++ *  available.  If it's not loaded already, the function will attempt
++ *  to load the data from the file.
++ *
++ *  Note that data may not always be available.  It might not be
++ *  installed (with the data file not being available), or the
++ *  combination of planet and version might not make sense.
++ *
++ *  @param[in] planet  The planet for which the data is being requested.
++ *  @param[in] version The version of VSOP data being requested.
++ *
++ *  @param[out] vh  A location to place the vsop_handle, if it's available.
++ *
++ *  @return 0 if the requested data was available (and returned),
++ *  otherwise an errno value that could have been set by fopen(),
++ *  fclose(), or realloc() is returned.
++ */
++int get_vsop_data_handle(const vsop_body planet, const vsop_version version, vsop_handle *vh)
++{
++  /* Check to see if the data for this planet/series is already loaded. */
++  if(get_vsop_handle(planet, version, vh)) {
++    /* If so, return the handle.       */
++    return 0;
++  } else {
++    /* If not, load it, then return it. */
++    return load_vsop_handle(planet, version, vh);
++  }
++}
++
++/*! @brief Maps a specified vsop_handle to the loaded body elements that it represents.
++ *
++ *  Given a vsop_handle (which is abstract from the loaded data), this
++ *  function locates the body_elements structure to which the handle
++ *  maps.
++ *
++ *  @param[in] vh The handle that represents the elements to search for.
++ *
++ *  @return A pointer to a structure containing the elements
++ *  associated with the specified vsop_handle, if it exists.
++ *  Otherwise NULL.
++ *
++ */
++body_elements *get_body_elements_for_handle(const vsop_handle vh)
++{
++  int n;
++  for(n = 0; n &lt; vhw_list_size; n++) {
++    if(vh.data_id == vhw_list[n].h.data_id) {
++      /* Found the handle, so return its associated body_elements structure. */
++      return vhw_list[n].be;
++    }
++  }
++
++  /* The handle wasn't found in the list of loaded data, so return NULL. */
++  return NULL;
++}
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-01-23 08:47:17 UTC (rev 219)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-01-23 09:11:48 UTC (rev 220)
+@@ -53,7 +53,6 @@
+  */
+ 
+ #include &lt;ephemeritis.h&gt;
+-#include &lt;ephemeritis_vsop_data.h&gt;
+ 
+ #include &lt;stdio.h&gt;
+ #include &lt;math.h&gt;
+
+Modified: branches/new-vsop-prepare/src/c/utils/build_vsop_data.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/utils/build_vsop_data.c	2006-01-23 08:47:17 UTC (rev 219)
++++ branches/new-vsop-prepare/src/c/utils/build_vsop_data.c	2006-01-23 09:11:48 UTC (rev 220)
+@@ -31,7 +31,7 @@
+  */
+ 
+ #include &quot;config.h&quot;
+-#include &lt;ephemeritis_vsop_data.h&gt;
++#include &lt;ephemeritis.h&gt;
+ #include &lt;ephemeritis_vsop_internal.h&gt;
+ #include &lt;stdio.h&gt;
+ #include &lt;stdlib.h&gt;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000072.html">[Ephemeritis-svn] r219 - in branches/new-vsop-prepare/src/c: libephemeritis utils
+</A></li>
+	<LI>Next message: <A HREF="000074.html">[Ephemeritis-svn] r221 - in branches/new-vsop-prepare/src/c: libephemeritis utils
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#73">[ date ]</a>
+              <a href="thread.html#73">[ thread ]</a>
+              <a href="subject.html#73">[ subject ]</a>
+              <a href="author.html#73">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

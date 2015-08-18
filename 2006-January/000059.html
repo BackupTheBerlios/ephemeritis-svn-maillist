@@ -1,0 +1,246 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r207 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-January/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r207%20-%20in%20branches/new-vsop-prepare/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200601111013.k0BADhZf016590%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000060.html">
+   <LINK REL="Next"  HREF="000061.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r207 - in branches/new-vsop-prepare/src/c: libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r207%20-%20in%20branches/new-vsop-prepare/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200601111013.k0BADhZf016590%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r207 - in branches/new-vsop-prepare/src/c: libephemeritis tests">izogi at berlios.de
+       </A><BR>
+    <I>Wed Jan 11 11:13:43 CET 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000060.html">[Ephemeritis-svn] r206 - in branches/new-vsop-prepare/src: . c/libephemeritis c/tests
+</A></li>
+        <LI>Next message: <A HREF="000061.html">[Ephemeritis-svn] r208 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#59">[ date ]</a>
+              <a href="thread.html#59">[ thread ]</a>
+              <a href="subject.html#59">[ subject ]</a>
+              <a href="author.html#59">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-01-11 11:13:43 +0100 (Wed, 11 Jan 2006)
+New Revision: 207
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.c
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+Created the vsop_body type to replace vPlanets, which had been borrowed from the old VSOP code.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.c	2006-01-11 09:45:16 UTC (rev 206)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.c	2006-01-11 10:13:43 UTC (rev 207)
+@@ -221,7 +221,7 @@
+  *
+  *  @return true if the data was loaded and returned, otherwise false.
+  */
+-static bool get_vsop_handle(const enum vPlanets planet, const vsop_version version, vsop_handle *h)
++static bool get_vsop_handle(const vsop_body planet, const vsop_version version, vsop_handle *h)
+ {
+   int n;
+   for(n = 0; n &lt; vhw_list_size; n++) {
+@@ -241,9 +241,9 @@
+ 
+ 
+ typedef struct {
+-  enum vPlanets p;
++  vsop_body p;
+   char *str;
+-} vPlanets_str_map_type;
++} body_str_map_type;
+ 
+ static version_str_map_type version_str_map[] = {
+   {hel_ell_j2,   EPH_VSOP_HEJ2},
+@@ -265,25 +265,25 @@
+   return NULL;
+ }
+ 
+-static vPlanets_str_map_type vPlanets_str_map[] = {
+-  {vMercury, EPH_MER},
+-  {vVenus,   EPH_VEN},
+-  {vEarth,   EPH_EAR},
+-  {vMars,    EPH_MAR},
+-  {vJupiter, EPH_JUP},
+-  {vSaturn,  EPH_SAT},
+-  {vUranus,  EPH_URA},
+-  {vNeptune, EPH_NEP},
+-  {vSun,     EPH_SOL},
+-  {vEMB,     EPH_EMB}
++static body_str_map_type body_str_map[] = {
++  {vsop_mercury, EPH_MER},
++  {vsop_venus,   EPH_VEN},
++  {vsop_earth,   EPH_EAR},
++  {vsop_mars,    EPH_MAR},
++  {vsop_jupiter, EPH_JUP},
++  {vsop_saturn,  EPH_SAT},
++  {vsop_uranus,  EPH_URA},
++  {vsop_neptune, EPH_NEP},
++  {vsop_sun,     EPH_SOL},
++  {vsop_EMB,     EPH_EMB}
+ };
+ 
+-static char *planet_map_lookup(enum vPlanets p)
++static char *planet_map_lookup(vsop_body p)
+ {
+   int n;
+-  for(n = 0; n &lt; sizeof(vPlanets_str_map) / sizeof(*vPlanets_str_map); n++) {
+-    if(p == vPlanets_str_map[n].p) {
+-      return vPlanets_str_map[n].str;
++  for(n = 0; n &lt; sizeof(body_str_map) / sizeof(*body_str_map); n++) {
++    if(p == body_str_map[n].p) {
++      return body_str_map[n].str;
+     }
+   }
+   return NULL;
+@@ -291,7 +291,7 @@
+ 
+ /* Assumes that the handle isn't already loaded, and that the data in
+    the file isn't corrupt, so use with care. */
+-static bool load_vsop_handle(const enum vPlanets planet, const vsop_version version, vsop_handle *vh)
++static bool load_vsop_handle(const vsop_body planet, const vsop_version version, vsop_handle *vh)
+ {
+   /* Construct the filename. */
+   char filename[512];
+@@ -352,16 +352,14 @@
+  *
+  *  @return true if the requested data was available (and returned), false otherwise.
+  */
+-bool get_vsop_data_handle(const enum vPlanets planet, const vsop_version version, vsop_handle *vh)
++bool get_vsop_data_handle(const vsop_body planet, const vsop_version version, vsop_handle *vh)
+ {
+   /* Check to see if the data for this planet/series is already loaded. */
+   if(get_vsop_handle(planet, version, vh)) {
+     /* If so, return the handle.       */
+-    printf(&quot;Found it early -- saving time.\n&quot;);
+     return true;
+   } else {
+     /* If not, load it, then return it. */
+-    printf(&quot;Oops -- loading from disk.\n&quot;);
+     return load_vsop_handle(planet, version, vh);
+   }
+ }
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h	2006-01-11 09:45:16 UTC (rev 206)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h	2006-01-11 10:13:43 UTC (rev 207)
+@@ -37,7 +37,25 @@
+ 
+ #include &lt;stdio.h&gt;
+ 
++/*! @brief A list of bodies recognised by the VSOP model.
++ */
+ typedef enum {
++  vsop_mercury,			/*!&lt; @brief Mercury */
++  vsop_venus,			/*!&lt; @brief Venus   */
++  vsop_earth,			/*!&lt; @brief Earth   */
++  vsop_mars,			/*!&lt; @brief Mars    */
++  vsop_jupiter,			/*!&lt; @brief Jupiter */
++  vsop_saturn,			/*!&lt; @brief Saturn  */
++  vsop_uranus,			/*!&lt; @brief Uranus  */
++  vsop_neptune,			/*!&lt; @brief Neptune */
++  
++  vsop_sun,                     /*!&lt; @brief Sun                   */
++  vsop_EMB                      /*!&lt; @brief Earth-Moon barycentre */
++} vsop_body;
++
++/*! @brief A list of versions available for the VSOP model.
++ */
++typedef enum {
+     hel_ell_j2,			/*!&lt; @brief Heliocentric Elliptic Elements J2000       */
+     hel_rec_j2,			/*!&lt; @brief Heliocentric Rectangular Variables J2000   */
+     hel_sph_j2,			/*!&lt; @brief Heliocentric Spherical Variables J2000     */
+@@ -46,10 +64,11 @@
+     bar_rec_j2                  /*!&lt; @brief Barycentric Rectangular Variables J2000    */
+ } vsop_version;
+ 
++
+ /*! @brief A user-available structure to refer to VSOP data.
+  */
+ typedef struct {
+-  enum vPlanets planet; /*!&lt; @brief The planet to which this data relates.  */
++  vsop_body planet;     /*!&lt; @brief The planet to which this data relates.  */
+   vsop_version version; /*!&lt; @brief The series which this data is for.      */
+ 
+   int data_id;          /*!&lt; @brief An internally recognised data identifier to identify where the data is held. */
+@@ -57,7 +76,7 @@
+ 
+ void vsop_data_init();
+ void vsop_data_cleanup();
+-bool get_vsop_data_handle(const enum vPlanets planet, const vsop_version version, vsop_handle *vh);
++bool get_vsop_data_handle(const vsop_body planet, const vsop_version version, vsop_handle *vh);
+ 
+ 
+ 
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-01-11 09:45:16 UTC (rev 206)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-01-11 10:13:43 UTC (rev 207)
+@@ -1144,16 +1144,16 @@
+ 
+       vsop_handle vh;
+       bool result;
+-      result = get_vsop_data_handle(vMercury, hel_rec_date, &amp;vh);
++      result = get_vsop_data_handle(vsop_mercury, hel_rec_date, &amp;vh);
+       printf(&quot;%d\n&quot;, vh.data_id);
+ 
+-      result = get_vsop_data_handle(vVenus, hel_rec_date, &amp;vh);
++      result = get_vsop_data_handle(vsop_venus, hel_rec_date, &amp;vh);
+       printf(&quot;%d\n&quot;, vh.data_id);
+ 
+-      result = get_vsop_data_handle(vEarth, hel_rec_date, &amp;vh);
++      result = get_vsop_data_handle(vsop_earth, hel_rec_date, &amp;vh);
+       printf(&quot;%d\n&quot;, vh.data_id);
+ 
+-      result = get_vsop_data_handle(vMercury, hel_rec_date, &amp;vh);
++      result = get_vsop_data_handle(vsop_mercury, hel_rec_date, &amp;vh);
+       printf(&quot;%d\n&quot;, vh.data_id);
+ 
+       if(result) {
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000060.html">[Ephemeritis-svn] r206 - in branches/new-vsop-prepare/src: . c/libephemeritis c/tests
+</A></li>
+	<LI>Next message: <A HREF="000061.html">[Ephemeritis-svn] r208 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#59">[ date ]</a>
+              <a href="thread.html#59">[ thread ]</a>
+              <a href="subject.html#59">[ subject ]</a>
+              <a href="author.html#59">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

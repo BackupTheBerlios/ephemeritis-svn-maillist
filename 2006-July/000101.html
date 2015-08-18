@@ -1,0 +1,489 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r248 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-July/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r248%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607201102.k6KB2ord005694%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000100.html">
+   <LINK REL="Next"  HREF="000102.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r248 - in branches/new-vsop-prepare/src/c:	libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r248%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607201102.k6KB2ord005694%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r248 - in branches/new-vsop-prepare/src/c:	libephemeritis tests">izogi at mail.berlios.de
+       </A><BR>
+    <I>Thu Jul 20 13:02:50 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000100.html">[Ephemeritis-svn] r247 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000102.html">[Ephemeritis-svn] r249 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#101">[ date ]</a>
+              <a href="thread.html#101">[ thread ]</a>
+              <a href="subject.html#101">[ subject ]</a>
+              <a href="author.html#101">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-07-20 13:02:44 +0200 (Thu, 20 Jul 2006)
+New Revision: 248
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+   branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c
+   branches/new-vsop-prepare/src/c/libephemeritis/equinox.c
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+More adjustments of code towards using ecliptical_coords and equatorial_coords structs.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-07-20 10:27:59 UTC (rev 247)
++++ branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-07-20 11:02:44 UTC (rev 248)
+@@ -175,8 +175,7 @@
+  *  @param[in]  (*heliocentic_f)  A function to calculate the planet's spherical coordinates according to the ecliptic and equinox of the date, returning the results in the fk5 system.
+  *  @param[in]  delta     Desired accuracy, in days.
+  *
+- *  @param[out] longitude Right ascension, in radians.
+- *  @param[out] latitude  Declination, in radians.
++ *  @param[out] ecl_pos   Ecliptical coordinates, in radians.
+  *
+  *  @returns A value indicating if the calculation was successful.
+  *    The function may return any value that could have been returned
+@@ -201,7 +200,7 @@
+ 				 vsop_body planet,
+ 				 vsop_error_state (*heliocentric_f) (double, vsop_body, sph_coords *),
+ 				 double delta,
+-				 double *longitude, double *latitude)
++				 ecliptical_coords *ecl_pos)
+ {
+     double t = jd;
+     double l0 = -100.0;		/* Impossible value. */
+@@ -230,11 +229,11 @@
+ 	}
+ 
+ 	/* Rectangular offset. */
+-	const double cosB0 = cos(sc_e.B);
+-	const double cosB = cos(sc_p.B);
+-	const double x = sc_p.R * cosB * cos(sc_p.L) - sc_e.R * cosB0 * cos(sc_e.L);
+-	const double y = sc_p.R * cosB * sin(sc_p.L) - sc_e.R * cosB0 * sin(sc_e.L);
+-	const double z = sc_p.R * sin(sc_p.B) - sc_e.R * sin(sc_e.B);
++	const double cosB0 = cos(sc_e.ecl.ecl_lat);
++	const double cosB = cos(sc_p.ecl.ecl_lat);
++	const double x = sc_p.R * cosB * cos(sc_p.ecl.ecl_lat) - sc_e.R * cosB0 * cos(sc_e.ecl.ecl_lat);
++	const double y = sc_p.R * cosB * sin(sc_p.ecl.ecl_lat) - sc_e.R * cosB0 * sin(sc_e.ecl.ecl_lat);
++	const double z = sc_p.R * sin(sc_p.ecl.ecl_lat) - sc_e.R * sin(sc_e.ecl.ecl_lat);
+ 
+ 	/* Geocentric geometric ecliptic coordinates of the planet. */
+ 	const double x2 = x * x;
+@@ -264,8 +263,8 @@
+ 	t = jd - tau;
+     }
+ 
+-    *longitude = l;
+-    *latitude = b;
++    ecl_pos-&gt;ecl_lon = l;
++    ecl_pos-&gt;ecl_lat = b;
+ 
+     if (!worked) {
+ 	/* Bail out. */
+@@ -631,8 +630,7 @@
+ void elliptical_orbit_ecliptical(const rec_coords sol,
+ 				 const rec_coords body,
+ 				 const double r_sun,
+-				 double *ra,
+-				 double *dec,
++				 equatorial_coords *equ_pos,
+ 				 double *elongation,
+ 				 double *phase_angle, double *r_earth)
+ {
+@@ -643,8 +641,8 @@
+     double r_e = sqrt(s * s + n * n + t * t);
+     *r_earth = r_e;
+ 
+-    *ra = modpi2(atan2(n, s));
+-    *dec = asin(t / r_e);
++    equ_pos-&gt;ra = modpi2(atan2(n, s));
++    equ_pos-&gt;dec = asin(t / r_e);
+ 
+     double R = sqrt(sol.x * sol.x + sol.y * sol.y + sol.z * sol.z);
+     *elongation =
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-20 10:27:59 UTC (rev 247)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-20 11:02:44 UTC (rev 248)
+@@ -450,8 +450,7 @@
+ /*! @brief Struct for holding spherical coordinates.
+  */
+ typedef struct {
+-    double L;			/*!&lt; @brief Heliocentric ecliptical longitude. */
+-    double B;			/*!&lt; @brief Heliocentric ecliptical latitude.  */
++    ecliptical_coords ecl;      /*!&lt; @brief Heliocentric ecliptical coordinates, in radians. */
+     double R;			/*!&lt; @brief The radius vector (distance to the Sun). */
+ } sph_coords;
+ 
+@@ -581,7 +580,7 @@
+ 				 vsop_body planet,
+ 				 vsop_error_state (*heliocentric_f) (double, vsop_body, sph_coords *),
+ 				 double delta,
+-				 double *longitude, double *latitude);
++				 ecliptical_coords *ecl_pos);
+ 
+ 
+ 
+@@ -597,10 +596,10 @@
+ void elliptical_orbit_ecliptical(const rec_coords sol,
+ 				 const rec_coords body,
+ 				 const double r_sun,
+-				 double *ra,
+-				 double *dec,
++				 equatorial_coords *equ_pos,
+ 				 double *elongation,
+-				 double *phase_angle, double *r_earth);
++				 double *phase_angle,
++				 double *r_earth);
+ 
+ double mag_abs(const double g, const double k, const double r_sun,
+ 	       const double r_earth);
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c	2006-07-20 10:27:59 UTC (rev 247)
++++ branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c	2006-07-20 11:02:44 UTC (rev 248)
+@@ -70,16 +70,13 @@
+     double aberration = aberration_low(s_sc.R);
+ 
+     /* Correct the longitude for nutation and aberration. */
+-    s_sc.L = s_sc.L - nut_in_lon(jd) + aberration;
++    s_sc.ecl.ecl_lon = s_sc.ecl.ecl_lon - nut_in_lon(jd) + aberration;
+ 
+     /* Solar ra and dec. */
+     double obl = obliquity_hi(jd) + nut_in_obl(jd);
+ 
+     equatorial_coords equ_pos;
+-    ecliptical_coords ecl_pos;
+-    ecl_pos.ecl_lat = s_sc.B;
+-    ecl_pos.ecl_lon = s_sc.L;
+-    ecl_to_equ(ecl_pos, obl, &amp;equ_pos);
++    ecl_to_equ(s_sc.ecl, obl, &amp;equ_pos);
+ 
+     /* Do the final calculation, and return it. */
+     *eot_result =
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/equinox.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/equinox.c	2006-07-20 10:27:59 UTC (rev 247)
++++ branches/new-vsop-prepare/src/c/libephemeritis/equinox.c	2006-07-20 11:02:44 UTC (rev 248)
+@@ -277,10 +277,10 @@
+   	    *equinox_result = jd;
+   	    return result;
+ 	}
+-	sc_s.L += nut_in_lon(jd) + aberration_low(sc_s.R);
++	sc_s.ecl.ecl_lon += nut_in_lon(jd) + aberration_low(sc_s.R);
+ 
+ 	/* Meeus uses jd + 58 * sin(diff(...)) */
+-	jd += diff_angle(sc_s.L, circ) * _k_sun_motion;
++	jd += diff_angle(sc_s.ecl.ecl_lon, circ) * _k_sun_motion;
+ 	if (fabs(jd - jd0) &lt; delta) {
+ 	    *equinox_result = jd;
+ 	    return ok;
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-07-20 10:27:59 UTC (rev 247)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-07-20 11:02:44 UTC (rev 248)
+@@ -327,8 +327,8 @@
+ 
+     /* Now return L, B and R.                                 */
+     /* L, B and R come from varibles 0, 1 and 2 respectively. */
+-    vsc.sc.L = modpi2(internal_vsop_dimension_calc(be, 0, jd));
+-    vsc.sc.B = internal_vsop_dimension_calc(be, 1, jd);
++    vsc.sc.ecl.ecl_lon = modpi2(internal_vsop_dimension_calc(be, 0, jd));
++    vsc.sc.ecl.ecl_lat = internal_vsop_dimension_calc(be, 1, jd);
+     vsc.sc.R = internal_vsop_dimension_calc(be, 2, jd);
+ 
+     /* Return 0 for success. */
+@@ -393,15 +393,15 @@
+     }
+ 
+     double T = (output.vh.version == hel_sph_date) ? (jd_to_jcent(output.jd) / 10.0) : 0.0;
+-    double L1 = vsc.sc.L - polynomial(terms, 3, T);
++    double L1 = vsc.sc.ecl.ecl_lon - polynomial(terms, 3, T);
+     double cosL1 = cos(L1);
+     double sinL1 = sin(L1);
+ 
+-    double deltaL = l1 + (l2 * (cosL1 + sinL1) * tan(output.sc.B));
++    double deltaL = l1 + (l2 * (cosL1 + sinL1) * tan(output.sc.ecl.ecl_lat));
+     double deltaB = l2 * (cosL1 - sinL1);
+ 
+-    output.sc.L += deltaL;
+-    output.sc.B += deltaB;
++    output.sc.ecl.ecl_lon += deltaL;
++    output.sc.ecl.ecl_lat += deltaB;
+ 
+     return output;
+ }
+@@ -429,8 +429,8 @@
+ 	return output;
+     }
+ 
+-    output.sc.L = modpi2(output.sc.L + pi);
+-    output.sc.B = -output.sc.B;
++    output.sc.ecl.ecl_lon = modpi2(output.sc.ecl.ecl_lon + pi);
++    output.sc.ecl.ecl_lat = -output.sc.ecl.ecl_lat;
+     output.is_inverted = output.is_inverted ^ 0x01;
+     return output;
+ }
+@@ -532,13 +532,13 @@
+ 
+   double obl = vrc.vh.version == hel_sph_j2 ? obliquity_hi(je_to_jd(2000.0)) : obliquity_hi(vrc.jd);
+ 
+-  double cosL = cos(vsc.sc.L);
+-  double cosB = cos(vsc.sc.B);
+-  double sinL = sin(vsc.sc.L);
+-  double sinB = sin(vsc.sc.B);
++  double cosL = cos(vsc.sc.ecl.ecl_lon);
++  double cosB = cos(vsc.sc.ecl.ecl_lat);
++  double sinL = sin(vsc.sc.ecl.ecl_lon);
++  double sinB = sin(vsc.sc.ecl.ecl_lat);
+   double sinobl = sin(obl);
+   double cosobl = cos(obl);
+-  
++
+   vrc.rc.x = vsc.sc.R * (cosB * cosL);
+   vrc.rc.y = vsc.sc.R * ((cosB * sinL * cosobl) - (sinB * sinobl));
+   vrc.rc.z = vsc.sc.R * ((cosB * sinL * sinobl) + (sinB * cosobl));
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-20 10:27:59 UTC (rev 247)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-20 11:02:44 UTC (rev 248)
+@@ -97,8 +97,8 @@
+ 		   vsc.error_state);
+ 	    return 0;
+ 	}
+-	*longitude = vsc.sc.L;
+-	*latitude = vsc.sc.B;
++	*longitude = vsc.sc.ecl.ecl_lon;
++	*latitude = vsc.sc.ecl.ecl_lat;
+ 	*radius = vsc.sc.R;
+ 	return 1;
+     } else {
+@@ -121,8 +121,8 @@
+ 		   vsc.error_state);
+ 	    return 0;
+ 	}
+-	*longitude = vsc.sc.L;
+-	*latitude = vsc.sc.B;
++	*longitude = vsc.sc.ecl.ecl_lon;
++	*latitude = vsc.sc.ecl.ecl_lat;
+ 	*radius = vsc.sc.R;
+ 	return 1;
+     } else {
+@@ -752,19 +752,19 @@
+ 	vsop_sph_coords vsc;
+ 	if(0 == get_vsop_data_handle(vsop_earth, hel_sph_date, &amp;vh)) {
+ 	  vsc = vsop_sph_sol(vsop_get_spherical(vh, jd));
+-	  report(&quot;longitude&quot;, r_to_d(vsc.sc.L) * 3600, 199.907372 * 3600, 1.0,
++	  report(&quot;longitude&quot;, r_to_d(vsc.sc.ecl.ecl_lon) * 3600, 199.907372 * 3600, 1.0,
+ 		 &quot;arc-seconds&quot;);
+-	  report(&quot;latitude&quot;, r_to_d(vsc.sc.B) * 3600, 0.644, 1.0, &quot;arc-seconds&quot;);
++	  report(&quot;latitude&quot;, r_to_d(vsc.sc.ecl.ecl_lat) * 3600, 0.644, 1.0, &quot;arc-seconds&quot;);
+ 	  report(&quot;radius&quot;, vsc.sc.R * km_per_au, 0.99760775 * km_per_au, 150.0,
+ 		 &quot;km&quot;);
+ 
+ 	  vsc = vsop_sph_to_fk5(vsc);
+ 
+-	  report(&quot;corrected fk5 longitude&quot;, r_to_d(vsc.sc.L) * 3600,
++	  report(&quot;corrected fk5 longitude&quot;, r_to_d(vsc.sc.ecl.ecl_lon) * 3600,
+ 		 199.907347 * 3600, 0.5, &quot;arc-seconds&quot;);
+-	  report(&quot;corrected fk5 latitude&quot;, r_to_d(vsc.sc.B) * 3600, 0.644 - 0.023,
++	  report(&quot;corrected fk5 latitude&quot;, r_to_d(vsc.sc.ecl.ecl_lat) * 3600, 0.644 - 0.023,
+ 		 0.5, &quot;arc-seconds&quot;);
+-	  printf(&quot;%.10f %.10f %.10f\n&quot;, r_to_d(vsc.sc.L), r_to_d(vsc.sc.B) * 3600.0, vsc.sc.R);
++	  printf(&quot;%.10f %.10f %.10f\n&quot;, r_to_d(vsc.sc.ecl.ecl_lon), r_to_d(vsc.sc.ecl.ecl_lat) * 3600.0, vsc.sc.R);
+ 
+ 
+ 	  printf
+@@ -783,14 +783,14 @@
+ 	  report(&quot;aberration&quot;, r_to_d(aberration) * 3600, -20.539, 0.001,
+ 		 &quot;arc-seconds&quot;);
+ 
+-	  double app_lon = vsc.sc.L + n_in_l + aberration;
++	  double app_lon = vsc.sc.ecl.ecl_lon + n_in_l + aberration;
+ 	  report(&quot;apparent longitude&quot;, r_to_d(app_lon) * 3600.0,
+ 		 dms_to_d(199, 54, 21.818) * 3600.0, 1, &quot;arc-seconds&quot;);
+ 
+-	  report(&quot;longitude&quot;, r_to_d(vsc.sc.L) * 3600 * 100,
++	  report(&quot;longitude&quot;, r_to_d(vsc.sc.ecl.ecl_lon) * 3600 * 100,
+ 		 dms_to_d(199, 54, 26.18) * 3600 * 100, 1,
+ 		 &quot;arc-seconds/100&quot;);
+-	  report(&quot;latitude&quot;, r_to_d(vsc.sc.B) * 3600 * 100, 0.72 * 100, 1,
++	  report(&quot;latitude&quot;, r_to_d(vsc.sc.ecl.ecl_lat) * 3600 * 100, 0.72 * 100, 1,
+ 		 &quot;arc-seconds/100&quot;);
+ 	  report(&quot;radius&quot;, vsc.sc.R, 0.99760853, 1e-8, &quot;au&quot;);
+ 
+@@ -819,8 +819,8 @@
+ 	    /*
+ 	    double obl = obliquity_hi(jd);
+ 	    */
+-	    report_diff(&quot;L&quot;, r_to_d(vsc.sc.L) * 3600.0, 199.907347 * 3600.0, &quot;arc-seconds&quot;);
+-	    report_diff(&quot;B&quot;, r_to_d(vsc.sc.B) * 3600.0, dms_to_d(0,0,0.62) * 3600.0, &quot;arc-seconds&quot;);
++	    report_diff(&quot;L&quot;, r_to_d(vsc.sc.ecl.ecl_lon) * 3600.0, 199.907347 * 3600.0, &quot;arc-seconds&quot;);
++	    report_diff(&quot;B&quot;, r_to_d(vsc.sc.ecl.ecl_lat) * 3600.0, dms_to_d(0,0,0.62) * 3600.0, &quot;arc-seconds&quot;);
+ 	    report_diff(&quot;R&quot;, vsc.sc.R * km_per_au, 0.99760775 * km_per_au, &quot;km&quot;);
+ 
+ 	    vsop_rec_coords vrc = sol_sph_to_rec(vsc);
+@@ -975,7 +975,7 @@
+ 
+     printf(&quot;33.a Apparent position (vsop)\n&quot;);
+     {
+-      double longitude, latitude;
++      ecliptical_coords ecl_pos;
+       double jd = 2448976.5;
+ 	/*
+ 	   geocentric_planet(jd, vEarth, vVenus, vsop_dimension3_fk5,
+@@ -988,13 +988,13 @@
+ 			  d_to_r(dms_to_d(0, 0, 16.749)),
+ 			  d_to_r(23.439669), days_per_second, &amp;ra, &amp;dec);
+       */
++
+ 	vsop_error_state result = ecliptic_planet(
+ 						  jd,
+ 						  vsop_venus,
+ 						  vsop_simple_heliocentric_spherical_date_fk5,
+ 						  days_per_second,
+-						  &amp;longitude,
+-						  &amp;latitude);
++						  &amp;ecl_pos);
+ 
+ 	if(ok != result) {
+ 	  printf(&quot;\tThere was a problem calculating the ecliptical position for Venus: %d.\n&quot;, result);
+@@ -1004,13 +1004,10 @@
+ 	  /*
+ 	    longitude += d_to_r(dms_to_d(0, 0, 16.749));
+ 	  */
+-	  longitude += nut_in_lon(jd);
++	  ecl_pos.ecl_lon += nut_in_lon(jd);
+ 
+ 	  /* Get equatorial coordinates. */
+ 	  equatorial_coords equ_pos;
+-	  ecliptical_coords ecl_pos;
+-	  ecl_pos.ecl_lat = latitude;
+-	  ecl_pos.ecl_lon = longitude;
+ 	  ecl_to_equ(ecl_pos, obliquity_hi(jd) + nut_in_obl(jd), &amp;equ_pos);
+ 
+ 
+@@ -1068,8 +1065,9 @@
+ 	    report(&quot;solar z&quot;, src.z * km_per_au, -0.0868566 * km_per_au, 0.0000001 * km_per_au,
+ 		   &quot;km&quot;);
+ 
+-	    double ra, dec, elongation, phase_angle, body_r_earth;
+-	    elliptical_orbit_ecliptical(src, rc, r_sun, &amp;ra, &amp;dec,
++	    equatorial_coords equ_pos;
++	    double elongation, phase_angle, body_r_earth;
++	    elliptical_orbit_ecliptical(src, rc, r_sun, &amp;equ_pos,
+ 					&amp;elongation, &amp;phase_angle,
+ 					&amp;body_r_earth);
+ 
+@@ -1086,14 +1084,14 @@
+ 	    report(&quot;recalc-y&quot;, rc.y, 0.4849477, 0.000001, &quot;AU&quot;);
+ 	    report(&quot;recalc-z&quot;, rc.z, 0.3573712, 0.000001, &quot;AU&quot;);
+ 
+-	    elliptical_orbit_ecliptical(src, rc, r_sun, &amp;ra, &amp;dec,
++	    elliptical_orbit_ecliptical(src, rc, r_sun, &amp;equ_pos,
+ 					&amp;elongation, &amp;phase_angle,
+ 					&amp;body_r_earth);
+ 
+ 	    report(&quot;recalc-delta-earth&quot;, body_r_earth, 0.8242811, 0.000001,
+ 		   &quot;AU&quot;);
+-	    report(&quot;ra&quot;, r_to_d(ra) * 3600.0, 158.558965 * 3600.0, 0.01, &quot;arc-seconds&quot;);
+-	    report(&quot;dec&quot;, r_to_d(dec) * 3600.0, 19.158496 * 3600.0, 0.01, &quot;arc-seconds&quot;);
++	    report(&quot;ra&quot;, r_to_d(equ_pos.ra) * 3600.0, 158.558965 * 3600.0, 0.01, &quot;arc-seconds&quot;);
++	    report(&quot;dec&quot;, r_to_d(equ_pos.dec) * 3600.0, 19.158496 * 3600.0, 0.01, &quot;arc-seconds&quot;);
+ 	    report(&quot;elongation&quot;, r_to_d(elongation), 40.51, 0.01,
+ 		   &quot;degrees&quot;);
+ 	}
+@@ -1218,8 +1216,7 @@
+ 	    rec_coords sun_rec = vrc.rc;
+ 	    */
+ 
+-	    double ra;
+-	    double dec;
++	    equatorial_coords equ_pos;
+ 	    double elongation;
+ 	    double phase_angle;
+ 	    double body_r_earth;
+@@ -1242,7 +1239,7 @@
+ 		    elliptical_orbit_rectangular(ec, body_r_sun);
+ 
+ 		elliptical_orbit_ecliptical(sun_rec, body_rec, body_r_sun,
+-					    &amp;ra, &amp;dec, &amp;elongation,
++					    &amp;equ_pos, &amp;elongation,
+ 					    &amp;phase_angle, &amp;body_r_earth);
+ 
+ 		double tau = 0.0057755183 * body_r_earth;
+@@ -1258,7 +1255,7 @@
+ 
+ 	    int h, m;
+ 	    double s;
+-	    r_to_hms(ra, &amp;h, &amp;m, &amp;s);
++	    r_to_hms(equ_pos.ra, &amp;h, &amp;m, &amp;s);
+ 
+ 
+ 	    /* Things to do:
+@@ -1287,11 +1284,11 @@
+ 	    ra += a_in_ra;
+ 	    dec += a_in_dec;
+ 	    */
+-	    
+-	    report_diff(&quot;RA              &quot;, r_to_d(ra) * 3600,
++
++	    report_diff(&quot;RA              &quot;, r_to_d(equ_pos.ra) * 3600,
+ 			r_to_d(test-&gt;ra) * 3600,
+ 		   &quot;arc-sec&quot;);
+-	    report_diff(&quot;Declination     &quot;, (dec * (360.0 * 60.0 * 60.0) / (2 * pi)),
++	    report_diff(&quot;Declination     &quot;, (equ_pos.dec * (360.0 * 60.0 * 60.0) / (2 * pi)),
+ 		   (test-&gt;dec * (360.0 * 60.0 * 60.0) / (2 * pi)),
+ 		   &quot;arc-sec&quot;);
+ 	    report_diff(&quot;Distance (Earth)&quot;, body_r_earth * km_per_au, test-&gt;r_earth * km_per_au,
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000100.html">[Ephemeritis-svn] r247 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000102.html">[Ephemeritis-svn] r249 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#101">[ date ]</a>
+              <a href="thread.html#101">[ thread ]</a>
+              <a href="subject.html#101">[ subject ]</a>
+              <a href="author.html#101">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

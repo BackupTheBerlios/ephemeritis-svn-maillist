@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r272 - in branches/new-vsop-prepare: . src/c/utils
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-July/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r272%20-%20in%20branches/new-vsop-prepare%3A%20.%20src/c/utils&In-Reply-To=%3C200607271040.k6RAepA6003944%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000123.html">
+   <LINK REL="Next"  HREF="000126.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r272 - in branches/new-vsop-prepare: . src/c/utils</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r272%20-%20in%20branches/new-vsop-prepare%3A%20.%20src/c/utils&In-Reply-To=%3C200607271040.k6RAepA6003944%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r272 - in branches/new-vsop-prepare: . src/c/utils">izogi at mail.berlios.de
+       </A><BR>
+    <I>Thu Jul 27 12:40:51 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000123.html">[Ephemeritis-svn] r271 - in branches/new-vsop-prepare: data	data/vsop87d src/c/libephemeritis src/c/utils
+</A></li>
+        <LI>Next message: <A HREF="000126.html">[Ephemeritis-svn] r273 - branches/new-vsop-prepare/data/vsop87d
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#124">[ date ]</a>
+              <a href="thread.html#124">[ thread ]</a>
+              <a href="subject.html#124">[ subject ]</a>
+              <a href="author.html#124">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-07-27 12:40:47 +0200 (Thu, 27 Jul 2006)
+New Revision: 272
+
+Modified:
+   branches/new-vsop-prepare/configure.ac
+   branches/new-vsop-prepare/src/c/utils/build_vsop_data.c
+Log:
+Adding vsop87d makefile reference to configure script.
+Minor initialisation bugfix in build_vsop_data app.
+
+
+Modified: branches/new-vsop-prepare/configure.ac
+===================================================================
+--- branches/new-vsop-prepare/configure.ac	2006-07-27 10:30:35 UTC (rev 271)
++++ branches/new-vsop-prepare/configure.ac	2006-07-27 10:40:47 UTC (rev 272)
+@@ -63,7 +63,7 @@
+ AC_OUTPUT([
+ 	Makefile
+ 	data/Makefile
+-	data/vsop/Makefile
++	data/vsop87d/Makefile
+ 	doc/Makefile
+ 	doc/src-doxygen-main/Makefile
+ 	src/Makefile
+
+Modified: branches/new-vsop-prepare/src/c/utils/build_vsop_data.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/utils/build_vsop_data.c	2006-07-27 10:30:35 UTC (rev 271)
++++ branches/new-vsop-prepare/src/c/utils/build_vsop_data.c	2006-07-27 10:40:47 UTC (rev 272)
+@@ -144,7 +144,10 @@
+             case 'L': variable_index = 1 -1; break;
+             case 'B': variable_index = 2 -1; break;
+             case 'R': variable_index = 3 -1; break;
+-            default: printf(&quot;ERROR -- UNRECOGNISED VARIABLE %c&quot;, char_variable); break;
++            default:
++                variable_index = 0;
++                printf(&quot;ERROR -- UNRECOGNISED VARIABLE %c&quot;, char_variable);
++                break;
+         }
+         
+ 	/* Copy in the name of the body (redundant all times except the first). */
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000123.html">[Ephemeritis-svn] r271 - in branches/new-vsop-prepare: data	data/vsop87d src/c/libephemeritis src/c/utils
+</A></li>
+	<LI>Next message: <A HREF="000126.html">[Ephemeritis-svn] r273 - branches/new-vsop-prepare/data/vsop87d
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#124">[ date ]</a>
+              <a href="thread.html#124">[ thread ]</a>
+              <a href="subject.html#124">[ subject ]</a>
+              <a href="author.html#124">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

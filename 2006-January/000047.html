@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r194 - trunk/src/c/tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-January/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r194%20-%20trunk/src/c/tests&In-Reply-To=%3C200601072242.k07MgOKY010351%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000046.html">
+   <LINK REL="Next"  HREF="000048.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r194 - trunk/src/c/tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r194%20-%20trunk/src/c/tests&In-Reply-To=%3C200601072242.k07MgOKY010351%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r194 - trunk/src/c/tests">izogi at berlios.de
+       </A><BR>
+    <I>Sat Jan  7 23:42:24 CET 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000046.html">[Ephemeritis-svn] r193 - trunk/src/c/tests
+</A></li>
+        <LI>Next message: <A HREF="000048.html">[Ephemeritis-svn] r195 - in trunk/src: . c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#47">[ date ]</a>
+              <a href="thread.html#47">[ thread ]</a>
+              <a href="subject.html#47">[ subject ]</a>
+              <a href="author.html#47">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-01-07 23:42:23 +0100 (Sat, 07 Jan 2006)
+New Revision: 194
+
+Modified:
+   trunk/src/c/tests/validate_meeus.c
+Log:
+Minor adjustments to validate_meeus to make output clearer.
+
+
+Modified: trunk/src/c/tests/validate_meeus.c
+===================================================================
+--- trunk/src/c/tests/validate_meeus.c	2006-01-06 10:34:19 UTC (rev 193)
++++ trunk/src/c/tests/validate_meeus.c	2006-01-07 22:42:23 UTC (rev 194)
+@@ -704,10 +704,12 @@
+ 	report_diff(&quot;corrected latitude&quot;, r_to_d(B) * 3600, 0.62,
+ 		    &quot;arc-seconds&quot;);
+ 	*/
+-	report(&quot;corrected longitude&quot;, r_to_d(L) * 3600, 199.907347 * 3600, 1.0, &quot;arc-seconds&quot;);
+-	report(&quot;corrected latitude&quot;, r_to_d(B) * 3600, 0.62, 0.1, &quot;arc-seconds&quot;);
++	report(&quot;corrected fk5 longitude&quot;, r_to_d(L) * 3600, 199.907347 * 3600, 1.0, &quot;arc-seconds&quot;);
++	report(&quot;corrected fk5 latitude&quot;, r_to_d(B) * 3600, 0.644 - 0.023, 0.1, &quot;arc-seconds&quot;);
++	/*
++	report(&quot;corrected fk5 latitude&quot;, r_to_d(B) * 3600, 0.62, 0.1, &quot;arc-seconds&quot;);
++	*/
+ 
+-
+ 	printf
+ 	    (&quot;25.b Sun position, high precision (complete theory pg 165)\n&quot;);
+ 
+@@ -721,10 +723,10 @@
+ 	report(&quot;obliquity&quot;, r_to_d(obl), 23.4401443, 0.0000001, &quot;degrees&quot;);
+ 	report(&quot;aberration&quot;, r_to_d(aberration) * 3600, -20.539, 0.001, &quot;arc-seconds&quot;);
+ 
+-	double app_lon = L + n_in_l - aberration;
+-	report(&quot;apparent longitude&quot;, r_to_d(app_lon),
+-	       dms_to_d(199, 54, 21.818), 0.000000001,
+-	       &quot;radians&quot;);
++	double app_lon = L + n_in_l + aberration;
++	report(&quot;apparent longitude&quot;, r_to_d(app_lon) * 3600.0,
++	       dms_to_d(199, 54, 21.818) * 3600.0, 1,
++	       &quot;arc-seconds&quot;);
+ 
+ 	report(&quot;longitude&quot;, r_to_d(L) * 3600 * 100,
+ 	       dms_to_d(199, 54, 26.18) * 3600 * 100, 1,
+@@ -915,6 +917,8 @@
+ 
+ 	double L, B, R;
+ 	sol_dimension3_fk5(jd, &amp;L, &amp;B, &amp;R);
++
++
+ 	rec_coords src = sol_rectangular(L, B, R, obl2000);
+ 	report(&quot;solar x&quot;, src.x * km_per_au, -0.9756732 * km_per_au, 1, &quot;km&quot;);
+ 	report(&quot;solar y&quot;, src.y * km_per_au, -0.2003254 * km_per_au, 1, &quot;km&quot;);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000046.html">[Ephemeritis-svn] r193 - trunk/src/c/tests
+</A></li>
+	<LI>Next message: <A HREF="000048.html">[Ephemeritis-svn] r195 - in trunk/src: . c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#47">[ date ]</a>
+              <a href="thread.html#47">[ thread ]</a>
+              <a href="subject.html#47">[ subject ]</a>
+              <a href="author.html#47">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,209 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r271 - in branches/new-vsop-prepare: data	data/vsop87d src/c/libephemeritis src/c/utils
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-July/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r271%20-%20in%20branches/new-vsop-prepare%3A%20data%0A%09data/vsop87d%20src/c/libephemeritis%20src/c/utils&In-Reply-To=%3C200607271030.k6RAUhcP000093%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000122.html">
+   <LINK REL="Next"  HREF="000124.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r271 - in branches/new-vsop-prepare: data	data/vsop87d src/c/libephemeritis src/c/utils</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r271%20-%20in%20branches/new-vsop-prepare%3A%20data%0A%09data/vsop87d%20src/c/libephemeritis%20src/c/utils&In-Reply-To=%3C200607271030.k6RAUhcP000093%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r271 - in branches/new-vsop-prepare: data	data/vsop87d src/c/libephemeritis src/c/utils">izogi at mail.berlios.de
+       </A><BR>
+    <I>Thu Jul 27 12:30:43 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000122.html">[Ephemeritis-svn] r270 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000124.html">[Ephemeritis-svn] r272 - in branches/new-vsop-prepare: . src/c/utils
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#123">[ date ]</a>
+              <a href="thread.html#123">[ thread ]</a>
+              <a href="subject.html#123">[ subject ]</a>
+              <a href="author.html#123">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-07-27 12:30:35 +0200 (Thu, 27 Jul 2006)
+New Revision: 271
+
+Added:
+   branches/new-vsop-prepare/data/vsop87d/Makefile.am
+Modified:
+   branches/new-vsop-prepare/data/Makefile.am
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c
+   branches/new-vsop-prepare/src/c/utils/Makefile.am
+   branches/new-vsop-prepare/src/c/utils/build_vsop_data.c
+Log:
+Adjusting configuration to build and install gpl-abble VSOP87D files.
+
+
+Modified: branches/new-vsop-prepare/data/Makefile.am
+===================================================================
+--- branches/new-vsop-prepare/data/Makefile.am	2006-07-27 09:54:54 UTC (rev 270)
++++ branches/new-vsop-prepare/data/Makefile.am	2006-07-27 10:30:35 UTC (rev 271)
+@@ -1,2 +1,2 @@
+ AUTOMAKE_OPTIONS = gnu
+-SUBDIRS = vsop
++SUBDIRS = vsop87d
+
+Added: branches/new-vsop-prepare/data/vsop87d/Makefile.am
+===================================================================
+--- branches/new-vsop-prepare/data/vsop87d/Makefile.am	2006-07-27 09:54:54 UTC (rev 270)
++++ branches/new-vsop-prepare/data/vsop87d/Makefile.am	2006-07-27 10:30:35 UTC (rev 271)
+@@ -0,0 +1,4 @@
++AUTOMAKE_OPTIONS = gnu
++
++pkgdata_DATA = VSOP87D.mer VSOP87D.ven VSOP87D.ear VSOP87D.mar VSOP87D.jup VSOP87D.sat VSOP87D.ura VSOP87D.nep
++EXTRA_DIST = VSOP87D.mer VSOP87D.ven VSOP87D.ear VSOP87D.mar VSOP87D.jup VSOP87D.sat VSOP87D.ura VSOP87D.nep
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c	2006-07-27 09:54:54 UTC (rev 270)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c	2006-07-27 10:30:35 UTC (rev 271)
+@@ -402,7 +402,7 @@
+     strncat(filename, planet_map_lookup(planet), 512);
+     strncat(filename, EPH_VSOP_SUFFIX, 512);
+     filename[511] = '\0';
+-
++    
+     /* Try to open the file. */
+     FILE *f;
+     errno = 0;
+
+Modified: branches/new-vsop-prepare/src/c/utils/Makefile.am
+===================================================================
+--- branches/new-vsop-prepare/src/c/utils/Makefile.am	2006-07-27 09:54:54 UTC (rev 270)
++++ branches/new-vsop-prepare/src/c/utils/Makefile.am	2006-07-27 10:30:35 UTC (rev 271)
+@@ -16,12 +16,14 @@
+ 
+ # This install hook doesn't seem to work properly yet.
+ 
+-VSOPFILES = VSOP87A.ear  VSOP87A.nep  VSOP87B.jup  VSOP87B.ura  VSOP87C.mer  VSOP87D.ear  VSOP87D.sat  VSOP87E.mar  VSOP87E.ura \
+-            VSOP87A.emb  VSOP87A.sat  VSOP87B.mar  VSOP87B.ven  VSOP87C.nep  VSOP87D.jup  VSOP87D.ura  VSOP87E.mer  VSOP87E.ven \
+-            VSOP87A.jup  VSOP87A.ura  VSOP87B.mer  VSOP87C.ear  VSOP87C.sat  VSOP87D.mar  VSOP87D.ven  VSOP87E.nep \
+-            VSOP87A.mar  VSOP87A.ven  VSOP87B.nep  VSOP87C.jup  VSOP87C.ura  VSOP87D.mer  VSOP87E.ear  VSOP87E.sat \
+-            VSOP87A.mer  VSOP87B.ear  VSOP87B.sat  VSOP87C.mar  VSOP87C.ven  VSOP87D.nep  VSOP87E.jup  VSOP87E.sun
++#VSOPFILES = VSOP87A.ear  VSOP87A.nep  VSOP87B.jup  VSOP87B.ura  VSOP87C.mer  VSOP87D.ear  VSOP87D.sat  VSOP87E.mar  VSOP87E.ura \
++#            VSOP87A.emb  VSOP87A.sat  VSOP87B.mar  VSOP87B.ven  VSOP87C.nep  VSOP87D.jup  VSOP87D.ura  VSOP87E.mer  VSOP87E.ven \
++#            VSOP87A.jup  VSOP87A.ura  VSOP87B.mer  VSOP87C.ear  VSOP87C.sat  VSOP87D.mar  VSOP87D.ven  VSOP87E.nep \
++#            VSOP87A.mar  VSOP87A.ven  VSOP87B.nep  VSOP87C.jup  VSOP87C.ura  VSOP87D.mer  VSOP87E.ear  VSOP87E.sat \
++#            VSOP87A.mer  VSOP87B.ear  VSOP87B.sat  VSOP87C.mar  VSOP87C.ven  VSOP87D.nep  VSOP87E.jup  VSOP87E.sun
+ 
++VSOPFILES = VSOP87D.mer VSOP87D.ven VSOP87D.ear VSOP87D.mar VSOP87D.jup VSOP87D.sat VSOP87D.ura VSOP87D.nep
++
+ install-exec-hook:
+ 
+ # Make sure the package directory exists.
+@@ -32,7 +34,7 @@
+ 
+ # Build each VSOP data file, placing the output into the package directory.
+ 	for vf in $(VSOPFILES); do \
+-		( echo `pwd`; ./build_vsop_data ../../../data/vsop/$$vf $(pkgdatadir)/$$vf.eph.bin ); \
++		( echo `pwd`; ./build_vsop_data ../../../data/vsop87d/$$vf $(pkgdatadir)/$$vf.eph.bin ); \
+ 	done
+ 
+ #        for d in $(SUBDIRS); do         \
+
+Modified: branches/new-vsop-prepare/src/c/utils/build_vsop_data.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/utils/build_vsop_data.c	2006-07-27 09:54:54 UTC (rev 270)
++++ branches/new-vsop-prepare/src/c/utils/build_vsop_data.c	2006-07-27 10:30:35 UTC (rev 271)
+@@ -76,10 +76,13 @@
+ static void fill_term(term_bin * t, char *incoming)
+ {
+     char ch_A[32], ch_B[32], ch_C[32];
++    /*
+     substr(ch_A, incoming, 79, 97);
+     substr(ch_B, incoming, 97, 111);
+     substr(ch_C, incoming, 111, 131);
+-
++    */
++    sscanf(incoming, &quot;%s %s %s&quot;, ch_A, ch_B, ch_C);
++    
+     t-&gt;A = atof(ch_A);
+     t-&gt;B = atof(ch_B);
+     t-&gt;C = atof(ch_C);
+@@ -108,23 +111,42 @@
+ 
+     char *incoming;
+     char ch_body_name[8];
++    /*
+     char ch_variable_num[2];
++    */
++    char char_variable;
++    /*
+     char ch_alpha[2];
++    */
++    int alpha;
++    /*
+     char ch_num_terms[8];
++    */
++    int num_terms;
+ 
+ 
+     incoming = fgets(buf, BUF_SIZE, infile);
+     while (NULL != incoming) {
+ 	/* Extract some data. */
+-	substr(ch_body_name, incoming, 22, 29);
++        sscanf(incoming, &quot;%s %c %d %d&quot;, ch_body_name, &amp;char_variable, &amp;alpha, &amp;num_terms);
++        
++        /*
++        substr(ch_body_name, incoming, 22, 29);
+ 	substr(ch_variable_num, incoming, 41, 42);
+ 	substr(ch_alpha, incoming, 59, 60);
+ 	substr(ch_num_terms, incoming, 60, 67);
+-
+ 	int variable_index = atoi(ch_variable_num) - 1;
+ 	int alpha = atoi(ch_alpha);
+ 	int num_terms = atoi(ch_num_terms);
+-
++        */
++        int variable_index;
++        switch(char_variable) {
++            case 'L': variable_index = 1 -1; break;
++            case 'B': variable_index = 2 -1; break;
++            case 'R': variable_index = 3 -1; break;
++            default: printf(&quot;ERROR -- UNRECOGNISED VARIABLE %c&quot;, char_variable); break;
++        }
++        
+ 	/* Copy in the name of the body (redundant all times except the first). */
+ 	strncpy(body_el-&gt;meta.body_name,
+ 		strtrim(ch_body_name, ch_body_name),
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000122.html">[Ephemeritis-svn] r270 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000124.html">[Ephemeritis-svn] r272 - in branches/new-vsop-prepare: . src/c/utils
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#123">[ date ]</a>
+              <a href="thread.html#123">[ thread ]</a>
+              <a href="subject.html#123">[ subject ]</a>
+              <a href="author.html#123">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

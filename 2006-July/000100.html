@@ -1,0 +1,367 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r247 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-July/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r247%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607201028.k6KAS1ch025924%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000099.html">
+   <LINK REL="Next"  HREF="000101.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r247 - in branches/new-vsop-prepare/src/c:	libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r247%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607201028.k6KAS1ch025924%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r247 - in branches/new-vsop-prepare/src/c:	libephemeritis tests">izogi at mail.berlios.de
+       </A><BR>
+    <I>Thu Jul 20 12:28:01 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000099.html">[Ephemeritis-svn] r246 - branches/new-vsop-prepare/src/c/tests
+</A></li>
+        <LI>Next message: <A HREF="000101.html">[Ephemeritis-svn] r248 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#100">[ date ]</a>
+              <a href="thread.html#100">[ thread ]</a>
+              <a href="subject.html#100">[ subject ]</a>
+              <a href="author.html#100">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-07-20 12:27:59 +0200 (Thu, 20 Jul 2006)
+New Revision: 247
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/conversions.c
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+   branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c
+   branches/new-vsop-prepare/src/c/libephemeritis/riseset.c
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+Created structs for equatorial_coords and ecliptical_coords, and converted in code (mostly).
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/conversions.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/conversions.c	2006-07-20 09:14:36 UTC (rev 246)
++++ branches/new-vsop-prepare/src/c/libephemeritis/conversions.c	2006-07-20 10:27:59 UTC (rev 247)
+@@ -126,28 +126,26 @@
+     return result;
+ }
+ 
+-/*! @brief Converts ecliptic to equitorial coordinates. 
++/*! @brief Converts ecliptic to equatorial coordinates. 
+  *
+  *  [Meeus-1998: equations 13.3, 13.4]
+  *
+- *  @param[in]  longitude  Ecliptic longitude, in radians.
+- *  @param[in]  latitude   Ecliptic latitude, in radians.
++ *  @param[in]  eql_pos    The ecliptic position, in radians.
+  *  @param[in]  obliquity  Obliquity of the ecliptic, in radians.
+  *
+- *  @param[out] ra         Right ascension, in radians.
+- *  @param[out] dec        Declination, in radians.
++ *  @param[out] equ_pos    Right ascension and declination.
+  *
+  *  @sa obliquity_hi + nut_in_obl for calculating true obliquity.
+  */
+-void ecl_to_equ(double longitude, double latitude, double obliquity,
+-		double *ra, double *dec)
++void ecl_to_equ(ecliptical_coords ecl_pos, double obliquity,
++		equatorial_coords *equ_pos)
+ {
+     const double cose = cos(obliquity);
+     const double sine = sin(obliquity);
+-    const double sinl = sin(longitude);
+-    *ra =
+-	modpi2(atan2(sinl * cose - tan(latitude) * sine, cos(longitude)));
+-    *dec = asin(sin(latitude) * cose + cos(latitude) * sine * sinl);
++    const double sinl = sin(ecl_pos.ecl_lon);
++    equ_pos-&gt;ra =
++	modpi2(atan2(sinl * cose - tan(ecl_pos.ecl_lat) * sine, cos(ecl_pos.ecl_lon)));
++    equ_pos-&gt;dec = asin(sin(ecl_pos.ecl_lat) * cose + cos(ecl_pos.ecl_lat) * sine * sinl);
+ }
+ 
+ /*! @brief Converts equitorial to horizontal coordinates.
+@@ -160,20 +158,19 @@
+  *
+  *  @param[in]  longitude Geographic longitude, in radians.
+  *  @param[in]  latitude  Geographic latitude, in radians.
+- *  @param[in]  H         Hour angle, in radians.
+- *  @param[in]  decl      Declination, in radians.
++ *  @param[in]  equ_pos   Equatorial coordinates in radians.
+  *
+  *  @param[out] A         Azimuth, in radians.
+  *  @param[out] h         Altitude, in radians.
+  */
+-void equ_to_horiz(double longitude, double latitude, double H, double decl,
++void equ_to_horiz(double longitude, double latitude, equatorial_coords equ_pos,
+ 		  double *A, double *h)
+ {
+-    const double cosH = cos(H);
++    const double cosH = cos(equ_pos.ra);
+     const double sinLat = sin(latitude);
+     const double cosLat = cos(latitude);
+-    *A = atan2(sin(H), (cosH * sinLat) - (tan(decl) * cosLat));
+-    *h = asin((sinLat * sin(decl)) + (cosLat * cos(decl) * cosH));
++    *A = atan2(sin(equ_pos.ra), (cosH * sinLat) - (tan(equ_pos.dec) * cosLat));
++    *h = asin((sinLat * sin(equ_pos.dec)) + (cosLat * cos(equ_pos.dec) * cosH));
+ }
+ 
+ /*! @brief Converts horizontal to equitorial coordinates.
+@@ -189,19 +186,21 @@
+  *  @param[in]  A         Azimuth, in radians.
+  *  @param[in]  h         Altitude, in radians.
+  *
++ *  @param[out] equ_pos   Equatorial coordinates, in radians.
++
+  *  @param[out] H         Hour angle, in radians.
+  *  @param[out] decl      Declination, in radians.
+  *
+  *  @author Mike McGavin
+  */
+ void horiz_to_equ(double longitude, double latitude, double A, double h,
+-		  double *H, double *decl)
++		  equatorial_coords *equ_pos)
+ {
+     const double cosA = cos(A);
+     const double sinLat = sin(latitude);
+     const double cosLat = cos(latitude);
+-    *H = atan2(sin(A), (cosA * sinLat) + (tan(h) * cosLat));
+-    *decl = asin((sinLat * sin(h)) - (cosLat * cos(h) * cosA));
++    equ_pos-&gt;ra = atan2(sin(A), (cosA * sinLat) + (tan(h) * cosLat));
++    equ_pos-&gt;dec = asin((sinLat * sin(h)) - (cosLat * cos(h) * cosA));
+ }
+ 
+ 
+@@ -209,23 +208,22 @@
+  *
+  *  [Meeus-1998: equations 13.1, 13.2]
+  *
+- *  @param[in]  ra        Right accension, in radians.
+- *  @param[in]  dec       Declination, in radians.
+- *  @param[in]  obliquity Obliquity of the ecliptic, in radians.
++ *  @param[in]  equ_coords Equatorial coordinates to convert from.
++ *  @param[in]  obliquity  Obliquity of the ecliptic, in radians.
+  *
+- *  @param[out] longitude Ecliptic longitude, in radians.
+- *  @param[out] latitude  Ecliptic latitude, in radians.
++ *  @param[out] longitude  Ecliptic longitude, in radians.
++ *  @param[out] latitude   Ecliptic latitude, in radians.
+  *
+  *  @sa obliquity_hi + nut_in_obl for calculating true obliquity.
+  */
+-void equ_to_ecl(double ra, double dec, double obliquity, double *longitude,
++void equ_to_ecl(equatorial_coords equ_pos, double obliquity, double *longitude,
+ 		double *latitude)
+ {
+     const double cose = cos(obliquity);
+     const double sine = sin(obliquity);
+-    const double sina = sin(ra);
+-    *longitude = modpi2(atan2(sina * cose + tan(dec) * sine, cos(ra)));
+-    *latitude = modpi2(asin(sin(dec) * cose - cos(dec) * sine * sina));
++    const double sina = sin(equ_pos.ra);
++    *longitude = modpi2(atan2(sina * cose + tan(equ_pos.dec) * sine, cos(equ_pos.ra)));
++    *latitude = modpi2(asin(sin(equ_pos.dec) * cose - cos(equ_pos.dec) * sine * sina));
+ }
+ 
+ /*! @brief Converts a fractional day (0.0..1.0) to integral
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-20 09:14:36 UTC (rev 246)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-20 10:27:59 UTC (rev 247)
+@@ -104,6 +104,27 @@
+ } rec_coords;
+ 
+ 
++/*! @brief Struct for holding equatorial coordinates.
++ *
++ *  Equatorial coordinates are composed of right ascension and declination.  Both
++ *  are expressed in radians.
++ */
++typedef struct {
++    double ra;                 /*!&lt; @brief The right ascension, in radians. */
++    double dec;                /*!&lt; @brief The declination, in radians. */
++} equatorial_coords;
++
++/*! @brief Struct for holding ecliptical coordinates.
++ *
++ *  Ecliptical coordinates are composed of ecliptical latitude and ecliptical
++ *  longitude.  They represent the heliocentic position of a body with respect
++ *  to the plane of the ecliptic.
++ */
++typedef struct {
++    double ecl_lat;            /*!&lt; @brief The ecliptical latitude, in radians.  */
++    double ecl_lon;            /*!&lt; @brief The ecliptical longitude, in radians. */
++} ecliptical_coords;
++
+ /*  What follows are universe-specific constants that are used by
+  *  Ephemeritis to perform calculations.  Don't change these unless you
+  *  are moving to a new universe.
+@@ -237,13 +258,12 @@
+ double d_to_r(double d);
+ double diff_angle(double a, double b);
+ double dms_to_d(int deg, int min, double sec);
+-void ecl_to_equ(double longitude, double latitude, double obliquity,
+-		double *ra, double *dec);
+-void equ_to_horiz(double longitude, double latitude, double H, double decl,
++void ecl_to_equ(ecliptical_coords ecl_pos, double obliquity, equatorial_coords *equ_pos);
++void equ_to_horiz(double longitude, double latitude, equatorial_coords equ_pos,
+ 		  double *A, double *h);
+ void horiz_to_equ(double longitude, double latitude, double A, double h,
+-		  double *H, double *decl);
+-void equ_to_ecl(double ra, double dec, double obliquity, double *longitude,
++		  equatorial_coords *equ_pos);
++void equ_to_ecl(equatorial_coords equ_pos, double obliquity, double *longitude,
+ 		double *latitude);
+ void fday_to_hms(double day, int *hour, int *min, double *sec);
+ double hms_to_fday(int hr, int mn, double sec);
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c	2006-07-20 09:14:36 UTC (rev 246)
++++ branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c	2006-07-20 10:27:59 UTC (rev 247)
+@@ -74,12 +74,15 @@
+ 
+     /* Solar ra and dec. */
+     double obl = obliquity_hi(jd) + nut_in_obl(jd);
+-    double ra;
+-    double dec;
+-    ecl_to_equ(s_sc.L, s_sc.B, obl, &amp;ra, &amp;dec);
+ 
++    equatorial_coords equ_pos;
++    ecliptical_coords ecl_pos;
++    ecl_pos.ecl_lat = s_sc.B;
++    ecl_pos.ecl_lon = s_sc.L;
++    ecl_to_equ(ecl_pos, obl, &amp;equ_pos);
++
+     /* Do the final calculation, and return it. */
+     *eot_result =
+-	L0 - d_to_r(0.0057183) - ra + nut_in_lon(jd) * cos(d_to_r(obl));
++	L0 - d_to_r(0.0057183) - equ_pos.ra + nut_in_lon(jd) * cos(d_to_r(obl));
+     return ok;
+ }
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/riseset.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/riseset.c	2006-07-20 09:14:36 UTC (rev 246)
++++ branches/new-vsop-prepare/src/c/libephemeritis/riseset.c	2006-07-20 10:27:59 UTC (rev 247)
+@@ -161,8 +161,13 @@
+ 	const double dec = interpolate3(n, decList);
+ 	double H = theta0 - lon_rad - ra;
+ 	H = diff_angle(0.0, H);
++
++	equatorial_coords equ_pos;
++	equ_pos.ra = H;
++	equ_pos.dec = dec;
++
+ 	double A, h;
+-	equ_to_horiz(lon_rad, lat_rad, H, dec, &amp;A, &amp;h);
++	equ_to_horiz(lon_rad, lat_rad, equ_pos, &amp;A, &amp;h);
+ 	const double dm =
+ 	    (h - h0) / (pi2 * cos(dec) * cos(lat_rad) * sin(H));
+ 	m += dm;
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-20 09:14:36 UTC (rev 246)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-20 10:27:59 UTC (rev 247)
+@@ -400,19 +400,23 @@
+     printf(&quot;13.a Equitorial to ecliptical coordinates\n&quot;);
+     {
+ 	double L, B;
+-	equ_to_ecl(d_to_r(116.328942), d_to_r(28.026183),
+-		   d_to_r(23.4392911), &amp;L, &amp;B);
++	equatorial_coords equ_pos;
++	equ_pos.ra = d_to_r(116.328942);
++	equ_pos.dec = d_to_r(28.026183);
++	equ_to_ecl(equ_pos, d_to_r(23.4392911), &amp;L, &amp;B);
+ 	report(&quot;longitude&quot;, r_to_d(L), 113.215630, 1e-6, &quot;degrees&quot;);
+ 	report(&quot;latitude&quot;, r_to_d(B), 6.684170, 1e-6, &quot;degrees&quot;);
+     }
+ 
+     printf(&quot;13.a Ecliptical to equatorial coordinates\n&quot;);
+     {
+-	double ra, dec;
+-	ecl_to_equ(d_to_r(113.215630), d_to_r(6.684170),
+-		   d_to_r(23.4392911), &amp;ra, &amp;dec);
+-	report(&quot;right accension&quot;, r_to_d(ra), 116.328942, 1e-6, &quot;degrees&quot;);
+-	report(&quot;declination&quot;, r_to_d(dec), 28.026183, 1e-6, &quot;degrees&quot;);
++	equatorial_coords equ_pos;
++	ecliptical_coords ecl_pos;
++	ecl_pos.ecl_lon = d_to_r(113.215630);
++	ecl_pos.ecl_lat = d_to_r(6.684170);
++	ecl_to_equ(ecl_pos, d_to_r(23.4392911), &amp;equ_pos);
++	report(&quot;right accension&quot;, r_to_d(equ_pos.ra), 116.328942, 1e-6, &quot;degrees&quot;);
++	report(&quot;declination&quot;, r_to_d(equ_pos.dec), 28.026183, 1e-6, &quot;degrees&quot;);
+     }
+ 
+     /*
+@@ -971,7 +975,7 @@
+ 
+     printf(&quot;33.a Apparent position (vsop)\n&quot;);
+     {
+-      double ra, dec, longitude, latitude;
++      double longitude, latitude;
+       double jd = 2448976.5;
+ 	/*
+ 	   geocentric_planet(jd, vEarth, vVenus, vsop_dimension3_fk5,
+@@ -1001,14 +1005,18 @@
+ 	    longitude += d_to_r(dms_to_d(0, 0, 16.749));
+ 	  */
+ 	  longitude += nut_in_lon(jd);
+-	  
++
+ 	  /* Get equatorial coordinates. */
+-	  ecl_to_equ(longitude, latitude, obliquity_hi(jd) + nut_in_obl(jd), &amp;ra, &amp;dec);
+-	  
+-	  
+-	  report(&quot;ra&quot;, r_to_d(ra), r_to_d(hms_to_fday(21, 4, 41.454) * pi2),
++	  equatorial_coords equ_pos;
++	  ecliptical_coords ecl_pos;
++	  ecl_pos.ecl_lat = latitude;
++	  ecl_pos.ecl_lon = longitude;
++	  ecl_to_equ(ecl_pos, obliquity_hi(jd) + nut_in_obl(jd), &amp;equ_pos);
++
++
++	  report(&quot;ra&quot;, r_to_d(equ_pos.ra), r_to_d(hms_to_fday(21, 4, 41.454) * pi2),
+ 		 1e-5, &quot;degrees&quot;);
+-	  report(&quot;dec&quot;, r_to_d(dec), dms_to_d(-18, 53, 16.84), 1e-5,
++	  report(&quot;dec&quot;, r_to_d(equ_pos.dec), dms_to_d(-18, 53, 16.84), 1e-5,
+ 		 &quot;degrees&quot;);
+ 	}
+     }
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000099.html">[Ephemeritis-svn] r246 - branches/new-vsop-prepare/src/c/tests
+</A></li>
+	<LI>Next message: <A HREF="000101.html">[Ephemeritis-svn] r248 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#100">[ date ]</a>
+              <a href="thread.html#100">[ thread ]</a>
+              <a href="subject.html#100">[ subject ]</a>
+              <a href="author.html#100">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

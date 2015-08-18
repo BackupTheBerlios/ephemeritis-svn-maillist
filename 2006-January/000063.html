@@ -1,0 +1,330 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r210 - branches/new-vsop-prepare/src/c/libephemeritis
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-January/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r210%20-%20branches/new-vsop-prepare/src/c/libephemeritis&In-Reply-To=%3C200601141030.k0EAUN7j019994%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000062.html">
+   <LINK REL="Next"  HREF="000064.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r210 - branches/new-vsop-prepare/src/c/libephemeritis</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r210%20-%20branches/new-vsop-prepare/src/c/libephemeritis&In-Reply-To=%3C200601141030.k0EAUN7j019994%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r210 - branches/new-vsop-prepare/src/c/libephemeritis">izogi at berlios.de
+       </A><BR>
+    <I>Sat Jan 14 11:30:23 CET 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000062.html">[Ephemeritis-svn] r209 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000064.html">[Ephemeritis-svn] r211 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#63">[ date ]</a>
+              <a href="thread.html#63">[ thread ]</a>
+              <a href="subject.html#63">[ subject ]</a>
+              <a href="author.html#63">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-01-14 11:30:16 +0100 (Sat, 14 Jan 2006)
+New Revision: 210
+
+Added:
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+Log:
+Added the vsop_calculate.c file, which had been left out accidentally.
+
+
+Added: branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-01-14 04:29:13 UTC (rev 209)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-01-14 10:30:16 UTC (rev 210)
+@@ -0,0 +1,253 @@
++/* Copyright 2000, 2001, 2005 William McClain, Mike McGavin
++
++This file is part of Ephemeritis.
++
++Ephemeritis is free software; you can redistribute it and/or modify
++it under the terms of the GNU General Public License as published by
++the Free Software Foundation; either version 2 of the License, or
++(at your option) any later version.
++
++Ephemeritis is distributed in the hope that it will be useful,
++but WITHOUT ANY WARRANTY; without even the implied warranty of
++MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++GNU General Public License for more details.
++
++You should have received a copy of the GNU General Public License
++along with Ephemeritis; if not, write to the Free Software
++Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
++*/
++
++/*! @file vsop_calculate.c
++ *
++ *  @brief Calculate planetary positions using the VSOP87 planetary
++ *  position model.
++ *
++ */
++
++#include &quot;ephemeritis.h&quot;
++#include &quot;ephemeritis_vsop_data.h&quot;
++#include &quot;config.h&quot;
++
++#include &lt;math.h&gt;
++#include &lt;string.h&gt;
++
++/*! @brief Internal function to sum together the series of a
++ *  particular variable within a set of body elements, and return the
++ *  result (in VSOP coordinates).
++ *
++ *  @param[in] be The set of body elements that contain the variable.
++ *  @param[in] var_num The variable number to return the value for.
++ *                     This is zero-based, and should be consistent with the
++ *                     variable_list array inside the body_elements structure.
++ *  @param[in] jd      THe Julian Day to calculate for, in Dynamical Time.
++ *
++ *  @return The calculated value.  0 will also be returned if the
++ *  var_num parameter was out of range.
++ *
++ *  @warning This function is intended to be internal, and will return
++ *  0.0 if the variable number is out of range for the set of values.
++ *  As this is also a valid return value, be sure to check that
++ *  var_num is within range before calling.
++ *
++ */
++static double internal_vsop_dimension_calc(const body_elements *be, const int var_num, const double jd)
++{
++  if(var_num &lt; 0 || var_num &gt; be-&gt;meta.num_variables-1) {
++    /* Oops, this variable doesn't exist. */
++    return 0;
++  }
++
++  /* Get a reference to the series's of this variable. */
++  int series_count = be-&gt;variable_list[var_num].meta.series_count;
++  series *series_list = be-&gt;variable_list[var_num].series_list;
++
++  /* Set tau to the Julian millenia. */
++  const double T = jd_to_jcent(jd) / 10.0;
++
++  double val = 0.0;
++
++  int sn;
++  for(sn = 0; sn &lt; series_count; sn++) {
++    double s_val = 0.0;
++
++    /* Even though alphaoftime is always an integer, it's set it to a
++       double here to save having to re-convert it every time. */
++    double alphaoftime = (double)(series_list[sn].meta.alpha);
++
++    /* Loop through every term in the series. */
++    term_bin *t, *first_term, *last_term;
++    first_term = series_list[sn].terms;
++    last_term = first_term + (series_list[sn].meta.num_terms - 1);
++
++    for(t = first_term; t &lt;= last_term; t++) {
++      s_val += t-&gt;A * (cos(t-&gt;B + (t-&gt;C * T)));
++    }
++
++    /* Now add the result of the set of terms to the overall value for
++       the variable, multiplying by T^alpha for the series. */
++    val += s_val * pow(T, alphaoftime);
++  }
++
++  return val;
++}
++
++
++/*! @brief Given a VSOP handle referencing data, and a Julian Date,
++ *  calculates rectangular variables.
++ *
++ *  The referenced VSOP data must be data designed for calculating
++ *  rectangular coordinates.  ie. vh.variable must be one of
++ *  hel_rec_j2, hel_rec_date, or bar_rec_j2.  If it isn't, the
++ *  error_state property of the returned struct will be set to a
++ *  non-zero value.
++ *
++ *  @param vh The VSOP handle referencing the data to use for the
++ *            calculation.
++ *  @param jd The Julian Date for which to
++ *            calculate coordinates, in dynamical time.
++ *
++ *  @sa vsop_rec_vsop_to_fk5
++ */
++vsop_rec_coords vsop_get_rectangular(const vsop_handle vh, const double jd)
++{
++  vsop_rec_coords vrc;
++
++  /* Init the struct properties. */
++  memset(&amp;vrc, '\0', sizeof(vrc));
++  vrc.vh = vh;
++  vrc.jd = jd;
++
++  /* Get a reference to the body_elements structure for this handle. */
++  body_elements *be;
++  if(NULL == (be = get_body_elements_for_handle(vh))) {
++    vrc.error_state = -1;
++    return vrc;
++  }
++
++  /* Confirm that the body elements for the handle contain data with rectangular coordinates. */
++  if( ! (vh.version == hel_rec_j2 || vh.version == hel_rec_date || vh.version == bar_rec_j2) ) {
++    vrc.error_state = -2;
++    return vrc;
++  }
++
++  /* Now return X, Y and Z.                                 */
++  /* X, Y and Z come from varibles 0, 1 and 2 respectively. */
++  vrc.rc.x = internal_vsop_dimension_calc(be, 0, jd);
++  vrc.rc.y = internal_vsop_dimension_calc(be, 1, jd);
++  vrc.rc.z = internal_vsop_dimension_calc(be, 2, jd);
++  vrc.error_state = 0;
++
++  /* Return 0 for success. */
++  return vrc;
++}
++
++/*! @brief Rotate rectangular VSOP coordinates from the dynamical
++ *  ecliptic frame J2000 to the equatorial frame FK5 J2000.
++ *
++ *  The incoming rectangular coordinates must be designed to be
++ *  rotated.  ie. They must have been generated from hel_rec_j2 or
++ *  bar_rec_j2.  If it isn't, the error_state property of the returned
++ *  struct will be set to a non-zero value.  If it is already a
++ *  non-zero value for the incoming data, the data will be immediately
++ *  returned with no change.
++ *
++ *  @param vrc[in] The incoming coordinates to be rotated.
++ *
++ *  @return The rotated coordinates.
++ */
++vsop_rec_coords vsop_rec_vsop_to_fk5(const vsop_rec_coords vrc)
++{
++  /* Make a variable to return, and inialise it to the existing incoming values. */
++  vsop_rec_coords output = vrc;
++
++  /* Stop right here if the incoming coordinates are in an error state. */
++  if(output.error_state != 0) {
++    return output;
++  }
++
++  /* Check that the incoming coordinates are of a version designed to be rotated. */
++  if(! (output.vh.version == hel_rec_j2 || output.vh.version == bar_rec_j2)) {
++    output.error_state = -3;
++    return output;
++  }
++
++  output.rc.x = vrc.rc.x*1.000000000000  + vrc.rc.y*0.000000440360 + vrc.rc.z*-0.000000190919;
++  output.rc.y = vrc.rc.x*-0.000000479966 + vrc.rc.y*0.917482137087 + vrc.rc.z*-0.397776982902;
++  output.rc.z = vrc.rc.x*0.000000000000  + vrc.rc.y*0.397776982902 + vrc.rc.z*+0.917482137087;
++  output.error_state = 0;
++
++  return output;
++}
++
++
++vsop_sph_coords vsop_get_spherical(const vsop_handle vh, const double jd)
++{
++  vsop_sph_coords vsc;
++
++  /* Init the struct properties. */
++  memset(&amp;vsc, '\0', sizeof(vsc));
++  vsc.vh = vh;
++  vsc.jd = jd;
++
++  /* Get a reference to the body_elements structure for this handle. */
++  body_elements *be;
++  if(NULL == (be = get_body_elements_for_handle(vh))) {
++    vsc.error_state = -1;
++    return vsc;
++  }
++
++  /* Confirm that the body elements for the handle contain data with spherical coordinates. */
++  if( ! (vh.version == hel_sph_j2 || vh.version == hel_sph_date) ) {
++    vsc.error_state = -2;
++    return vsc;
++  }
++
++  /* Now return L, B and R.                                 */
++  /* L, B and R come from varibles 0, 1 and 2 respectively. */
++  vsc.sc.L = internal_vsop_dimension_calc(be, 0, jd);
++  vsc.sc.B = internal_vsop_dimension_calc(be, 1, jd);
++  vsc.sc.R = internal_vsop_dimension_calc(be, 2, jd);
++  vsc.error_state = 0;
++
++  /* Return 0 for success. */
++  return vsc;
++}
++
++
++vsop_sph_coords vsop_sph_vsop_to_fk5(const vsop_sph_coords vsc) {
++  /* Make a variable to return, and inialise it to the existing incoming values. */
++  vsop_sph_coords output = vsc;
++
++  /* Stop right here if the incoming coordinates are in an error state. */
++  if(output.error_state != 0) {
++    return output;
++  }
++
++  /* Check that the incoming coordinates are of a version designed to be rotated. */
++  /*
++  if(! (output.vh.version == hel_rec_j2 || output.vh.version == bar_rec_j2)) {
++    output.error_state = -3;
++    return output;
++  }
++  */
++
++  static double l1, l2, b1;
++  static double vars[2];
++  static bool static_set = false;
++  if(!static_set) {
++    static_set = true;
++    l1 = -d_to_r(dms_to_d(0,0,0.09033));
++    l2 =  d_to_r(dms_to_d(0,0,0.03916));
++    vars[0] = d_to_r(1.397);
++    vars[1] = d_to_r(0.00031);
++  }
++  /*
++  double L1 = vsc.L - 
++
++    double deltaL = 999;
++  double deltaB;
++  */
++
++
++
++}
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000062.html">[Ephemeritis-svn] r209 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000064.html">[Ephemeritis-svn] r211 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#63">[ date ]</a>
+              <a href="thread.html#63">[ thread ]</a>
+              <a href="subject.html#63">[ subject ]</a>
+              <a href="author.html#63">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

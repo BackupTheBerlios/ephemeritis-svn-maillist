@@ -1,0 +1,851 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r257 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-July/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r257%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607240638.k6O6c21a013053%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000107.html">
+   <LINK REL="Next"  HREF="000111.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r257 - in branches/new-vsop-prepare/src/c:	libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r257%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607240638.k6O6c21a013053%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r257 - in branches/new-vsop-prepare/src/c:	libephemeritis tests">izogi at mail.berlios.de
+       </A><BR>
+    <I>Mon Jul 24 08:38:02 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000107.html">[Ephemeritis-svn] r256 - in branches/new-vsop-prepare: .	src/c/libephemeritis src/c/tests
+</A></li>
+        <LI>Next message: <A HREF="000111.html">[Ephemeritis-svn] r258 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#110">[ date ]</a>
+              <a href="thread.html#110">[ thread ]</a>
+              <a href="subject.html#110">[ subject ]</a>
+              <a href="author.html#110">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-07-24 08:37:57 +0200 (Mon, 24 Jul 2006)
+New Revision: 257
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/aberration.c
+   branches/new-vsop-prepare/src/c/libephemeritis/calendar.c
+   branches/new-vsop-prepare/src/c/libephemeritis/dynamical.c
+   branches/new-vsop-prepare/src/c/libephemeritis/elp2000.c
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+   branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c
+   branches/new-vsop-prepare/src/c/libephemeritis/equinox.c
+   branches/new-vsop-prepare/src/c/libephemeritis/nutation.c
+   branches/new-vsop-prepare/src/c/libephemeritis/riseset.c
+   branches/new-vsop-prepare/src/c/libephemeritis/solar.c
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+Renaming conversion functions to have an eph prefix.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/aberration.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/aberration.c	2006-07-23 11:01:49 UTC (rev 256)
++++ branches/new-vsop-prepare/src/c/libephemeritis/aberration.c	2006-07-24 06:37:57 UTC (rev 257)
+@@ -41,7 +41,7 @@
+ 
+ static void _constants(double jd, double *e, double *p, double *K)
+ {
+-    double T = jd_to_jcent(jd);
++    double T = ephJdToJCent(jd);
+     /*
+        (jd - 2451545.0) / 36525.0;
+      */
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/calendar.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/calendar.c	2006-07-23 11:01:49 UTC (rev 256)
++++ branches/new-vsop-prepare/src/c/libephemeritis/calendar.c	2006-07-24 06:37:57 UTC (rev 257)
+@@ -53,7 +53,7 @@
+  *  @return              The julian day number that matches the calendar
+  *                       date provided.
+  */
+-double cal_to_jd(int yr, int mo, double dy, EPH_Bool gregorian)
++double ephCalToJd(int yr, int mo, double dy, EPH_Bool gregorian)
+ {
+     if (mo &lt;= 2) {
+ 	yr--;
+@@ -85,10 +85,10 @@
+  *  @return              The day number, 1 = Jan 1...365 (or 366 for leap
+  *                       years) = Dec 31.
+  */
+-int cal_to_day_of_year(int yr, int mo, int dy, EPH_Bool gregorian)
++int ephCalToDayOfYear(int yr, int mo, int dy, EPH_Bool gregorian)
+ {
+     int K;
+-    if (is_leap_year(yr, gregorian)) {
++    if (ephIsLeapYear(yr, gregorian)) {
+ 	K = 1;
+     } else {
+ 	K = 2;
+@@ -108,10 +108,10 @@
+  *  @param[out] mo       Month, with January being 1, February 2, etc.
+  *  @param[out] dy       Day.  1 is the first day of the month.
+  */
+-void day_of_year_to_cal(int yr, int N, EPH_Bool gregorian, int *mo, int *dy)
++void ephDayOfYearToCal(int yr, int N, EPH_Bool gregorian, int *mo, int *dy)
+ {
+     int K;
+-    if (is_leap_year(yr, gregorian)) {
++    if (ephIsLeapYear(yr, gregorian)) {
+ 	K = 1;
+     } else {
+ 	K = 2;
+@@ -136,7 +136,7 @@
+  *  @param[out] mo       Month, with January being 1, February 2, etc.
+  *  @param[out] dy       Day.  1 is the first day of the month.
+  */
+-void easter(int yr, EPH_Bool gregorian, int *mo, int *dy)
++void ephEaster(int yr, EPH_Bool gregorian, int *mo, int *dy)
+ {
+     int tmp;
+     if (gregorian) {
+@@ -174,7 +174,7 @@
+  *
+  *  @return              True if this is a leap year, else false.
+  */
+-EPH_Bool is_leap_year(int yr, EPH_Bool gregorian)
++EPH_Bool ephIsLeapYear(int yr, EPH_Bool gregorian)
+ {
+     if (gregorian) {
+ 	return (yr % 4 == 0) &amp;&amp; ((yr % 100 != 0) || (yr % 400 == 0));
+@@ -194,7 +194,7 @@
+  *  @param[out] mo       Month, with January being 1, February 2, etc.
+  *  @param[out] day      Day (may be fractional).  1 is the first day of the month.
+  */
+-void jd_to_cal(double jd, EPH_Bool gregorian, int *yr, int *mo, double *day)
++void ephJdToCal(double jd, EPH_Bool gregorian, int *yr, int *mo, double *day)
+ {
+     double Z;
+     const double F = modf(jd + 0.5, &amp;Z);
+@@ -230,7 +230,7 @@
+  *
+  *  @return        The day of week: 0 = Sunday...6 = Saturday.
+  */
+-int jd_to_day_of_week(double jd)
++int ephJdToDayOfWeek(double jd)
+ {
+     const int i = (int) (jd + 1.5);
+     return i % 7;
+@@ -242,7 +242,7 @@
+  *
+  *  @return         The number of Julian centuries since J2000.0.
+  */
+-double jd_to_jcent(double jd)
++double ephJdToJCent(double jd)
+ {
+     return (jd - 2451545.0) / 36525.0;
+ }
+@@ -257,9 +257,9 @@
+  *  @return          The sidereal time, in radians (2pi radians = 24
+  *                   hrs).
+  */
+-double sidereal_time_greenwich(double jd)
++double ephSiderealTimeGreenwich(double jd)
+ {
+-    const double T = jd_to_jcent(jd);
++    const double T = ephJdToJCent(jd);
+     const double T2 = T * T;
+     const double T3 = T2 * T;
+     const double theta0 =
+@@ -286,7 +286,7 @@
+  *
+  *  @author Mike McGavin.
+  */
+-double jd_to_be(double jd)
++double ephJdToBe(double jd)
+ {
+     return 1900.0 + ((jd - 2415020.31352) / 365.24219878);
+ }
+@@ -304,7 +304,7 @@
+  *
+  *  @author Mike McGavin.
+  */
+-double be_to_jd(double be)
++double ephBeToJd(double be)
+ {
+     return ((be - 1900.0) * 365.24219878) + 2415020.31352;
+ }
+@@ -325,7 +325,7 @@
+  *
+  *  @author Mike McGavin.
+  */
+-double jd_to_je(double jd)
++double ephJdToJe(double jd)
+ {
+     return 2000.0 + ((jd - 2451545.0) / 365.25);
+ }
+@@ -342,7 +342,7 @@
+  *
+  *  @author Mike McGavin.
+  */
+-double je_to_jd(double je)
++double ephJeToJd(double je)
+ {
+     return ((je - 2000.0) * 365.25) + 2451545.0;
+ }
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/dynamical.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/dynamical.c	2006-07-23 11:01:49 UTC (rev 256)
++++ branches/new-vsop-prepare/src/c/libephemeritis/dynamical.c	2006-07-24 06:37:57 UTC (rev 257)
+@@ -287,12 +287,12 @@
+     int yr;
+     int mo;
+     double day;
+-    jd_to_cal(jd, true, &amp;yr, &amp;mo, &amp;day);
++    ephJdToCal(jd, true, &amp;yr, &amp;mo, &amp;day);
+ 
+     /* Determine the JD equivalents of the start and end of the table.
+        1620 - 20xx */
+-    const double _jdstart = cal_to_jd(_tbl_start, 1, 1, true);
+-    const double _jdend = cal_to_jd(_tbl_end, 1, 1, true);
++    const double _jdstart = ephCalToJd(_tbl_start, 1, 1, true);
++    const double _jdend = ephCalToJd(_tbl_end, 1, 1, true);
+     if (_tbl_start &lt; yr &amp;&amp; yr &lt; _tbl_end) {
+ 	double jd0 = _jdstart;
+ 	double jd1 = _jdend;
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/elp2000.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/elp2000.c	2006-07-23 11:01:49 UTC (rev 256)
++++ branches/new-vsop-prepare/src/c/libephemeritis/elp2000.c	2006-07-24 06:37:57 UTC (rev 257)
+@@ -249,7 +249,7 @@
+ void elp_dimension3(double jd, double *longitude, double *latitude,
+ 		    double *radius)
+ {
+-    const double T = jd_to_jcent(jd);
++    const double T = ephJdToJCent(jd);
+     double L1, D, M, M1, F, A1, A2, A3, E, E2;
+     _constants(T, &amp;L1, &amp;D, &amp;M, &amp;M1, &amp;F, &amp;A1, &amp;A2, &amp;A3, &amp;E, &amp;E2);
+ 
+@@ -347,7 +347,7 @@
+        A subset of the logic in dimension3()
+ 
+      */
+-    const double T = jd_to_jcent(jd);
++    const double T = ephJdToJCent(jd);
+     double L1, D, M, M1, F, A1, A2, A3, E, E2;
+     _constants(T, &amp;L1, &amp;D, &amp;M, &amp;M1, &amp;F, &amp;A1, &amp;A2, &amp;A3, &amp;E, &amp;E2);
+ 
+@@ -379,7 +379,7 @@
+        A subset of the logic in dimension3()
+ 
+      */
+-    const double T = jd_to_jcent(jd);
++    const double T = ephJdToJCent(jd);
+     double L1, D, M, M1, F, A1, A2, A3, E, E2;
+     _constants(T, &amp;L1, &amp;D, &amp;M, &amp;M1, &amp;F, &amp;A1, &amp;A2, &amp;A3, &amp;E, &amp;E2);
+ 
+@@ -415,7 +415,7 @@
+        A subset of the logic in dimension3()
+ 
+      */
+-    const double T = jd_to_jcent(jd);
++    const double T = ephJdToJCent(jd);
+     double L1, D, M, M1, F, A1, A2, A3, E, E2;
+     _constants(T, &amp;L1, &amp;D, &amp;M, &amp;M1, &amp;F, &amp;A1, &amp;A2, &amp;A3, &amp;E, &amp;E2);
+ 
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-23 11:01:49 UTC (rev 256)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-24 06:37:57 UTC (rev 257)
+@@ -186,19 +186,19 @@
+ 
+ 
+ /* calendar.c */
+-double cal_to_jd(int yr, int mo, double dy, EPH_Bool gregorian);
+-int cal_to_day_of_year(int yr, int mo, int dy, EPH_Bool gregorian);
+-void day_of_year_to_cal(int yr, int N, EPH_Bool gregorian, int *mo, int *dy);
+-void easter(int yr, EPH_Bool gregorian, int *mo, int *dy);
+-EPH_Bool is_leap_year(int yr, EPH_Bool gregorian);
+-void jd_to_cal(double jd, EPH_Bool gregorian, int *yr, int *mo, double *day);
+-int jd_to_day_of_week(double jd);
+-double jd_to_jcent(double jd);
+-double sidereal_time_greenwich(double jd);
+-double jd_to_be(double jd);
+-double be_to_jd(double be);
+-double jd_to_je(double jd);
+-double je_to_jd(double je);
++double ephCalToJd(int yr, int mo, double dy, EPH_Bool gregorian);
++int ephCalToDayOfYear(int yr, int mo, int dy, EPH_Bool gregorian);
++void ephDayOfYearToCal(int yr, int N, EPH_Bool gregorian, int *mo, int *dy);
++void ephEaster(int yr, EPH_Bool gregorian, int *mo, int *dy);
++EPH_Bool ephIsLeapYear(int yr, EPH_Bool gregorian);
++void ephJdToCal(double jd, EPH_Bool gregorian, int *yr, int *mo, double *day);
++int ephJdToDayOfWeek(double jd);
++double ephJdToJCent(double jd);
++double ephSiderealTimeGreenwich(double jd);
++double ephJdToBe(double jd);
++double ephBeToJd(double be);
++double ephJdToJe(double jd);
++double ephJeToJd(double je);
+ 
+ /* dynamical.c */
+ double deltaT_seconds(double jd);
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c	2006-07-23 11:01:49 UTC (rev 256)
++++ branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c	2006-07-24 06:37:57 UTC (rev 257)
+@@ -53,7 +53,7 @@
+ 				  double *eot_result
+ 				  )
+ {
+-    double T = jd_to_jcent(jd) / 10.0;
++    double T = ephJdToJCent(jd) / 10.0;
+     double _terms[] = {
+ 	280.4664567, 360007.6982779, 0.03032028, 1.0 / 49931.0,
+ 	-1.0 / 15300.0, -1.0 / 2000000.0
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/equinox.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/equinox.c	2006-07-23 11:01:49 UTC (rev 256)
++++ branches/new-vsop-prepare/src/c/libephemeritis/equinox.c	2006-07-24 06:37:57 UTC (rev 257)
+@@ -188,7 +188,7 @@
+     }
+     double jd = polynomial(series_poly, 5, Y);
+ 
+-    const double T = jd_to_jcent(jd);
++    const double T = ephJdToJCent(jd);
+     const double W = d_to_r(35999.373 * T - 2.47);
+     const double delta_lambda = 1 + 0.0334 * cos(W) + 0.0007 * cos(2 * W);
+     double S = 0.0;
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/nutation.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/nutation.c	2006-07-23 11:01:49 UTC (rev 256)
++++ branches/new-vsop-prepare/src/c/libephemeritis/nutation.c	2006-07-24 06:37:57 UTC (rev 257)
+@@ -243,7 +243,7 @@
+  */
+ double nut_in_lon(double jd)
+ {
+-    const double T = jd_to_jcent(jd);
++    const double T = ephJdToJCent(jd);
+     double D, M, M1, F, omega;
+     _constants(T, &amp;D, &amp;M, &amp;M1, &amp;F, &amp;omega);
+     double deltaPsi = 0.0;
+@@ -278,7 +278,7 @@
+  */
+ double nut_in_obl(double jd)
+ {
+-    const double T = jd_to_jcent(jd);
++    const double T = ephJdToJCent(jd);
+     double D, M, M1, F, omega;
+     _constants(T, &amp;D, &amp;M, &amp;M1, &amp;F, &amp;omega);
+     double deltaEps = 0.0;
+@@ -365,7 +365,7 @@
+ 	_el0[3] = d_to_r(dms_to_d(0, 0, 0.001813));
+     }
+ 
+-    const double T = jd_to_jcent(jd);
++    const double T = ephJdToJCent(jd);
+     return polynomial(_el0, sizeof(_el0) / sizeof(*_el0), T);
+ }
+ 
+@@ -405,6 +405,6 @@
+     }
+ 
+ 
+-    const double U = jd_to_jcent(jd) / 100;
++    const double U = ephJdToJCent(jd) / 100;
+     return polynomial(_el1, sizeof(_el1) / sizeof(*_el1), U);
+ }
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/riseset.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/riseset.c	2006-07-23 11:01:49 UTC (rev 256)
++++ branches/new-vsop-prepare/src/c/libephemeritis/riseset.c	2006-07-24 06:37:57 UTC (rev 257)
+@@ -95,7 +95,7 @@
+     const double _k1 = d_to_r(360.985647);
+     const double jd_ut = jd;
+ 
+-    const double THETA0 = sidereal_time_greenwich(jd_ut);
++    const double THETA0 = ephSiderealTimeGreenwich(jd_ut);
+     const double deltaT_days = deltaT_seconds(jd_ut) / seconds_per_day;
+     const double cosH0 =
+ 	(sin(h0) -
+@@ -211,7 +211,7 @@
+ {
+     const double _k1 = d_to_r(360.985647);
+     const double jd_ut = jd;
+-    const double THETA0 = sidereal_time_greenwich(jd_ut);
++    const double THETA0 = ephSiderealTimeGreenwich(jd_ut);
+     const double deltaT_days = deltaT_seconds(jd_ut) / seconds_per_day;
+ 
+     double m = (raList[1] + geo_pos.longitude - THETA0) / pi2;
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/solar.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/solar.c	2006-07-23 11:01:49 UTC (rev 256)
++++ branches/new-vsop-prepare/src/c/libephemeritis/solar.c	2006-07-24 06:37:57 UTC (rev 257)
+@@ -68,7 +68,7 @@
+     const double _ck4 = d_to_r(-0.000101);
+     const double _ck5 = d_to_r(0.000289);
+ 
+-    const double T = jd_to_jcent(jd);
++    const double T = ephJdToJCent(jd);
+     const double L0 = polynomial(_kL0, 3, T);
+     const double M = polynomial(_kM, 3, T);
+     const double e = polynomial(_ke, 3, T);
+@@ -102,7 +102,7 @@
+     const double _lk2 = d_to_r(0.00569);
+     const double _lk3 = d_to_r(0.00478);
+ 
+-    const double T = jd_to_jcent(jd);
++    const double T = ephJdToJCent(jd);
+     const double omega = _lk0 - _lk1 * T;
+     return modpi2(L - _lk2 - _lk3 * sin(omega));
+ }
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-07-23 11:01:49 UTC (rev 256)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-07-24 06:37:57 UTC (rev 257)
+@@ -72,7 +72,7 @@
+     series *series_list = be-&gt;variable_list[var_num].series_list;
+ 
+     /* Set tau to the Julian millenia. */
+-    const double T = jd_to_jcent(jd) / 10.0;
++    const double T = ephJdToJCent(jd) / 10.0;
+ 
+     double val = 0.0;
+ 
+@@ -392,7 +392,7 @@
+ 	terms[2] = d_to_r(0.00031);
+     }
+ 
+-    double T = (output.vh.version == hel_sph_date) ? (jd_to_jcent(output.jd) / 10.0) : 0.0;
++    double T = (output.vh.version == hel_sph_date) ? (ephJdToJCent(output.jd) / 10.0) : 0.0;
+     double L1 = vsc.sc.ecl.longitude - polynomial(terms, 3, T);
+     double cosL1 = cos(L1);
+     double sinL1 = sin(L1);
+@@ -530,7 +530,7 @@
+     return vrc;
+   }
+ 
+-  double obl = vrc.vh.version == hel_sph_j2 ? obliquity_hi(je_to_jd(2000.0)) : obliquity_hi(vrc.jd);
++  double obl = vrc.vh.version == hel_sph_j2 ? obliquity_hi(ephJeToJd(2000.0)) : obliquity_hi(vrc.jd);
+ 
+   double cosL = cos(vsc.sc.ecl.longitude);
+   double cosB = cos(vsc.sc.ecl.latitude);
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-23 11:01:49 UTC (rev 256)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-24 06:37:57 UTC (rev 257)
+@@ -160,11 +160,11 @@
+     /* Getting some printouts of the sidereal time, to confirm it's simply returning the hour angle in radians.
+        printf(&quot;Random tests:\n&quot;);
+        int n;
+-       const int m20_doy = cal_to_day_of_year(2003, 3, 20, true);
++       const int m20_doy = ephCalToDayOfYear(2003, 3, 20, true);
+        for(n = m20_doy + 1; n &lt;= m20_doy + 365; n+= 10) {
+        int mo, dy;
+-       day_of_year_to_cal(2003, n, true, &amp;mo, &amp;dy);
+-       printf(&quot;DOY = %3d, Sidereal time is: %f\n&quot;, n, sidereal_time_greenwich(cal_to_jd(2003, mo, dy, true)));
++       ephDayOfYearToCal(2003, n, true, &amp;mo, &amp;dy);
++       printf(&quot;DOY = %3d, Sidereal time is: %f\n&quot;, n, ephSiderealTimeGreenwich(ephCalToJd(2003, mo, dy, true)));
+        }
+      */
+ 
+@@ -178,13 +178,13 @@
+     printf(&quot;7.a Convert Gregorian date to Julian day number\n&quot;);
+     {
+ 	/* Main 7.a example. */
+-	const double jd = cal_to_jd(1957, 10, 4.81, true);
++	const double jd = ephCalToJd(1957, 10, 4.81, true);
+ 	report(&quot;julian day&quot;, jd, 2436116.31, 0.01, &quot;days&quot;);
+     }
+ 
+     printf(&quot;7.b Convert Julian date to Julian day number\n&quot;);
+     {
+-	const double jd = cal_to_jd(333, 1, 27.5, false);
++	const double jd = ephCalToJd(333, 1, 27.5, false);
+ 	report(&quot;julian day&quot;, jd, 1842713.0, 0.01, &quot;days&quot;);
+     }
+ 
+@@ -192,7 +192,7 @@
+     {
+ 	int yr, mo;
+ 	double day;
+-	jd_to_cal(2436116.31, true, &amp;yr, &amp;mo, &amp;day);
++	ephJdToCal(2436116.31, true, &amp;yr, &amp;mo, &amp;day);
+ 	report(&quot;year&quot;, yr, 1957, 0, &quot;years&quot;);
+ 	report(&quot;month&quot;, mo, 10, 0, &quot;months&quot;);
+ 	report(&quot;day&quot;, day, 4.81, 0.01, &quot;days&quot;);
+@@ -202,7 +202,7 @@
+     {
+ 	int yr, mo;
+ 	double day;
+-	jd_to_cal(1842713.0, false, &amp;yr, &amp;mo, &amp;day);
++	ephJdToCal(1842713.0, false, &amp;yr, &amp;mo, &amp;day);
+ 	report(&quot;year&quot;, yr, 333, 0, &quot;years&quot;);
+ 	report(&quot;month&quot;, mo, 1, 0, &quot;months&quot;);
+ 	report(&quot;day&quot;, day, 27.5, 0.01, &quot;days&quot;);
+@@ -212,7 +212,7 @@
+     {
+ 	int yr, mo;
+ 	double day;
+-	jd_to_cal(1507900.13, false, &amp;yr, &amp;mo, &amp;day);
++	ephJdToCal(1507900.13, false, &amp;yr, &amp;mo, &amp;day);
+ 	report(&quot;year&quot;, yr, -584, 0, &quot;years&quot;);
+ 	report(&quot;month&quot;, mo, 5, 0, &quot;months&quot;);
+ 	report(&quot;day&quot;, day, 28.63, 0.01, &quot;days&quot;);
+@@ -250,7 +250,7 @@
+ 	    for (n = 0; n &lt; dcj_size; n++) {
+ 		const struct Data_Cal_JD *dcj_f = &amp;(dcj[n]);
+ 		const double jd =
+-		    cal_to_jd(dcj_f-&gt;yr, dcj_f-&gt;mo, dcj_f-&gt;day,
++		    ephCalToJd(dcj_f-&gt;yr, dcj_f-&gt;mo, dcj_f-&gt;day,
+ 			      dcj_f-&gt;gregorian);
+ 		printf(&quot;  Also testing date: %4.1f:%d:%d\n&quot;, dcj_f-&gt;day,
+ 		       dcj_f-&gt;mo, dcj_f-&gt;yr);
+@@ -266,7 +266,7 @@
+ 	    double day;
+ 	    for (n = 0; n &lt; dcj_size; n++) {
+ 		const struct Data_Cal_JD *dcj_f = &amp;(dcj[n]);
+-		jd_to_cal(dcj_f-&gt;jd, dcj_f-&gt;gregorian, &amp;yr, &amp;mo, &amp;day);
++		ephJdToCal(dcj_f-&gt;jd, dcj_f-&gt;gregorian, &amp;yr, &amp;mo, &amp;day);
+ 		printf(&quot;  Also testing JD: %9.1f\n&quot;, dcj_f-&gt;jd);
+ 		report(&quot;year&quot;, yr, dcj_f-&gt;yr, 0, &quot;years&quot;);
+ 		report(&quot;month&quot;, mo, dcj_f-&gt;mo, 0, &quot;months&quot;);
+@@ -277,18 +277,18 @@
+ 
+     printf(&quot;7.d Time interval in days\n&quot;);
+     {
+-	const double jd0 = cal_to_jd(1910, 4, 20.0, true);
+-	const double jd1 = cal_to_jd(1986, 2, 9.0, true);
++	const double jd0 = ephCalToJd(1910, 4, 20.0, true);
++	const double jd1 = ephCalToJd(1986, 2, 9.0, true);
+ 	report(&quot;interval&quot;, jd1 - jd0, 27689, 0, &quot;days&quot;);
+     }
+ 
+     printf(&quot;7.d(1) Time interval in days\n&quot;);
+     {
+-	double jd = cal_to_jd(1991, 7, 11, true);
++	double jd = ephCalToJd(1991, 7, 11, true);
+ 	jd += 10000;
+ 	int yr, mo;
+ 	double day;
+-	jd_to_cal(jd, true, &amp;yr, &amp;mo, &amp;day);
++	ephJdToCal(jd, true, &amp;yr, &amp;mo, &amp;day);
+ 	report(&quot;year&quot;, yr, 2018, 0, &quot;years&quot;);
+ 	report(&quot;month&quot;, mo, 11, 0, &quot;months&quot;);
+ 	report(&quot;day&quot;, day, 26, 0, &quot;days&quot;);
+@@ -296,28 +296,28 @@
+ 
+     printf(&quot;7.e Day of the week\n&quot;);
+     {
+-	const double jd = cal_to_jd(1954, 6, 30.0, true);
++	const double jd = ephCalToJd(1954, 6, 30.0, true);
+ 	report(&quot;julian day&quot;, jd, 2434923.5, 0, &quot;days&quot;);
+-	const int dow = jd_to_day_of_week(jd);
++	const int dow = ephJdToDayOfWeek(jd);
+ 	report(&quot;day of week&quot;, dow, 3, 0, &quot;days&quot;);
+     }
+ 
+     printf(&quot;7.f Day of the year\n&quot;);
+     {
+-	const int N = cal_to_day_of_year(1978, 11, 14, true);
++	const int N = ephCalToDayOfYear(1978, 11, 14, true);
+ 	report(&quot;day of the year&quot;, N, 318, 0, &quot;days&quot;);
+     }
+ 
+     printf(&quot;7.g Day of the year\n&quot;);
+     {
+-	const int N = cal_to_day_of_year(1988, 4, 22, true);
++	const int N = ephCalToDayOfYear(1988, 4, 22, true);
+ 	report(&quot;day of the year&quot;, N, 113, 0, &quot;days&quot;);
+     }
+ 
+     printf(&quot;7(pg 66-1) Day of the year to calendar\n&quot;);
+     {
+ 	int mo, day;
+-	day_of_year_to_cal(1978, 318, true, &amp;mo, &amp;day);
++	ephDayOfYearToCal(1978, 318, true, &amp;mo, &amp;day);
+ 	report(&quot;month&quot;, mo, 11, 0, &quot;months&quot;);
+ 	report(&quot;days&quot;, day, 14, 0, &quot;days&quot;);
+     }
+@@ -325,7 +325,7 @@
+     printf(&quot;7(pg 66-2) Day of the year to calendar\n&quot;);
+     {
+ 	int mo, day;
+-	day_of_year_to_cal(1988, 113, true, &amp;mo, &amp;day);
++	ephDayOfYearToCal(1988, 113, true, &amp;mo, &amp;day);
+ 	report(&quot;month&quot;, mo, 4, 0, &quot;months&quot;);
+ 	report(&quot;day&quot;, day, 22, 0, &quot;days&quot;);
+     }
+@@ -343,7 +343,7 @@
+ 	int n;
+ 	for (n = 0; n &lt; 6; n++) {
+ 	    int mo, day;
+-	    easter(_tbl[n].yr, true, &amp;mo, &amp;day);
++	    ephEaster(_tbl[n].yr, true, &amp;mo, &amp;day);
+ 	    report(&quot;month&quot;, mo, _tbl[n].mo, 0, &quot;months&quot;);
+ 	    report(&quot;day&quot;, day, _tbl[n].day, 0, &quot;days&quot;);
+ 	}
+@@ -355,7 +355,7 @@
+ 	int n;
+ 	for (n = 0; n &lt; 3; n++) {
+ 	    int mo, day;
+-	    easter(_tbl[n], false, &amp;mo, &amp;day);
++	    ephEaster(_tbl[n], false, &amp;mo, &amp;day);
+ 	    report(&quot;month&quot;, mo, 4, 0, &quot;months&quot;);
+ 	    report(&quot;day&quot;, day, 12, 0, &quot;days&quot;);
+ 	}
+@@ -363,28 +363,28 @@
+ 
+     printf(&quot;10.a DeltaT 1990 (pg 78)\n&quot;);
+     {
+-	const double jd = cal_to_jd(1990, 1, 27, true);
++	const double jd = ephCalToJd(1990, 1, 27, true);
+ 	const double secs = deltaT_seconds(jd);
+ 	report(&quot;seconds&quot;, secs, 57, 1, &quot;seconds&quot;);
+     }
+ 
+     printf(&quot;10.a DeltaT 1977\n&quot;);
+     {
+-	const double jd = cal_to_jd(1977, 2, 18, true);
++	const double jd = ephCalToJd(1977, 2, 18, true);
+ 	const double secs = deltaT_seconds(jd);
+ 	report(&quot;seconds&quot;, secs, 48, 1, &quot;seconds&quot;);
+     }
+ 
+     printf(&quot;10.b DeltaT 333\n&quot;);
+     {
+-	const double jd = cal_to_jd(333, 2, 6, true);
++	const double jd = ephCalToJd(333, 2, 6, true);
+ 	const double secs = deltaT_seconds(jd);
+ 	report(&quot;seconds&quot;, secs, 6146, 1, &quot;seconds&quot;);
+     }
+ 
+     printf(&quot;12.a Sidereal time (mean)\n&quot;);
+     {
+-	const double theta0 = sidereal_time_greenwich(2446895.5);
++	const double theta0 = ephSiderealTimeGreenwich(2446895.5);
+ 	const double fday = hms_to_fday(13, 10, 46.3668);
+ 	report(&quot;sidereal time&quot;, theta0 / pi2, fday,
+ 	       1.0 / (seconds_per_day * 1000), &quot;days&quot;);
+@@ -392,7 +392,7 @@
+ 
+     printf(&quot;12.b Sidereal time (mean)\n&quot;);
+     {
+-	const double theta0 = sidereal_time_greenwich(2446896.30625);
++	const double theta0 = ephSiderealTimeGreenwich(2446896.30625);
+ 	report(&quot;sidereal time&quot;, theta0 / pi2, 128.7378734 / 360, 1e-7,
+ 	       &quot;days&quot;);
+     }
+@@ -423,8 +423,8 @@
+        printf(&quot;13.b Equatorial to horizon coordinates&quot;);
+        {
+        double A, h;
+-       const double jd = cal_to_jd(1987, 4, 10, true) + ((19*3600+21*60) / seconds_per_day);
+-       const double gw_sidereal = sidereal_time_greenwich(jd) + nut_in_lon(jd) / ;
++       const double jd = ephCalToJd(1987, 4, 10, true) + ((19*3600+21*60) / seconds_per_day);
++       const double gw_sidereal = ephSiderealTimeGreenwich(jd) + nut_in_lon(jd) / ;
+        printf(&quot;Test not done yet.&quot;);
+        }
+      */
+@@ -440,7 +440,7 @@
+ 	const double latitude = d_to_r(42.3333);
+ 	*/
+ 
+-	const double ut = cal_to_jd(1988, 3, 20, true);
++	const double ut = ephCalToJd(1988, 3, 20, true);
+ 	const double _raList[] =
+ 	    { d_to_r(40.68021), d_to_r(41.73129), d_to_r(42.78204) };
+ 	const double _decList[] =
+@@ -587,15 +587,15 @@
+ 	};
+ 	int n;
+ 	for (n = 0; n &lt; sizeof(b_be) / sizeof(*b_be); n++) {
+-	    double calc_jd = be_to_jd(b_be[n]);
+-	    double calc_be = jd_to_be(b_jd[n]);
++	    double calc_jd = ephBeToJd(b_be[n]);
++	    double calc_be = ephJdToBe(b_jd[n]);
+ 	    report(&quot;Calculated JD&quot;, calc_jd, b_jd[n], 0.0001, &quot;days&quot;);
+ 	    report(&quot;Calculated besselian epoch&quot;, calc_be, b_be[n], 0.0001,
+ 		   &quot;years&quot;);
+ 	}
+ 	for (n = 0; n &lt; sizeof(j_je) / sizeof(*j_je); n++) {
+-	    double calc_jd = je_to_jd(j_je[n]);
+-	    double calc_je = jd_to_je(j_jd[n]);
++	    double calc_jd = ephJeToJd(j_je[n]);
++	    double calc_je = ephJdToJe(j_jd[n]);
+ 	    report(&quot;Calculated JD&quot;, calc_jd, j_jd[n], 0.0001, &quot;days&quot;);
+ 	    report(&quot;Calculated julian epoch&quot;, calc_je, j_je[n], 0.0001,
+ 		   &quot;years&quot;);
+@@ -624,7 +624,7 @@
+ 	EPH_EclipticalCoords eclInitial, eclFinal;
+ 	eclInitial.longitude = d_to_r(149.48194);
+ 	eclInitial.latitude = d_to_r(1.76549);
+-	precession_ecl(precession_get_elements_ecl(je_to_jd(2000.0), 1643074.5),
++	precession_ecl(precession_get_elements_ecl(ephJeToJd(2000.0), 1643074.5),
+ 		eclInitial, &amp;eclFinal);
+ 
+ 	report(&quot;Longitude&quot;, eclFinal.longitude, d_to_r(118.704), 0.00001, &quot;radians&quot;);
+@@ -675,7 +675,7 @@
+ 
+     printf(&quot;23.a Apparent place of a star\n&quot;);
+     {
+-	double jd = ut_to_dt(cal_to_jd(2028, 11, 13.19, true));
++	double jd = ut_to_dt(ephCalToJd(2028, 11, 13.19, true));
+ 	double ra = hms_to_r(2, 46, 11.331);
+ 	double dec = d_to_r(dms_to_d(49, 20, 54.54));
+ 
+@@ -855,7 +855,7 @@
+ 	  printf(&quot;There was some kind of problem calculating the equinox: %d\n&quot;, e_state);
+ 	} else {
+ 	  report(&quot;julian day&quot;, jd,
+-		 cal_to_jd(1962, 6, 21, true) + hms_to_fday(21, 24, 42),
++		 ephCalToJd(1962, 6, 21, true) + hms_to_fday(21, 24, 42),
+ 		 1e-5, &quot;days&quot;);
+ 	}
+     }
+@@ -934,7 +934,7 @@
+ 		    season_names[p-&gt;season]);
+ 
+ 	    report(str_buf, jd,
+-		   cal_to_jd(p-&gt;yr, season_months[p-&gt;season],
++		   ephCalToJd(p-&gt;yr, season_months[p-&gt;season],
+ 			     p-&gt;day + p-&gt;fday, true), days_per_second,
+ 		   &quot;days&quot;);
+ 	}
+@@ -1028,8 +1028,8 @@
+     printf(&quot;33.b Apparent position (elements)\n&quot;);
+     {
+ 	EPH_OrbitalElements el;
+-	double T = cal_to_jd(1990, 10, 28.54502, true);
+-	double jd = cal_to_jd(1990, 10, 6, true);
++	double T = ephCalToJd(1990, 10, 28.54502, true);
++	double jd = ephCalToJd(1990, 10, 6, true);
+ 	el.a = 2.2091404;
+ 	el.e = 0.8502196;
+ 	el.i = d_to_r(11.94524);
+@@ -1039,7 +1039,7 @@
+ 	el.M = mean_anomoly(jd, T, el.n);
+ 
+ 	double r_sun;
+-	double obl2000 = obliquity_hi(je_to_jd(2000.0));
++	double obl2000 = obliquity_hi(ephJeToJd(2000.0));
+ 	EPH_ElementConstants ec = get_element_constants(obl2000, el, 53);
+ 	r_sun = get_r_sun(ec);
+ 	EPH_RecCoords rc = elliptical_orbit_rectangular(ec, r_sun);
+@@ -1157,45 +1157,45 @@
+ 	orbit_s orbits[] = {
+ 	    {
+ 	     &quot;Ceres&quot;,
+-	     cal_to_jd(2005, 1, 30, true), d_to_r(43.77971), 2.7673017,
++	     ephCalToJd(2005, 1, 30, true), d_to_r(43.77971), 2.7673017,
+ 	     0.0800887, d_to_r(10.58276), d_to_r(73.72889),
+ 	     d_to_r(80.42334), 3.34, 0.12, d_to_r(0.21410131)
+ 	     },
+ 
+ 	    {
+ 	     &quot;Pallas&quot;,
+-	     cal_to_jd(2005, 1, 30, true), d_to_r(28.70170), 2.7732372,
++	     ephCalToJd(2005, 1, 30, true), d_to_r(28.70170), 2.7732372,
+ 	     0.2302220, d_to_r(34.85083), d_to_r(310.54489),
+ 	     d_to_r(173.16604), 4.13, 0.11, d_to_r(0.21341432)
+ 	     },
+ 
+ 	    {
+ 	     &quot;Juno&quot;,
+-	     cal_to_jd(2005, 1, 30, true), d_to_r(300.24990), 2.6681509,
++	     ephCalToJd(2005, 1, 30, true), d_to_r(300.24990), 2.6681509,
+ 	     0.2584015, d_to_r(12.97175), d_to_r(247.86205),
+ 	     d_to_r(170.12682), 5.33, 0.32, d_to_r(0.22614578)
+ 	     }
+ 	};
+ 
+ 	jd_test_values tests[] = {
+-	    {&amp;orbits[0], ut_to_dt(cal_to_jd(2005, 5, 1, true)),
++	    {&amp;orbits[0], ut_to_dt(ephCalToJd(2005, 5, 1, true)),
+ 	     hms_to_r(15, 20, 0.07 * 60.0),
+ 	     d_to_r(dms_to_d(-8.0, 33, 0.9 * 60.0)), 1.692, 2.683, 7.1},
+-	    {&amp;orbits[0], ut_to_dt(cal_to_jd(2005, 6, 10, true)),
++	    {&amp;orbits[0], ut_to_dt(ephCalToJd(2005, 6, 10, true)),
+ 	     hms_to_r(14, 47, 0.78 * 60.0),
+ 	     d_to_r(dms_to_d(-9.0, 8, 0.4 * 60.0)), 1.837, 2.715, 7.6},
+ 
+-	    {&amp;orbits[1], ut_to_dt(cal_to_jd(2005, 2, 5, true)),
++	    {&amp;orbits[1], ut_to_dt(ephCalToJd(2005, 2, 5, true)),
+ 	     hms_to_r(12, 42, 0.98 * 60.0),
+ 	     d_to_r(dms_to_d(-6.0, 39, 0.1 * 60.0)), 1.570, 2.271, 8.0},
+-	    {&amp;orbits[1], ut_to_dt(cal_to_jd(2005, 5, 1, true)),
++	    {&amp;orbits[1], ut_to_dt(ephCalToJd(2005, 5, 1, true)),
+ 	     hms_to_r(12, 07, 0.76 * 60.0),
+ 	     d_to_r(dms_to_d(19.0, 20, 0.4 * 60.0)), 1.672, 2.449, 8.2},
+ 
+-	    {&amp;orbits[2], ut_to_dt(cal_to_jd(2005, 9, 8, true)),
++	    {&amp;orbits[2], ut_to_dt(ephCalToJd(2005, 9, 8, true)),
+ 	     hms_to_r(4, 44, 0.23 * 60.0),
+ 	     d_to_r(dms_to_d(10.0, 2, 0.1 * 60.0)), 1.649, 1.997, 9.0},
+-	    {&amp;orbits[2], ut_to_dt(cal_to_jd(2005, 11, 12, true)),
++	    {&amp;orbits[2], ut_to_dt(ephCalToJd(2005, 11, 12, true)),
+ 	     hms_to_r(5, 31, 0.69 * 60.0),
+ 	     d_to_r(dms_to_d(0.0, 24, 0.1 * 60.0)), 1.115, 1.984, 7.8}
+ 
+@@ -1239,7 +1239,7 @@
+ 					       or-&gt;G);
+ 
+ 		EPH_ElementConstants ec =
+-		    get_element_constants(obliquity_hi(je_to_jd(2000)), cd,
++		    get_element_constants(obliquity_hi(ephJeToJd(2000)), cd,
+ 					  53);
+ 		body_r_sun = get_r_sun(ec);
+ 		EPH_RecCoords body_rec =
+@@ -1274,7 +1274,7 @@
+ 	     */
+ 	    /*
+ 	    precession_eq(precession_get_elements_eq
+-			  (je_to_jd(2000.0), test-&gt;jd), ra, dec, &amp;ra,
++			  (ephJeToJd(2000.0), test-&gt;jd), ra, dec, &amp;ra,
+ 			  &amp;dec);
+ 
+ 	    double n_in_ra, n_in_dec;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000107.html">[Ephemeritis-svn] r256 - in branches/new-vsop-prepare: .	src/c/libephemeritis src/c/tests
+</A></li>
+	<LI>Next message: <A HREF="000111.html">[Ephemeritis-svn] r258 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#110">[ date ]</a>
+              <a href="thread.html#110">[ thread ]</a>
+              <a href="subject.html#110">[ subject ]</a>
+              <a href="author.html#110">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

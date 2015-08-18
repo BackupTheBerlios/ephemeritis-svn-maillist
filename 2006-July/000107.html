@@ -1,0 +1,339 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r256 - in branches/new-vsop-prepare: .	src/c/libephemeritis src/c/tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-July/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r256%20-%20in%20branches/new-vsop-prepare%3A%20.%0A%09src/c/libephemeritis%20src/c/tests&In-Reply-To=%3C200607231101.k6NB1pJL014056%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000106.html">
+   <LINK REL="Next"  HREF="000110.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r256 - in branches/new-vsop-prepare: .	src/c/libephemeritis src/c/tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r256%20-%20in%20branches/new-vsop-prepare%3A%20.%0A%09src/c/libephemeritis%20src/c/tests&In-Reply-To=%3C200607231101.k6NB1pJL014056%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r256 - in branches/new-vsop-prepare: .	src/c/libephemeritis src/c/tests">izogi at mail.berlios.de
+       </A><BR>
+    <I>Sun Jul 23 13:01:51 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000106.html">[Ephemeritis-svn] r255 -	branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+        <LI>Next message: <A HREF="000110.html">[Ephemeritis-svn] r257 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#107">[ date ]</a>
+              <a href="thread.html#107">[ thread ]</a>
+              <a href="subject.html#107">[ subject ]</a>
+              <a href="author.html#107">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-07-23 13:01:49 +0200 (Sun, 23 Jul 2006)
+New Revision: 256
+
+Modified:
+   branches/new-vsop-prepare/ephemeritis.kdevelop
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+   branches/new-vsop-prepare/src/c/libephemeritis/riseset.c
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+Adjusting horizon() and transit() functions to use output variable rather than return value.
+
+
+Modified: branches/new-vsop-prepare/ephemeritis.kdevelop
+===================================================================
+--- branches/new-vsop-prepare/ephemeritis.kdevelop	2006-07-23 09:41:34 UTC (rev 255)
++++ branches/new-vsop-prepare/ephemeritis.kdevelop	2006-07-23 11:01:49 UTC (rev 256)
+@@ -9,7 +9,7 @@
+     &lt;ignoreparts/&gt;
+     &lt;projectdirectory&gt;.&lt;/projectdirectory&gt;
+     &lt;absoluteprojectpath&gt;false&lt;/absoluteprojectpath&gt;
+-    &lt;description&gt;&lt;/description&gt;
++    &lt;description/&gt;
+     &lt;versioncontrol&gt;kdevsubversion&lt;/versioncontrol&gt;
+   &lt;/general&gt;
+   &lt;kdevautoproject&gt;
+@@ -21,7 +21,7 @@
+       &lt;mainprogram&gt;src/ephemeritis&lt;/mainprogram&gt;
+       &lt;directoryradio&gt;executable&lt;/directoryradio&gt;
+       &lt;customdirectory&gt;/&lt;/customdirectory&gt;
+-      &lt;programargs&gt;&lt;/programargs&gt;
++      &lt;programargs/&gt;
+       &lt;terminal&gt;false&lt;/terminal&gt;
+       &lt;autocompile&gt;true&lt;/autocompile&gt;
+       &lt;envvars/&gt;
+@@ -42,14 +42,14 @@
+         &lt;f77compiler&gt;kdevpgf77options&lt;/f77compiler&gt;
+         &lt;cflags&gt;-O0 -g3&lt;/cflags&gt;
+         &lt;envvars/&gt;
+-        &lt;topsourcedir&gt;&lt;/topsourcedir&gt;
+-        &lt;cppflags&gt;&lt;/cppflags&gt;
+-        &lt;ldflags&gt;&lt;/ldflags&gt;
+-        &lt;ccompilerbinary&gt;&lt;/ccompilerbinary&gt;
+-        &lt;cxxcompilerbinary&gt;&lt;/cxxcompilerbinary&gt;
+-        &lt;f77compilerbinary&gt;&lt;/f77compilerbinary&gt;
+-        &lt;cxxflags&gt;&lt;/cxxflags&gt;
+-        &lt;f77flags&gt;&lt;/f77flags&gt;
++        &lt;topsourcedir/&gt;
++        &lt;cppflags/&gt;
++        &lt;ldflags/&gt;
++        &lt;ccompilerbinary/&gt;
++        &lt;cxxcompilerbinary/&gt;
++        &lt;f77compilerbinary/&gt;
++        &lt;cxxflags/&gt;
++        &lt;f77flags/&gt;
+       &lt;/debug&gt;
+     &lt;/configurations&gt;
+     &lt;make&gt;
+@@ -61,18 +61,18 @@
+       &lt;runmultiplejobs&gt;false&lt;/runmultiplejobs&gt;
+       &lt;numberofjobs&gt;1&lt;/numberofjobs&gt;
+       &lt;dontact&gt;false&lt;/dontact&gt;
+-      &lt;makebin&gt;&lt;/makebin&gt;
++      &lt;makebin/&gt;
+       &lt;prio&gt;0&lt;/prio&gt;
+     &lt;/make&gt;
+   &lt;/kdevautoproject&gt;
+   &lt;kdevdebugger&gt;
+     &lt;general&gt;
+       &lt;dbgshell&gt;libtool&lt;/dbgshell&gt;
+-      &lt;programargs&gt;&lt;/programargs&gt;
+-      &lt;gdbpath&gt;&lt;/gdbpath&gt;
+-      &lt;configGdbScript&gt;&lt;/configGdbScript&gt;
+-      &lt;runShellScript&gt;&lt;/runShellScript&gt;
+-      &lt;runGdbScript&gt;&lt;/runGdbScript&gt;
++      &lt;programargs/&gt;
++      &lt;gdbpath/&gt;
++      &lt;configGdbScript/&gt;
++      &lt;runShellScript/&gt;
++      &lt;runGdbScript/&gt;
+       &lt;breakonloadinglibs&gt;true&lt;/breakonloadinglibs&gt;
+       &lt;separatetty&gt;false&lt;/separatetty&gt;
+       &lt;floatingtoolbar&gt;false&lt;/floatingtoolbar&gt;
+@@ -148,7 +148,7 @@
+     &lt;qt&gt;
+       &lt;used&gt;false&lt;/used&gt;
+       &lt;version&gt;3&lt;/version&gt;
+-      &lt;root&gt;&lt;/root&gt;
++      &lt;root/&gt;
+     &lt;/qt&gt;
+     &lt;codecompletion&gt;
+       &lt;includeGlobalFunctions&gt;true&lt;/includeGlobalFunctions&gt;
+@@ -163,7 +163,7 @@
+       &lt;headerCompletionDelay&gt;250&lt;/headerCompletionDelay&gt;
+     &lt;/codecompletion&gt;
+     &lt;creategettersetter&gt;
+-      &lt;prefixGet&gt;&lt;/prefixGet&gt;
++      &lt;prefixGet/&gt;
+       &lt;prefixSet&gt;set&lt;/prefixSet&gt;
+       &lt;prefixVariable&gt;m_,_&lt;/prefixVariable&gt;
+       &lt;parameterName&gt;theValue&lt;/parameterName&gt;
+@@ -174,9 +174,9 @@
+   &lt;/kdevcppsupport&gt;
+   &lt;kdevdocumentation&gt;
+     &lt;projectdoc&gt;
+-      &lt;docsystem&gt;&lt;/docsystem&gt;
+-      &lt;docurl&gt;&lt;/docurl&gt;
+-      &lt;usermanualurl&gt;&lt;/usermanualurl&gt;
++      &lt;docsystem/&gt;
++      &lt;docurl/&gt;
++      &lt;usermanualurl/&gt;
+     &lt;/projectdoc&gt;
+   &lt;/kdevdocumentation&gt;
+   &lt;kdevfileview&gt;
+@@ -187,10 +187,11 @@
+     &lt;tree&gt;
+       &lt;hidepatterns&gt;*.o,*.lo,CVS&lt;/hidepatterns&gt;
+       &lt;hidenonprojectfiles&gt;false&lt;/hidenonprojectfiles&gt;
++      &lt;showvcsfields&gt;false&lt;/showvcsfields&gt;
+     &lt;/tree&gt;
+   &lt;/kdevfileview&gt;
+   &lt;ctagspart&gt;
+-    &lt;customArguments&gt;&lt;/customArguments&gt;
+-    &lt;customTagfilePath&gt;&lt;/customTagfilePath&gt;
++    &lt;customArguments/&gt;
++    &lt;customTagfilePath/&gt;
+   &lt;/ctagspart&gt;
+ &lt;/kdevelop&gt;
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-23 09:41:34 UTC (rev 255)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-23 11:01:49 UTC (rev 256)
+@@ -252,11 +252,13 @@
+ 	       const double *raList,
+ 	       const double *decList,
+ 	       const double h0,
+-	       const double delta);
+-double transit(const double jd,
++	       const double delta,
++               double *jdRiseSet);
++int transit(const double jd,
+ 	       const EPH_GeographicCoords geo_pos,
+ 	       const double *raList,
+-	       const double delta);
++               const double delta,
++               double *jdTransit);
+ double moon_rst_altitude(double r);
+ 
+ 
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/riseset.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/riseset.c	2006-07-23 09:41:34 UTC (rev 255)
++++ branches/new-vsop-prepare/src/c/libephemeritis/riseset.c	2006-07-23 11:01:49 UTC (rev 256)
+@@ -53,14 +53,19 @@
+  *  @param[in] delta     The desired accuracy, in days.  Note that times of less than one minute are
+  *                       infeasible for rise times because of atmospheric refraction.
+  *
+- *  @returns             If input is valid, returns time of rising or setting.
+- *                       Returns -1 if hType wasn't a valid value.
++ *  @pararm[out] jdRiseSet The time of rising or setting, if the input was valid.
++ *
++ *  @returns             Returns  0 if everything worked.
++ *                       Returns -1 i *  @bug  Some events are dropped at the moment.  (See code.)
++f hType wasn't a valid value.
+  *                       Returns -2 if object is circumpolar.
+  *                       Returns -3 if object never rises.
+- *                       Returns -4 if m is out of range (see code).
++ *                       Returns -4 i *  @bug  Some events are dropped at the moment.  (See code.)
++f m is out of range (see code).
+  *                       Returns -5 if too much accuracy was required.
+  *                       Returns -6 if a bug in the code was encountered.
+- *
++ * *  @bug  Some events are dropped at the moment.  (See code.)
++
+  *  @throws NotPossibleError
+  *                       Thrown if the object does not actually rise.  For circumpolar
+  *                       objects, why() returns rCircumPolar.  For objects that are
+@@ -84,9 +89,9 @@
+ 	       const double *raList,
+ 	       const double *decList,
+ 	       const double h0,
+-	       const double delta)
++	       const double delta,
++               double *jdRiseSet)
+ {
+-
+     const double _k1 = d_to_r(360.985647);
+     const double jd_ut = jd;
+ 
+@@ -163,17 +168,15 @@
+ 	equ_pos.ra = H;
+ 	equ_pos.dec = dec;
+ 
+-	/*
+-	double A, h;
+-	*/
+ 	EPH_HorizonCoords hor_pos;
+ 	equ_to_horiz(geo_pos, equ_pos, &amp;hor_pos);
+ 	const double dm =
+ 	    (hor_pos.altitude - h0) / (pi2 * cos(dec) * cos(geo_pos.latitude) * sin(H));
+ 	m += dm;
+ 	if (fabs(m - m0) &lt; delta) {
+-	    return jd_ut + m;
+-	}
++	    *jdRiseSet = jd_ut + m;
++            return 0;
++        }
+     }
+ 
+     return -5;
+@@ -190,7 +193,9 @@
+  *  @param[in] raList    A sequence of three right acsension values, in radians, for (jd-1, jd, jd+1).
+  *  @param[in] delta     The desired accuracy, in days.
+  *
+- *  @returns             Julian Day of the transit time.
++ *  @param[out] jdTransit Julian Day of the transit time, if everything worked.
++ *
++ *  @returns             Returns  0 if everything worked.
+  *                       Returns -4 if m is out of range (see code).
+  *                       Returns -5 if too much accuracy was required.
+  *                       Returns -6 if a bug in the code was encountered.
+@@ -198,10 +203,11 @@
+  *  @todo Report both upper and lower culmination, and transits of
+  *  objects below the horizon.
+  */
+-double transit(const double jd,
++int transit(const double jd,
+ 	       const EPH_GeographicCoords geo_pos,
+ 	       const double *raList,
+-	       const double delta)
++	       const double delta,
++               double *jdTransit)
+ {
+     const double _k1 = d_to_r(360.985647);
+     const double jd_ut = jd;
+@@ -242,8 +248,9 @@
+ 	const double dm = -H / pi2;
+ 	m += dm;
+ 	if (fabs(m - m0) &lt; delta) {
+-	    return jd_ut + m;
+-	}
++	    *jdTransit = jd_ut + m;
++            return 0;
++        }
+     }
+ 
+     return -5;
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-23 09:41:34 UTC (rev 255)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-23 11:01:49 UTC (rev 256)
+@@ -447,15 +447,17 @@
+ 	    { d_to_r(18.04761), d_to_r(18.44092), d_to_r(18.82742) };
+ 
+ 	double jd;
+-	jd = horizon(hRising, ut, geo_pos, _raList, _decList,
+-		     d_to_r(-0.5667), days_per_minute);
++        int result;
++        
++        result = horizon(hRising, ut, geo_pos, _raList, _decList,
++		     d_to_r(-0.5667), days_per_minute, &amp;jd);
+ 	report(&quot;rise, julian days&quot;, jd - ut, 0.51766, 1e-5, &quot;days&quot;);
+ 
+-	jd = horizon(hSetting, ut, geo_pos, _raList, _decList,
+-		     d_to_r(-0.5667), days_per_minute);
++	result = horizon(hSetting, ut, geo_pos, _raList, _decList,
++		     d_to_r(-0.5667), days_per_minute, &amp;jd);
+ 	report(&quot;set, julian days&quot;, jd - ut, 0.12130, 1e-5, &quot;days&quot;);
+ 
+-	jd = transit(ut, geo_pos, _raList, 1.0 / (60 * 24));
++	result = transit(ut, geo_pos, _raList, 1.0 / (60 * 24), &amp;jd);
+ 	report(&quot;transit, julian days&quot;, jd - ut, 0.81980, 1e-5, &quot;days&quot;);
+     }
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000106.html">[Ephemeritis-svn] r255 -	branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+	<LI>Next message: <A HREF="000110.html">[Ephemeritis-svn] r257 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#107">[ date ]</a>
+              <a href="thread.html#107">[ thread ]</a>
+              <a href="subject.html#107">[ subject ]</a>
+              <a href="author.html#107">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

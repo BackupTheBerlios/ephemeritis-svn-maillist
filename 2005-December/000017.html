@@ -1,0 +1,136 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r161 - trunk/src/c/libephemeritis
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2005-December/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r161%20-%20trunk/src/c/libephemeritis&In-Reply-To=%3C200512141011.jBEABoDV023339%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000016.html">
+   <LINK REL="Next"  HREF="000018.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r161 - trunk/src/c/libephemeritis</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r161%20-%20trunk/src/c/libephemeritis&In-Reply-To=%3C200512141011.jBEABoDV023339%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r161 - trunk/src/c/libephemeritis">izogi at berlios.de
+       </A><BR>
+    <I>Wed Dec 14 11:11:50 CET 2005</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000016.html">[Ephemeritis-svn] r160 - trunk/src/c/libephemeritis
+</A></li>
+        <LI>Next message: <A HREF="000018.html">[Ephemeritis-svn] r162 - trunk/src/c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#17">[ date ]</a>
+              <a href="thread.html#17">[ thread ]</a>
+              <a href="subject.html#17">[ subject ]</a>
+              <a href="author.html#17">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2005-12-14 11:11:43 +0100 (Wed, 14 Dec 2005)
+New Revision: 161
+
+Modified:
+   trunk/src/c/libephemeritis/solar.c
+   trunk/src/c/libephemeritis/vsop87d.c
+Log:
+Made minor modifications to code and doxygen documentation when comparing with book.
+
+
+Modified: trunk/src/c/libephemeritis/solar.c
+===================================================================
+--- trunk/src/c/libephemeritis/solar.c	2005-12-14 09:19:56 UTC (rev 160)
++++ trunk/src/c/libephemeritis/solar.c	2005-12-14 10:11:43 UTC (rev 161)
+@@ -64,6 +64,10 @@
+ 
+ /*! @brief Returns geocentric ecliptic longitude, latitude and radius.
+  *
++ *  The code in this function very simply calls sol_dimension for each
++ *  value, so it is no more efficient to call this.  It's provided for
++ *  convenience only.
++ *
+  *  @param[in]  jd  Julian Day in dynamical time.
+  *  @param[out] L   Longitude, in radians.
+  *  @param[out] B   Latitude, in radians.
+
+Modified: trunk/src/c/libephemeritis/vsop87d.c
+===================================================================
+--- trunk/src/c/libephemeritis/vsop87d.c	2005-12-14 09:19:56 UTC (rev 160)
++++ trunk/src/c/libephemeritis/vsop87d.c	2005-12-14 10:11:43 UTC (rev 161)
+@@ -45,9 +45,20 @@
+  *                        radians), or radius (in astronomical units).
+  *
+  *  @sa deltaT_seconds for calculating %dynamical time offset.
++ *
++ *  @todo Add an option for the calling code to request that less
++ *  detail be calculated if less accuracy is required, to save
++ *  processing time.  According to Meeus, much fewer than available
++ *  elements are actually required unless great accuracy is wanted.
+  */
+ double vsop_dimension(double jd, enum vPlanets planet, enum Coords dim)
+ {
++    /* The idea here is to sum the results of A*cos(B+(C*tau)) for
++     * each series, combine the result for each series together in
++     * a polynomial of the form L = L0 + L1tau + l2tau^2, etc, 
++     * 
++     */
++
+     double X = 0.0;
+     double tauN = 1.0;
+     const double tau = jd_to_jcent(jd) / 10.0;
+@@ -68,8 +79,9 @@
+ 		v = &amp;tl[n].values[o];
+ 		series_sum += v-&gt;A * cos(v-&gt;B + (v-&gt;C * tau));
+ 	    }
++
+ 	    X += series_sum * tauN;
+-	    tauN *= tau;	/* The last one is wasted. */
++	    tauN *= tau;
+ 	}
+     }
+ 
+@@ -81,6 +93,10 @@
+ 
+ /*! @brief Returns heliocentric ecliptic longitude, latitude and radius.
+  *
++ *  The code in this function very simply calls vsop_dimension for
++ *  each value, so it is no more efficient to call this.  It's
++ *  provided for convenience only.
++ *
+  *  @param[in]  jd        Julian Day, in dynamical time.
+  *  @param[in]  planet    The planet for which to calculate.
+  *  @param[out] longitude The ecliptic longitude of the planet, in radians.
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000016.html">[Ephemeritis-svn] r160 - trunk/src/c/libephemeritis
+</A></li>
+	<LI>Next message: <A HREF="000018.html">[Ephemeritis-svn] r162 - trunk/src/c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#17">[ date ]</a>
+              <a href="thread.html#17">[ thread ]</a>
+              <a href="subject.html#17">[ subject ]</a>
+              <a href="author.html#17">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

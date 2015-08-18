@@ -1,0 +1,143 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r270 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-July/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r270%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607270955.k6R9t17h028114%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000125.html">
+   <LINK REL="Next"  HREF="000123.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r270 - in branches/new-vsop-prepare/src/c:	libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r270%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607270955.k6R9t17h028114%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r270 - in branches/new-vsop-prepare/src/c:	libephemeritis tests">izogi at mail.berlios.de
+       </A><BR>
+    <I>Thu Jul 27 11:55:01 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000125.html">[Ephemeritis-svn] r269 - in branches/new-vsop-prepare/data: .	vsop87d
+</A></li>
+        <LI>Next message: <A HREF="000123.html">[Ephemeritis-svn] r271 - in branches/new-vsop-prepare: data	data/vsop87d src/c/libephemeritis src/c/utils
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#122">[ date ]</a>
+              <a href="thread.html#122">[ thread ]</a>
+              <a href="subject.html#122">[ subject ]</a>
+              <a href="author.html#122">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-07-27 11:54:54 +0200 (Thu, 27 Jul 2006)
+New Revision: 270
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+Bug fixes for epoch-adjusting code.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-27 09:53:29 UTC (rev 269)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-27 09:54:54 UTC (rev 270)
+@@ -425,7 +425,7 @@
+                         that even if the input planet is vsop_earth,
+                         is_inverted must be set to 0 or this error
+                         will be returned. */
+-  wrong_source,      /*!&lt; @brief (ephVsopRecSol, ephVsopSphSol)
++  wrong_source,      /*!&lt; @brief (ephVsopRecSol, ephVsopSphSol, ephVsopDateToEpoch)
+                         indicates that supplied coordinates were not
+                         rectangular J2000 or date coordinates. */
+   not_solar          /*!&lt; @brief (ephSolSphToRec) indicates that the
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-07-27 09:53:29 UTC (rev 269)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-07-27 09:54:54 UTC (rev 270)
+@@ -509,7 +509,7 @@
+        requested epoch. */
+ 
+     ephPrecessionEcl(
+-        ephPrecessionGetElementsEcl(epochJd, dateJd),
++        ephPrecessionGetElementsEcl( dateJd, epochJd ),
+         output.sc.ecl,
+         &amp;output.sc.ecl
+         );
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-27 09:53:29 UTC (rev 269)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-27 09:54:54 UTC (rev 270)
+@@ -1160,7 +1160,7 @@
+         if (0 != (resultED | resultJ2)) {
+             printf(&quot;Problem opening file.\n&quot;);
+         } else {
+-            EPH_VsopSphCoords vscED = ephVsopSphToFk5(ephVsopSphSol(ephVsopGetSpherical(vh_earthDate, jd)));
++            EPH_VsopSphCoords vscED = ephVsopDateToEpoch( ephVsopSphToFk5(ephVsopSphSol(ephVsopGetSpherical(vh_earthDate, jd))), ephJeToJd(2000.0), jd);
+             EPH_VsopSphCoords vscJ2 = ephVsopSphToFk5(ephVsopSphSol(ephVsopGetSpherical(vh_earthJ2, jd)));
+         
+             /*
+@@ -1172,22 +1172,21 @@
+                                   EPH_EclipticalCoords *eclFinal);
+             */
+             
++            /*
+             EPH_EclipticalCoords tempecl;
+             double jdnow, jd2000;
+             jdnow = jd;
+ 
+             jd2000 = ephJeToJd( 2000.0 );
+-/*
+-printf(&quot;\nday=%f, epoch=%f\n&quot;, ephCalToJd( calDate2000 ), jd2000);
+-*/
+             ephPrecessionEcl(
+-                    ephPrecessionGetElementsEcl(jd2000, jdnow),
+-                    vscJ2.sc.ecl,
++                    ephPrecessionGetElementsEcl(jdnow, jd2000),
++                    vscED.sc.ecl,
+                     &amp;tempecl
+                             );
+             
+-            vscJ2.sc.ecl = tempecl;
++            vscED.sc.ecl = tempecl;
+             
++            */
+             EPH_SphCoords scED, scJ2;
+             scED = vscED.sc;
+             scJ2 = vscJ2.sc;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000125.html">[Ephemeritis-svn] r269 - in branches/new-vsop-prepare/data: .	vsop87d
+</A></li>
+	<LI>Next message: <A HREF="000123.html">[Ephemeritis-svn] r271 - in branches/new-vsop-prepare: data	data/vsop87d src/c/libephemeritis src/c/utils
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#122">[ date ]</a>
+              <a href="thread.html#122">[ thread ]</a>
+              <a href="subject.html#122">[ subject ]</a>
+              <a href="author.html#122">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

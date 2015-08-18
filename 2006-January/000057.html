@@ -1,0 +1,215 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r204 - in branches/new-vsop-prepare/src/c: libephemeritis utils
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-January/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r204%20-%20in%20branches/new-vsop-prepare/src/c%3A%20libephemeritis%20utils&In-Reply-To=%3C200601100525.k0A5PS5U002114%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000056.html">
+   <LINK REL="Next"  HREF="000058.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r204 - in branches/new-vsop-prepare/src/c: libephemeritis utils</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r204%20-%20in%20branches/new-vsop-prepare/src/c%3A%20libephemeritis%20utils&In-Reply-To=%3C200601100525.k0A5PS5U002114%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r204 - in branches/new-vsop-prepare/src/c: libephemeritis utils">izogi at berlios.de
+       </A><BR>
+    <I>Tue Jan 10 06:25:28 CET 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000056.html">[Ephemeritis-svn] r203 - branches/new-vsop-prepare/src/c/utils
+</A></li>
+        <LI>Next message: <A HREF="000058.html">[Ephemeritis-svn] r205 - in branches/new-vsop-prepare: . data data/vsop src/c/libephemeritis src/c/utils
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#57">[ date ]</a>
+              <a href="thread.html#57">[ thread ]</a>
+              <a href="subject.html#57">[ subject ]</a>
+              <a href="author.html#57">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-01-10 06:25:26 +0100 (Tue, 10 Jan 2006)
+New Revision: 204
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.c
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h
+   branches/new-vsop-prepare/src/c/utils/build_vsop_data.c
+Log:
+Removed some typedefs from new vsop header code, and moved them to be anonymous structs inside other structs.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.c	2006-01-09 10:05:00 UTC (rev 203)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.c	2006-01-10 05:25:26 UTC (rev 204)
+@@ -26,6 +26,7 @@
+ 
+ #include &quot;ephemeritis_vsop_data.h&quot;
+ 
++#include &lt;stdlib.h&gt;
+ 
+ /*! @brief De-allocates the space that was allocated for a series
+  *  structure in memory.
+@@ -48,12 +49,10 @@
+ {
+   int n;
+   for(n = 0; n &lt; b-&gt;meta.num_variables; n++) {
+-    vsop_variable *var = &amp;b-&gt;variable_list[n];
+-
+     int o;
+-    for(o = 0; o &lt; var-&gt;meta.series_count; o++) {
++    for(o = 0; o &lt; b-&gt;variable_list[n].meta.series_count; o++) {
+       /* Destroy each series. */
+-      destroy_series(var-&gt;series_list[o]);
++      destroy_series(b-&gt;variable_list[n].series_list[o]);
+     }
+ 
+     /* Free the list of series for the variable. */
+@@ -77,12 +76,11 @@
+ 
+   int v;
+   for(v=0; v&lt;b-&gt;meta.num_variables; v++) {
+-    vsop_variable *var = &amp;(b-&gt;variable_list[v]);
+-    fprintf(ostream, &quot;\nVariable %d contains %d series':\n\n&quot;, v, var-&gt;meta.series_count);
++    fprintf(ostream, &quot;\nVariable %d contains %d series':\n\n&quot;, v, b-&gt;variable_list[v].meta.series_count);
+ 
+     int s;
+-    for(s=0; s&lt;var-&gt;meta.series_count; s++) {
+-      series *ser = &amp;var-&gt;series_list[s];
++    for(s=0; s&lt;b-&gt;variable_list[v].meta.series_count; s++) {
++      series *ser = &amp;(b-&gt;variable_list[v].series_list[s]);
+       fprintf(ostream, &quot;  Series %d has alpha %d and contains %d terms.\n&quot;, s, ser-&gt;meta.alpha, (ser-&gt;meta.num_terms));
+     }
+   }
+@@ -102,13 +100,12 @@
+   /* Loop through the variables, writing data of each one. */
+   int v;
+   for(v=0; v&lt;b-&gt;meta.num_variables; v++) {
+-    vsop_variable *var = &amp;(b-&gt;variable_list[v]);
+-    fwrite(&amp;var-&gt;meta, sizeof(var-&gt;meta), 1, outfile);
++    fwrite(&amp;(b-&gt;variable_list[v].meta), sizeof(b-&gt;variable_list[v].meta), 1, outfile);
+ 
+     /* Loop through the series variables, writing data of each one. */
+     int s;
+-    for(s=0; s&lt;var-&gt;meta.series_count; s++) {
+-      series *ser = &amp;var-&gt;series_list[s];
++    for(s=0; s&lt;b-&gt;variable_list[v].meta.series_count; s++) {
++      series *ser = &amp;b-&gt;variable_list[v].series_list[s];
+       fwrite(&amp;ser-&gt;meta, sizeof(ser-&gt;meta), 1, outfile);
+ 
+       /* Write the list of terms. */
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h	2006-01-09 10:05:00 UTC (rev 203)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h	2006-01-10 05:25:26 UTC (rev 204)
+@@ -42,20 +42,20 @@
+ 
+ 
+ typedef struct {
+-  char alpha;          /*!&lt; @brief The degree alpha of time variable for this series. */
+-  short int num_terms; /*!&lt; @brief The number of terms listed for this series. */
+-} series_meta_bin;
+-typedef struct {
+-  series_meta_bin meta;/*!&lt; @brief Binary meta data about the series'. */
++  struct {
++    char alpha;          /*!&lt; @brief The degree alpha of time variable for this series. */
++    short int num_terms; /*!&lt; @brief The number of terms listed for this series. */
++  } meta;
++
+   term_bin *terms;     /*!&lt; @brief The terms. */
+ } series;
+ 
+ 
+ typedef struct {
+-  char series_count;   /*!&lt; @brief The number of series' listed in the series_list field. */
+-} vsop_variable_meta_bin;
+-typedef struct {
+-  vsop_variable_meta_bin meta; /*!&lt; @brief Binary meta data about the VSOP variable. */
++  struct {
++    char series_count;   /*!&lt; @brief The number of series' listed in the series_list field. */
++  } meta;
++
+   series *series_list;         /*!&lt; @brief The series'. */
+ } vsop_variable;
+ 
+@@ -72,7 +72,15 @@
+  */
+ typedef struct {
+   body_elements_meta_bin meta;    /*!&lt; Binary meta data about the body elements. */
+-  vsop_variable variable_list[6]; /*!&lt; The variables.                            */
++
++  struct {
++    struct {
++      char series_count;   /*!&lt; @brief The number of series' listed in the series_list field. */
++    } meta;                /*!&lt; @brief Binary meta data about the VSOP variable. */
++
++    series *series_list;         /*!&lt; @brief The series'. */
++  } variable_list[6]; /*!&lt; The variables.                            */
++
+ } body_elements;
+ 
+ 
+
+Modified: branches/new-vsop-prepare/src/c/utils/build_vsop_data.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/utils/build_vsop_data.c	2006-01-09 10:05:00 UTC (rev 203)
++++ branches/new-vsop-prepare/src/c/utils/build_vsop_data.c	2006-01-10 05:25:26 UTC (rev 204)
+@@ -127,20 +127,18 @@
+     strncpy(body_el-&gt;meta.body_name, strtrim(ch_body_name, ch_body_name), sizeof(body_el-&gt;meta.body_name));
+ 
+ 
+-    /* Find the current variable structure. */
+-    vsop_variable *this_var = &amp;(body_el-&gt;variable_list[variable_index]);
+     if(variable_index+1 &gt; body_el-&gt;meta.num_variables) {
+       body_el-&gt;meta.num_variables = variable_index+1;
+     }
+ 
+ 
+     /* This is a series header, so add a new series to the variable. */
+-    this_var-&gt;meta.series_count++;
++    body_el-&gt;variable_list[variable_index].meta.series_count++;
+ 
+ 
+-    this_var-&gt;series_list = (series *)realloc(this_var-&gt;series_list, sizeof(series) * this_var-&gt;meta.series_count);
++    body_el-&gt;variable_list[variable_index].series_list = (series *)realloc(body_el-&gt;variable_list[variable_index].series_list, sizeof(series) * body_el-&gt;variable_list[variable_index].meta.series_count);
+ 
+-    series *this_series = &amp;(this_var-&gt;series_list[this_var-&gt;meta.series_count-1]);
++    series *this_series = &amp;(body_el-&gt;variable_list[variable_index].series_list[body_el-&gt;variable_list[variable_index].meta.series_count-1]);
+     this_series-&gt;meta.alpha = alpha;
+     this_series-&gt;meta.num_terms = num_terms;
+     this_series-&gt;terms = (term_bin *)calloc(num_terms, sizeof(term_bin));
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000056.html">[Ephemeritis-svn] r203 - branches/new-vsop-prepare/src/c/utils
+</A></li>
+	<LI>Next message: <A HREF="000058.html">[Ephemeritis-svn] r205 - in branches/new-vsop-prepare: . data data/vsop src/c/libephemeritis src/c/utils
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#57">[ date ]</a>
+              <a href="thread.html#57">[ thread ]</a>
+              <a href="subject.html#57">[ subject ]</a>
+              <a href="author.html#57">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

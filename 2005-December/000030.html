@@ -1,0 +1,270 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r174 - in trunk/src/c: libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2005-December/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r174%20-%20in%20trunk/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200512190745.jBJ7jX7v000287%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000029.html">
+   <LINK REL="Next"  HREF="000031.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r174 - in trunk/src/c: libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r174%20-%20in%20trunk/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200512190745.jBJ7jX7v000287%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r174 - in trunk/src/c: libephemeritis tests">izogi at berlios.de
+       </A><BR>
+    <I>Mon Dec 19 08:45:33 CET 2005</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000029.html">[Ephemeritis-svn] r173 - in trunk/src/c: libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000031.html">[Ephemeritis-svn] r175 - trunk/src/c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#30">[ date ]</a>
+              <a href="thread.html#30">[ thread ]</a>
+              <a href="subject.html#30">[ subject ]</a>
+              <a href="author.html#30">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2005-12-19 08:45:29 +0100 (Mon, 19 Dec 2005)
+New Revision: 174
+
+Modified:
+   trunk/src/c/libephemeritis/elliptical.c
+   trunk/src/c/libephemeritis/ephemeritis.h
+   trunk/src/c/libephemeritis/solar.c
+   trunk/src/c/tests/validate_meeus.c
+Log:
+Added rec_coords structure, and adjusted functions that reference/take/return rectangular coordinates to use it instead.
+
+
+Modified: trunk/src/c/libephemeritis/elliptical.c
+===================================================================
+--- trunk/src/c/libephemeritis/elliptical.c	2005-12-18 10:19:24 UTC (rev 173)
++++ trunk/src/c/libephemeritis/elliptical.c	2005-12-19 07:45:29 UTC (rev 174)
+@@ -281,8 +281,10 @@
+  *  @param[in]  L   Longitude of the ascending node, in radians.
+  *  @param[in]  n   Mean motion, in degrees/day.
+  *
++ *  @return A pointer to the rc structure that was passed in.  This
++ *  return value is for convenience only.
+  */
+-void elliptical_orbit_rectangular(double jd, double obl, double T, double a, double e, double i, double w, double L, double n, double *x, double *y, double *z)
++rec_coords *elliptical_orbit_rectangular(double jd, double obl, double T, double a, double e, double i, double w, double L, double n, rec_coords *rc)
+ {
+     double F = cos(L);
+     double G = sin(L) * cos(obl);
+@@ -306,7 +308,7 @@
+     double v = true_anomoly(e, E);
+     double r = radius_vector(a, e, E);
+ 
+-    *x = r * a_ * sin(A + w + v);
+-    *y = r * b_ * sin(B + w + v);
+-    *z = r * c_ * sin(C + w + v);
++    rc-&gt;x = r * a_ * sin(A + w + v);
++    rc-&gt;y = r * b_ * sin(B + w + v);
++    rc-&gt;z = r * c_ * sin(C + w + v);
+ }
+
+Modified: trunk/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- trunk/src/c/libephemeritis/ephemeritis.h	2005-12-18 10:19:24 UTC (rev 173)
++++ trunk/src/c/libephemeritis/ephemeritis.h	2005-12-19 07:45:29 UTC (rev 174)
+@@ -85,16 +85,19 @@
+     true = 1
+ } bool;
+ 
+-/*! @brief Custom type to hold floating point numbers.
+- * 
+- *  This will probably be either double or long double,
+- *  depending on the accuracy desired at compilation time.
++/*! @brief Struct for holding rectangular coordinates.
+  *
++ *  @warning The exact meaning of x, y and z varies depending upon the
++ *  function with which this is used.  Consult the documentation for
++ *  the function for information about what each field refers to.
+  */
+-	       /*
+-	          typedef double ephemnumeric;
+-	        */
++typedef struct {
++  double x;                     /*!&lt; The x coordinate. */
++  double y;                     /*!&lt; The y coordinate. */
++  double z;                     /*!&lt; The z coordinate. */
++} rec_coords;
+ 
++
+ /*  What follows are universe-specific constants that are used by
+  *  Ephemeritis to perform calculations.  Don't change these unless you
+  *  are moving to a new universe.
+@@ -287,7 +290,7 @@
+ 		      double epsilon,
+ 		      double delta,
+ 		      double *ra, double *dec);
+-void elliptical_orbit_rectangular(double jd,
++rec_coords *elliptical_orbit_rectangular(double jd,
+ 				  double obl,
+ 				  double T,
+ 				  double a,
+@@ -296,9 +299,7 @@
+ 				  double w,
+ 				  double L,
+ 				  double n,
+-				  double *x,
+-				  double *y,
+-				  double *z);
++				  rec_coords *rc);
+ 
+ /* solar.c */
+ double sol_dimension_vsop(double jd, enum Coords dim);
+@@ -309,7 +310,7 @@
+ void longitude_radius_low(double jd, double *L, double *R);
+ double apparent_longitude_low(double jd, double L);
+ double aberration_low(double R);
+-void sol_rectangular(double L, double B, double R, double E, double *X, double *Y, double *Z);
++rec_coords *sol_rectangular(double L, double B, double R, double E, rec_coords *rc);
+ 
+ 
+ /* constellations.c */
+
+Modified: trunk/src/c/libephemeritis/solar.c
+===================================================================
+--- trunk/src/c/libephemeritis/solar.c	2005-12-18 10:19:24 UTC (rev 173)
++++ trunk/src/c/libephemeritis/solar.c	2005-12-19 07:45:29 UTC (rev 174)
+@@ -215,35 +215,25 @@
+  *  @param[in]  B  Geometric latitude of the Sun, in radians/fk5.
+  *  @param[in]  R  Geometric radius of the Sun, in radians/fk5.
+  *  @param[in]  E  The mean obliquity of the ecliptic.
+- *  @param[out] X  The X coordinate, in astronomical units.
+- *  @param[out] Y  The Y coordinate, in astronomical units.
+- *  @param[out] Z  The Z coordinate, in astronomical units.
++ *  @param[out] rc  The x, y and z coordinates, in astronomical units.
+  *
++ *  @return A pointer to the rc structure that was passed. (This
++ *  return value is for convenience only.)
++ *
+  *  @sa sol_dimension3_fk5
+  *  @sa obliquity
+  *  @sa obliquity_hi
+  *
+  *  @author Mike McGavin.
+  */
+-void sol_rectangular(double L, double B, double R, double E, double *X, double *Y, double *Z)
++rec_coords *sol_rectangular(double L, double B, double R, double E, rec_coords *rc)
+ {
+-    /* Declare Longitude, Latitude and Radius.
+-    double L;
+-    double B;
+-    double R;
+-
+-    sol_dimension3_fk5(jd, &amp;L, &amp;B, &amp;R);
+-    */
+-    /* Get the obliquity of the ecliptic.
+-    double E = obliquity_hi(jd);
+-    */
+-
+     double cosB = cos(B);
+     double sinL = sin(L);
+     double sinB = sin(B);
+     double sinE = sin(E);
+     double cosE = cos(E);
+-    *X = R * (cosB * cos(L));
+-    *Y = R * ((cosB * sinL * cosE) - (sinB * sinE));
+-    *Z = R * ((cosB * sinL * sinE) + (sinB * cosE));
++    rc-&gt;x = R * (cosB * cos(L));
++    rc-&gt;y = R * ((cosB * sinL * cosE) - (sinB * sinE));
++    rc-&gt;z = R * ((cosB * sinL * sinE) + (sinB * cosE));
+ }
+
+Modified: trunk/src/c/tests/validate_meeus.c
+===================================================================
+--- trunk/src/c/tests/validate_meeus.c	2005-12-18 10:19:24 UTC (rev 173)
++++ trunk/src/c/tests/validate_meeus.c	2005-12-19 07:45:29 UTC (rev 174)
+@@ -670,11 +670,11 @@
+ 	B = d_to_r(dms_to_d(0,0,0.62));
+ 	R = 0.99760775;
+ 	double E = obliquity_hi(jd);
+-	double X, Y, Z;
+-	sol_rectangular(L, B, R, E, &amp;X, &amp;Y, &amp;Z);
+-	report(&quot;X&quot;, X, -0.9379952, 0.0000001, &quot;AU&quot;);
+-	report(&quot;Y&quot;, Y, -0.3116544, 0.0000001, &quot;AU&quot;);
+-	report(&quot;Z&quot;, Z, -0.1351215, 0.0000001, &quot;AU&quot;);
++	rec_coords rc;
++	sol_rectangular(L, B, R, E, &amp;rc);
++	report(&quot;X&quot;, rc.x, -0.9379952, 0.0000001, &quot;AU&quot;);
++	report(&quot;Y&quot;, rc.y, -0.3116544, 0.0000001, &quot;AU&quot;);
++	report(&quot;Z&quot;, rc.z, -0.1351215, 0.0000001, &quot;AU&quot;);
+     }
+ 
+     printf(&quot;27.a Approximate solstice\n&quot;);
+@@ -773,12 +773,12 @@
+       report(&quot;Equation of time&quot;, eot_result, fday_to_r(hms_to_fday(0.0,13.0,42.6)), 0.000001, &quot;radians&quot;);
+     }
+ 
+-    printf(&quot;30.a Equation of Kepler\n&quot;);
++    printf(&quot;30.a Eccentricity anomoly (Equation of Kepler)\n&quot;);
+     {
+       double e = 0.100;
+       double M = d_to_r(5.0);
+       double eok_result = eccentricity_anomoly(M, e, 33);
+-      report(&quot;Equation of Kepler&quot;, eok_result, d_to_r(5.554589), 0.0000001, &quot;radians&quot;);
++      report(&quot;Eccentricity anoomly&quot;, eok_result, d_to_r(5.554589), 0.0000001, &quot;radians&quot;);
+     }
+ 
+     printf(&quot;32.a Planet position\n&quot;);
+@@ -813,15 +813,14 @@
+       double L = d_to_r(334.75006);
+       double w = d_to_r(186.23352);
+       double n = 0.01720209895 / (a*sqrt(a));
+-      double x,y,z;
+-      
+       double jd = cal_to_jd(1990, 10, 6, true);
+ 
+-      elliptical_orbit_rectangular(jd, obliquity_hi(je_to_jd(2000.0)), T, a, e, i, w, L, n, &amp;x, &amp;y, &amp;z);
++      rec_coords rc;
++      elliptical_orbit_rectangular(jd, obliquity_hi(je_to_jd(2000.0)), T, a, e, i, w, L, n, &amp;rc);
+ 
+-      report(&quot;x&quot;, x, 0.2508066, 0.0000001, &quot;AU&quot;);
+-      report(&quot;y&quot;, y, 0.4849175, 0.0000001, &quot;AU&quot;);
+-      report(&quot;z&quot;, z, 0.3573373, 0.0000001, &quot;AU&quot;);
++      report(&quot;x&quot;, rc.x, 0.2508066, 0.0000001, &quot;AU&quot;);
++      report(&quot;y&quot;, rc.y, 0.4849175, 0.0000001, &quot;AU&quot;);
++      report(&quot;z&quot;, rc.z, 0.3573373, 0.0000001, &quot;AU&quot;);
+     }
+ 
+     printf(&quot;47.a Moon position\n&quot;);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000029.html">[Ephemeritis-svn] r173 - in trunk/src/c: libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000031.html">[Ephemeritis-svn] r175 - trunk/src/c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#30">[ date ]</a>
+              <a href="thread.html#30">[ thread ]</a>
+              <a href="subject.html#30">[ subject ]</a>
+              <a href="author.html#30">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

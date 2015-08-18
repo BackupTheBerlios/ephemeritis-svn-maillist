@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r151 - trunk/src/c/libephemeritis
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2005-December/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r151%20-%20trunk/src/c/libephemeritis&In-Reply-To=%3C200512061026.jB6AQU8E006109%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000007.html">
+   <LINK REL="Next"  HREF="000009.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r151 - trunk/src/c/libephemeritis</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r151%20-%20trunk/src/c/libephemeritis&In-Reply-To=%3C200512061026.jB6AQU8E006109%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r151 - trunk/src/c/libephemeritis">izogi at berlios.de
+       </A><BR>
+    <I>Tue Dec  6 11:26:30 CET 2005</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000007.html">[Ephemeritis-svn] r150 - in trunk/src/c: libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000009.html">[Ephemeritis-svn] r152 - in trunk/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#8">[ date ]</a>
+              <a href="thread.html#8">[ thread ]</a>
+              <a href="subject.html#8">[ subject ]</a>
+              <a href="author.html#8">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2005-12-06 11:26:28 +0100 (Tue, 06 Dec 2005)
+New Revision: 151
+
+Modified:
+   trunk/src/c/libephemeritis/equationoftime.c
+   trunk/src/c/libephemeritis/nutation.c
+Log:
+More work on Equation of Time -- still not working.
+
+
+Modified: trunk/src/c/libephemeritis/equationoftime.c
+===================================================================
+--- trunk/src/c/libephemeritis/equationoftime.c	2005-12-05 09:58:34 UTC (rev 150)
++++ trunk/src/c/libephemeritis/equationoftime.c	2005-12-06 10:26:28 UTC (rev 151)
+@@ -44,11 +44,15 @@
+ 
+   printf(&quot;%f\n&quot;, r_to_d(L0));
+ 
+-  double E = L0 - d_to_r(0.0057183) - sol_dimension(jd, vL) + nut_in_lon(jd) * cos(obliquity_hi(jd));
++  double E = L0 - d_to_r(0.0057183) - sol_dimension(jd, vL) + nut_in_lon(jd) * cos(obliquity_hi(jd) + nut_in_obl(jd));
+ 
++  printf(&quot;Output: %f\n&quot;, r_to_d( d_to_r(201.807193) - d_to_r(0.0057183) - d_to_r(0.004419) * cos(d_to_r(23.4401443))));
++
+   printf(&quot;%f\n&quot;, r_to_d(sol_dimension(jd, vL)));
++  printf(&quot;%f\n&quot;, r_to_d(obliquity_hi(jd) + nut_in_obl(jd)));
++  printf(&quot;%f\n&quot;, r_to_d(nut_in_lon(jd)));
+   int hr, mn, sec;
+-  fday_to_hms( (nut_in_lon(jd) / (2.0*pi))*24.0 , &amp;hr, &amp;mn, &amp;sec);
++  fday_to_hms( (nut_in_lon(jd) / (2*pi) )*24.0 , &amp;hr, &amp;mn, &amp;sec);
+   printf(&quot;%d %d %d\n&quot;, hr, mn, sec);
+ 
+   return E;
+
+Modified: trunk/src/c/libephemeritis/nutation.c
+===================================================================
+--- trunk/src/c/libephemeritis/nutation.c	2005-12-05 09:58:34 UTC (rev 150)
++++ trunk/src/c/libephemeritis/nutation.c	2005-12-06 10:26:28 UTC (rev 151)
+@@ -171,7 +171,7 @@
+     {2, 0, 1, -2, 0, -1, 0, 0, 0},	/* 103 */
+     {2, 0, 2, 0, 0, 1, 0, 0, 0},	/* 104 */
+     {4, 0, 0, 2, 2, -1, 0, 0, 0},	/* 105 */
+-    {1, 1, 0, 0, 0, 1, 0, 0, 0}	/* 106 */
++    {1, 1, 0, 0, 0, 1, 0, 0, 0}	        /* 106 */
+ };
+ 
+ void _constants(double T, double *D, double *M, double *M1, double *F,
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000007.html">[Ephemeritis-svn] r150 - in trunk/src/c: libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000009.html">[Ephemeritis-svn] r152 - in trunk/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#8">[ date ]</a>
+              <a href="thread.html#8">[ thread ]</a>
+              <a href="subject.html#8">[ subject ]</a>
+              <a href="author.html#8">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

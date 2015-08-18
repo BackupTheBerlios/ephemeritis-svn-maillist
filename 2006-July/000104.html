@@ -1,0 +1,268 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r251 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-July/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r251%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607230720.k6N7Ko2x023371%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000103.html">
+   <LINK REL="Next"  HREF="000108.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r251 - in branches/new-vsop-prepare/src/c:	libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r251%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607230720.k6N7Ko2x023371%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r251 - in branches/new-vsop-prepare/src/c:	libephemeritis tests">izogi at mail.berlios.de
+       </A><BR>
+    <I>Sun Jul 23 09:20:50 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000103.html">[Ephemeritis-svn] r250 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000108.html">[Ephemeritis-svn] r252 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#104">[ date ]</a>
+              <a href="thread.html#104">[ thread ]</a>
+              <a href="subject.html#104">[ subject ]</a>
+              <a href="author.html#104">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-07-23 09:20:46 +0200 (Sun, 23 Jul 2006)
+New Revision: 251
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/conversions.c
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+   branches/new-vsop-prepare/src/c/libephemeritis/precession.c
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+Converting more functions to use structs for ecliptical and equatorial coordinates.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/conversions.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/conversions.c	2006-07-21 10:54:06 UTC (rev 250)
++++ branches/new-vsop-prepare/src/c/libephemeritis/conversions.c	2006-07-23 07:20:46 UTC (rev 251)
+@@ -208,7 +208,7 @@
+  *
+  *  [Meeus-1998: equations 13.1, 13.2]
+  *
+- *  @param[in]  equ_coords Equatorial coordinates to convert from.
++ *  @param[in]  equ_pos Equatorial coordinates to convert from.
+  *  @param[in]  obliquity  Obliquity of the ecliptic, in radians.
+  *
+  *  @param[out] ecl_pos    The ecliptic coordinates, in radians.
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-21 10:54:06 UTC (rev 250)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-23 07:20:46 UTC (rev 251)
+@@ -252,17 +252,20 @@
+ 						  const double JDfinal);
+ 
+ void precession_eq(const precession_elements_eq pceq,
+-		   const double raInitial,
+-		   const double decInitial,
+-		   double *raFinal, double *decFinal);
++		   const equatorial_coords eqInitial,
++		   equatorial_coords *eqFinal);
+ 
+ precession_elements_ecl precession_get_elements_ecl(const double JDinitial,
+ 						    const double JDfinal);
+ 
+ void precession_ecl(const precession_elements_ecl pcecl,
++		    const ecliptical_coords eclInitial,
++		    ecliptical_coords *eclFinal);
++/*
+ 		    const double longInitial,
+ 		    const double latInitial,
+ 		    double *longFinal, double *latFinal);
++*/
+ 
+ /* riseset.c */
+ double horizon(const enum HorizonType hType,
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/precession.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/precession.c	2006-07-21 10:54:06 UTC (rev 250)
++++ branches/new-vsop-prepare/src/c/libephemeritis/precession.c	2006-07-23 07:20:46 UTC (rev 251)
+@@ -112,10 +112,8 @@
+  *  precession.  [Meeus-1998: equations 21.2 to 21.4]
+  *
+  *  @param[in]  pceq       The elements related to the time of the precession, calculated by precession_get_elements_eq.
+- *  @param[in]  raInitial  The initial right ascension, in radians.
+- *  @param[in]  decInitial The initial declination, in radians.
+- *  @param[out] raFinal    The final right ascension, in radians.
+- *  @param[out] decFinal   The final declination, in radians.
++ *  @param[in]  eqInitial  The initial equatorial coordinates.
++ *  @param[out] eqFinal    The final equatorial coordinates.
+  *
+  *  @see precession_get_elements_eq, precession_ecl
+  *
+@@ -124,22 +122,21 @@
+  *  @author Mike McGavin.
+  */
+ void precession_eq(const precession_elements_eq pceq,
+-		   const double raInitial,
+-		   const double decInitial,
+-		   double *raFinal, double *decFinal)
++		   const equatorial_coords eqInitial,
++		   equatorial_coords *eqFinal)
+ {
+-    double A = cos(decInitial) * sin(raInitial + pceq.zeta_rad);
++    double A = cos(eqInitial.dec) * sin(eqInitial.ra + pceq.zeta_rad);
+     double B =
+-	cos(pceq.theta_rad) * cos(decInitial) * cos(raInitial +
++	cos(pceq.theta_rad) * cos(eqInitial.dec) * cos(eqInitial.ra +
+ 						    pceq.zeta_rad) -
+-	sin(pceq.theta_rad) * sin(decInitial);
++	sin(pceq.theta_rad) * sin(eqInitial.dec);
+     double C =
+-	sin(pceq.theta_rad) * cos(decInitial) * cos(raInitial +
++	sin(pceq.theta_rad) * cos(eqInitial.dec) * cos(eqInitial.ra +
+ 						    pceq.zeta_rad) +
+-	cos(pceq.theta_rad) * sin(decInitial);
++	cos(pceq.theta_rad) * sin(eqInitial.dec);
+ 
+-    *raFinal = modpi2(atan2(A, B) + pceq.z_rad);
+-    *decFinal = circumpi(asin(C));
++    eqFinal-&gt;ra = modpi2(atan2(A, B) + pceq.z_rad);
++    eqFinal-&gt;dec = circumpi(asin(C));
+ }
+ 
+ /*! @brief Calculates certain values related to the precession
+@@ -216,10 +213,8 @@
+  *  precession.  [Meeus-1998: equations 21.2 to 21.4]
+  *
+  *  @param[in]  pcecl        The elements related to the time of the precession, calculated by precession_get_elements_ecl.
+- *  @param[in]  longInitial  The initial celestial longitude, in radians.
+- *  @param[in]  latInitial   The initial celestial latitude, in radians.
+- *  @param[out] longFinal    The final right ascension, in radians.
+- *  @param[out] latFinal     The final declination, in radians.
++ *  @param[in]  eclInitial   The initial ecliptical coordinates.
++ *  @param[out] eclFinal     The final ecliptical coordinates.
+  *
+  *  @see precession_get_elements_ecl, precession_eq
+  *
+@@ -228,23 +223,22 @@
+  *  @author Mike McGavin.
+  */
+ void precession_ecl(const precession_elements_ecl pcecl,
+-		    const double longInitial,
+-		    const double latInitial,
+-		    double *longFinal, double *latFinal)
++		    const ecliptical_coords eclInitial,
++		    ecliptical_coords *eclFinal)
+ {
+ 
+     double A =
+-	(cos(pcecl.n_rad) * cos(latInitial) *
+-	 sin(pcecl.II_rad - longInitial)) -
+-	(sin(pcecl.n_rad) * sin(latInitial));
+-    double B = cos(latInitial) * cos(pcecl.II_rad - longInitial);
++	(cos(pcecl.n_rad) * cos(eclInitial.ecl_lat) *
++	 sin(pcecl.II_rad - eclInitial.ecl_lon)) -
++	(sin(pcecl.n_rad) * sin(eclInitial.ecl_lat));
++    double B = cos(eclInitial.ecl_lat) * cos(pcecl.II_rad - eclInitial.ecl_lon);
+     double C =
+-	((cos(pcecl.n_rad) * sin(latInitial))) +
+-	(sin(pcecl.n_rad) * cos(latInitial) *
+-	 sin(pcecl.II_rad - longInitial));
++	((cos(pcecl.n_rad) * sin(eclInitial.ecl_lat))) +
++	(sin(pcecl.n_rad) * cos(eclInitial.ecl_lat) *
++	 sin(pcecl.II_rad - eclInitial.ecl_lon));
+ 
+-    *longFinal = modpi2(-1 * (atan2(A, B) - pcecl.p_rad - pcecl.II_rad));
+-    *latFinal = circumpi(asin(C));
++    eclFinal-&gt;ecl_lon = modpi2(-1 * (atan2(A, B) - pcecl.p_rad - pcecl.II_rad));
++    eclFinal-&gt;ecl_lat = circumpi(asin(C));
+ }
+ 
+ /*! @brief Calculates proper motion in ecliptical coordinates, given
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-21 10:54:06 UTC (rev 250)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-23 07:20:46 UTC (rev 251)
+@@ -602,33 +602,31 @@
+ 
+     printf(&quot;21.b Precession (equatorial)\n&quot;);
+     {
+-	double a0 =
++	equatorial_coords eqInitial, eqFinal;
++	eqInitial.ra = 
+ 	    fday_to_r(hms_to_fday(2, 44, 11.986) +
+ 		      hms_to_fday(0.0, 0.0, 0.03425) * 28.86705);
+-	double d0 =
++	eqInitial.dec =
+ 	    d_to_r(dms_to_d(49, 13, 42.48) +
+ 		   dms_to_d(0.0, 0.0, 0.0895) * 28.86705);
+-	double a1;
+-	double d1;
+ 	precession_eq(precession_get_elements_eq(2451545.0, 2462088.69),
+-		      a0, d0, &amp;a1, &amp;d1);
++		      eqInitial, &amp;eqFinal);
+ 
+-	report(&quot;RA&quot;, a1, fday_to_r(hms_to_fday(2, 46, 11.331)), 0.00001,
++	report(&quot;RA&quot;, eqFinal.ra, fday_to_r(hms_to_fday(2, 46, 11.331)), 0.00001,
+ 	       &quot;radians&quot;);
+-	report(&quot;Dec&quot;, d1, d_to_r(dms_to_d(49, 20, 54.54)), 0.0001,
++	report(&quot;Dec&quot;, eqFinal.dec, d_to_r(dms_to_d(49, 20, 54.54)), 0.0001,
+ 	       &quot;radians&quot;);
+     }
+     printf(&quot;21.c Precession (ecliptical)\n&quot;);
+     {
+-	double lon = d_to_r(149.48194);
+-	double lat = d_to_r(1.76549);
+-	double lon1;
+-	double lat1;
+-	precession_ecl(precession_get_elements_ecl
+-		       (je_to_jd(2000.0), 1643074.5), lon, lat, &amp;lon1,
+-		       &amp;lat1);
+-	report(&quot;Longitude&quot;, lon1, d_to_r(118.704), 0.00001, &quot;radians&quot;);
+-	report(&quot;Latitude&quot;, lat1, d_to_r(1.615), 0.0001, &quot;radians&quot;);
++	ecliptical_coords eclInitial, eclFinal;
++	eclInitial.ecl_lon = d_to_r(149.48194);
++	eclInitial.ecl_lat = d_to_r(1.76549);
++	precession_ecl(precession_get_elements_ecl(je_to_jd(2000.0), 1643074.5),
++		eclInitial, &amp;eclFinal);
++
++	report(&quot;Longitude&quot;, eclFinal.ecl_lon, d_to_r(118.704), 0.00001, &quot;radians&quot;);
++	report(&quot;Latitude&quot;, eclFinal.ecl_lat, d_to_r(1.615), 0.0001, &quot;radians&quot;);
+     }
+ 
+     printf(&quot;22.a Nutation (delta psi)\n&quot;);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000103.html">[Ephemeritis-svn] r250 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000108.html">[Ephemeritis-svn] r252 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#104">[ date ]</a>
+              <a href="thread.html#104">[ thread ]</a>
+              <a href="subject.html#104">[ subject ]</a>
+              <a href="author.html#104">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

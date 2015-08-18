@@ -1,0 +1,272 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r216 - in branches/new-vsop-prepare/src: c/libephemeritis c/tests python
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-January/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r216%20-%20in%20branches/new-vsop-prepare/src%3A%20c/libephemeritis%20c/tests%20python&In-Reply-To=%3C200601180957.k0I9vSna000849%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000068.html">
+   <LINK REL="Next"  HREF="000070.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r216 - in branches/new-vsop-prepare/src: c/libephemeritis c/tests python</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r216%20-%20in%20branches/new-vsop-prepare/src%3A%20c/libephemeritis%20c/tests%20python&In-Reply-To=%3C200601180957.k0I9vSna000849%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r216 - in branches/new-vsop-prepare/src: c/libephemeritis c/tests python">izogi at berlios.de
+       </A><BR>
+    <I>Wed Jan 18 10:57:28 CET 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000068.html">[Ephemeritis-svn] r215 - branches/new-vsop-prepare/src/python
+</A></li>
+        <LI>Next message: <A HREF="000070.html">[Ephemeritis-svn] r217 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#69">[ date ]</a>
+              <a href="thread.html#69">[ thread ]</a>
+              <a href="subject.html#69">[ subject ]</a>
+              <a href="author.html#69">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-01-18 10:57:28 +0100 (Wed, 18 Jan 2006)
+New Revision: 216
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+   branches/new-vsop-prepare/src/python/vsop2-experiment.py
+Log:
+Added vsop_rec_invert() for inverting rectangular coordinates (such as for determining the Sun's position having calculated Earth).
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h	2006-01-18 09:21:05 UTC (rev 215)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_data.h	2006-01-18 09:57:28 UTC (rev 216)
+@@ -81,6 +81,7 @@
+   vsop_handle vh;       /*!&lt; @brief The VSOP handle representing the data these coordinates were calculated from. */
+   double jd;            /*!&lt; @brief The Julian Date of these coordinates, in dynamical time.                      */
+   rec_coords rc;        /*!&lt; @brief The XYZ coordinates.                                                          */
++  int is_inverted;      /*!&lt; @brief Set to 1 if these coordinates are inverted (eg. for Solar coordinates), 0 otherwise. */
+   int error_state;      /*!&lt; @brief The state of these coordinates,
+                                     indicating if they're okay to use.
+                                     Note that this field is only valid
+@@ -109,6 +110,7 @@
+   vsop_handle vh;       /*!&lt; @brief The VSOP handle representing the data these coordinates were calculated from. */
+   double jd;            /*!&lt; @brief The Julian Date of these coordinates, in dynamical time.                      */
+   sph_coords sc;        /*!&lt; @brief The spherical coordinates.                                                   */
++  int is_inverted;      /*!&lt; @brief Set to 1 if these coordinates are inverted (eg. for Solar coordinates), 0 otherwise. */
+   int error_state;      /*!&lt; @brief The state of these coordinates,
+                                     indicating if they're okay to use.
+                                     Note that this field is only valid
+@@ -127,6 +129,7 @@
+ int get_vsop_data_handle(const vsop_body planet, const vsop_version version, vsop_handle *vh);
+ vsop_rec_coords vsop_get_rectangular(const vsop_handle vh, const double jd);
+ vsop_rec_coords vsop_rec_vsop_to_fk5(const vsop_rec_coords vrc);
++vsop_rec_coords vsop_rec_invert(const vsop_rec_coords vrc);
+ vsop_sph_coords vsop_get_spherical(const vsop_handle vh, const double jd);
+ vsop_sph_coords vsop_sph_vsop_to_fk5(const vsop_sph_coords vsc);
+ 
+@@ -138,7 +141,7 @@
+ #define EPHEMERITIS_BIN_HEADER_TEXT_FORMAT &quot;EphB v=%s&quot;
+ 
+ /* Define data path -- this should be updated to something configurable. */
+-#define EPH_VSOP_DATA_PATH &quot;/home/izogi/ephemeritis/branches/new-vsop-prepare/data/vsop/&quot;
++#define EPH_VSOP_DATA_PATH &quot;/home/izogi/misc/ephemeritis/branches/new-vsop-prepare/data/vsop/&quot;
+ 
+ /* Start with... */
+ #define EPH_VSOP_PREFIX    &quot;VSOP87&quot;
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-01-18 09:21:05 UTC (rev 215)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-01-18 09:57:28 UTC (rev 216)
+@@ -125,6 +125,7 @@
+   memset(&amp;vrc, '\0', sizeof(vrc));
+   vrc.vh = vh;
+   vrc.jd = jd;
++  vrc.is_inverted = 0;
+ 
+   /* Get a reference to the body_elements structure for this handle. */
+   body_elements *be;
+@@ -194,7 +195,37 @@
+   return output;
+ }
+ 
++/*! @brief Given a set of rectangular VSOP coordinates, invert them.
++ *  This is useful, for instance, to convert rectangular Earth
++ *  coordinates to Sun coordinates.
++ *
++ *  The is_inverted property of the coordinates structure is flipped
++ *  in the returned value of this function.  If the provided
++ *  coordinates are in an error state, they are returned immediately
++ *  without any additional operations being performed.
++ *
++ *  @param[in]  vrc A set of rectangular coordinates.
++ *
++ *  @return A set of rectangular coordinates identical to those
++ *  provided, but inverted.
++ */
++vsop_rec_coords vsop_rec_invert(const vsop_rec_coords vrc)
++{
++  vsop_rec_coords output = vrc;
+ 
++  /* Stop right here if the incoming coordinates are in an error state. */
++  if(output.error_state != 0) {
++    return output;
++  }
++
++  output.rc.x = -output.rc.x;
++  output.rc.y = -output.rc.y;
++  output.rc.z = -output.rc.z;
++  output.is_inverted = output.is_inverted ^ 0x01;
++  return output;
++}
++
++
+ /*! @brief Given a VSOP handle referencing data, and a Julian Date,
+  *  calculates spherical variables.
+  *
+@@ -220,6 +251,7 @@
+   memset(&amp;vsc, '\0', sizeof(vsc));
+   vsc.vh = vh;
+   vsc.jd = jd;
++  vsc.is_inverted = 0;
+ 
+   /* Get a reference to the body_elements structure for this handle. */
+   body_elements *be;
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-01-18 09:21:05 UTC (rev 215)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-01-18 09:57:28 UTC (rev 216)
+@@ -1220,26 +1220,27 @@
+ /* 	printf(&quot;File didn't load for some reason\n&quot;); */
+ /*       } */
+ /*     } */
+-/*     { */
+-/* 	printf(&quot;Checking new VSOP routines\n&quot;); */
+-/* 	{ */
+-/* 	  printf(&quot;Earth rectangular\n&quot;); */
+-/* 	  vsop_handle vh; */
+-/* 	  if(0 != get_vsop_data_handle(vsop_earth, hel_rec_j2, &amp;vh)) { */
+-/* 	    printf(&quot;\t\tError loading Earth handle.\n&quot;); */
+-/* 	  } else { */
+-/* 	    double jd = 2448170.5; */
+-/* 	    vsop_rec_coords vrc = vsop_get_rectangular(vh, jd); */
++    {
++	printf(&quot;Checking new VSOP routines\n&quot;);
++	{
++	  vsop_handle vh;
++
++ 	  if(0 != get_vsop_data_handle(vsop_earth, hel_rec_j2, &amp;vh)) {
++	    printf(&quot;\t\tError loading Earth handle.\n&quot;);
++	  } else {
++	    double jd = 2448170.5;
++	    vsop_rec_coords vrc = vsop_get_rectangular(vh, jd);
+ 	    
+-/* 	    vrc = vsop_rec_vsop_to_fk5(vrc); */
++	    vrc = vsop_rec_invert(vsop_rec_vsop_to_fk5(vrc));
+ 	  
+ 
+-/* 	    report(&quot;X&quot;, vrc.rc.x * km_per_au, 0.975673220683  * km_per_au, 1.0e-15, &quot;km&quot;); */
+-/* 	    report(&quot;Y&quot;, vrc.rc.y * km_per_au, 0.200325394065  * km_per_au, 1.0e-15, &quot;km&quot;); */
+-/* 	    report(&quot;Z&quot;, vrc.rc.z * km_per_au, 0.0868565820014 * km_per_au, 1.0e-15, &quot;km&quot;); */
++	    report(&quot;X&quot;, vrc.rc.x * km_per_au, -0.975673220683  * km_per_au, 1.0e-4, &quot;km&quot;);
++	    report(&quot;Y&quot;, vrc.rc.y * km_per_au, -0.200325394065  * km_per_au, 1.0e-4, &quot;km&quot;);
++	    report(&quot;Z&quot;, vrc.rc.z * km_per_au, -0.0868565820014 * km_per_au, 1.0e-4, &quot;km&quot;);
+ 	  
+-/* 	  } */
+-/* 	} */
++	  }
++	}
++    }
+ /* 	{ */
+ /* 	  printf(&quot;Venus spherical\n&quot;); */
+ /* 	  vsop_handle vh; */
+
+Modified: branches/new-vsop-prepare/src/python/vsop2-experiment.py
+===================================================================
+--- branches/new-vsop-prepare/src/python/vsop2-experiment.py	2006-01-18 09:21:05 UTC (rev 215)
++++ branches/new-vsop-prepare/src/python/vsop2-experiment.py	2006-01-18 09:57:28 UTC (rev 216)
+@@ -101,11 +101,11 @@
+   return val
+ 
+ def run():
+-  bd = load_data('/home/izogi/ephemeritis/branches/new-vsop-prepare/data/vsop/VSOP87B.ven')
+-  jd = 2448976.5
++#  bd = load_data('/home/izogi/ephemeritis/branches/new-vsop-prepare/data/vsop/VSOP87B.ven')
++#  jd = 2448976.5
+ 
+-#  bd = load_data('/home/izogi/ephemeritis/branches/new-vsop-prepare/data/vsop/VSOP87A.ear')
+-#  jd = 2448170.5
++  bd = load_data('../../data/vsop/VSOP87A.ear')
++  jd = 2448170.5
+ 
+   #double L, B, R;
+   #vsop_dimension3_vsop(2448976.5, vVenus, &amp;L, &amp;B, &amp;R);
+@@ -125,20 +125,20 @@
+ #  print &quot;B: &quot;, calc_at(bd, jd, 2)
+ #  print &quot;R: &quot;, calc_at(bd, jd, 0)
+ 
+-  print &quot;L: &quot;, calc_at(bd, jd, 0)
+-  print &quot;B: &quot;, calc_at(bd, jd, 1)
+-  print &quot;R: &quot;, calc_at(bd, jd, 2)
++#  print &quot;L: &quot;, calc_at(bd, jd, 0)
++#  print &quot;B: &quot;, calc_at(bd, jd, 1)
++#  print &quot;R: &quot;, calc_at(bd, jd, 2)
+ 
+-#  x = calc_at(bd, jd, 0)
+-#  y = calc_at(bd, jd, 1)
+-#  z = calc_at(bd, jd, 2)
++  x = calc_at(bd, jd, 0)
++  y = calc_at(bd, jd, 1)
++  z = calc_at(bd, jd, 2)
+ #  print &quot;X0: &quot;, -x
+ #  print &quot;Y0: &quot;, -y
+ #  print &quot;Z0: &quot;, -z
+-#  (x,y,z) = vsop_to_fk5((x,y,z))
+-#  print &quot;X: &quot;, -x
+-#  print &quot;Y: &quot;, -y
+-#  print &quot;Z: &quot;, -z
++  (x,y,z) = vsop_to_fk5((x,y,z))
++  print &quot;X: &quot;, -x
++  print &quot;Y: &quot;, -y
++  print &quot;Z: &quot;, -z
+ 
+ if '__main__' == __name__:
+   run()
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000068.html">[Ephemeritis-svn] r215 - branches/new-vsop-prepare/src/python
+</A></li>
+	<LI>Next message: <A HREF="000070.html">[Ephemeritis-svn] r217 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#69">[ date ]</a>
+              <a href="thread.html#69">[ thread ]</a>
+              <a href="subject.html#69">[ subject ]</a>
+              <a href="author.html#69">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

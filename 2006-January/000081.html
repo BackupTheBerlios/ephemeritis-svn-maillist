@@ -1,0 +1,1531 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r227 - branches/new-vsop-prepare/src/c/libephemeritis
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-January/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r227%20-%20branches/new-vsop-prepare/src/c/libephemeritis&In-Reply-To=%3C200601280210.k0S2AgUq029016%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000079.html">
+   <LINK REL="Next"  HREF="000080.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r227 - branches/new-vsop-prepare/src/c/libephemeritis</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r227%20-%20branches/new-vsop-prepare/src/c/libephemeritis&In-Reply-To=%3C200601280210.k0S2AgUq029016%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r227 - branches/new-vsop-prepare/src/c/libephemeritis">izogi at berlios.de
+       </A><BR>
+    <I>Sat Jan 28 03:10:42 CET 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000079.html">[Ephemeritis-svn] r226 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+        <LI>Next message: <A HREF="000080.html">[Ephemeritis-svn] r228 - in branches/new-vsop-prepare/src/c: tests utils
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#81">[ date ]</a>
+              <a href="thread.html#81">[ thread ]</a>
+              <a href="subject.html#81">[ subject ]</a>
+              <a href="author.html#81">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-01-28 03:10:20 +0100 (Sat, 28 Jan 2006)
+New Revision: 227
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/aberration.c
+   branches/new-vsop-prepare/src/c/libephemeritis/conversions.c
+   branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_internal.h
+   branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c
+   branches/new-vsop-prepare/src/c/libephemeritis/nutation.c
+   branches/new-vsop-prepare/src/c/libephemeritis/precession.c
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c
+Log:
+Ran 'indent -kr' on libephemeritis/ files.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/aberration.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/aberration.c	2006-01-28 02:04:08 UTC (rev 226)
++++ branches/new-vsop-prepare/src/c/libephemeritis/aberration.c	2006-01-28 02:10:20 UTC (rev 227)
+@@ -43,8 +43,8 @@
+ {
+     double T = jd_to_jcent(jd);
+     /*
+-(jd - 2451545.0) / 36525.0;
+-*/
++       (jd - 2451545.0) / 36525.0;
++     */
+     double e_terms[] = { 0.016708634, -0.000042037, -0.0000001267 };
+     double p_terms[] =
+ 	{ d_to_r(102.93735), d_to_r(1.71946), d_to_r(0.00046) };
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/conversions.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/conversions.c	2006-01-28 02:04:08 UTC (rev 226)
++++ branches/new-vsop-prepare/src/c/libephemeritis/conversions.c	2006-01-28 02:10:20 UTC (rev 227)
+@@ -239,14 +239,14 @@
+  */
+ void fday_to_hms(double day, int *hour, int *min, double *sec)
+ {
+-  /*
+-    const long tsec = (long) (day * seconds_per_day);
+-    const int tmin = tsec / 60;
+-    const int thour = tmin / 60;
+-    *hour = thour % 24;
+-    *min = tmin % 60;
+-    *sec = tsec % 60;
+-    */
++    /*
++       const long tsec = (long) (day * seconds_per_day);
++       const int tmin = tsec / 60;
++       const int thour = tmin / 60;
++       *hour = thour % 24;
++       *min = tmin % 60;
++       *sec = tsec % 60;
++     */
+ 
+     double tsec = day * seconds_per_day;
+     *hour = (int) (tsec / 3600.0);
+@@ -356,8 +356,8 @@
+  */
+ double circumpi(double x)
+ {
+-  x = modpi2(x);
+-  return x &gt; pi ? x - 2*pi : x;
++    x = modpi2(x);
++    return x &gt; pi ? x - 2 * pi : x;
+ }
+ 
+ /*! @brief Converts radians to degrees.
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-01-28 02:04:08 UTC (rev 226)
++++ branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-01-28 02:10:20 UTC (rev 227)
+@@ -431,7 +431,7 @@
+  */
+ double get_r_sun(const element_constants ec)
+ {
+-  return radius_vector(ec.a, ec.e, ec.E);
++    return radius_vector(ec.a, ec.e, ec.E);
+ }
+ 
+ /*! @brief Helper function to calculate magnitude using an absolute
+@@ -596,10 +596,10 @@
+     dest.i = i;
+     dest.w = w;
+     dest.L = L;
+-    if(n != 0.0) {
+-      dest.n = n;
++    if (n != 0.0) {
++	dest.n = n;
+     } else {
+-      dest.n = 0.9856076686 / (a * sqrt(a));
++	dest.n = 0.9856076686 / (a * sqrt(a));
+     }
+     dest.M = M_epoch + (n * (jd - epoch));
+     if (abs_s == mdt) {
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-01-28 02:04:08 UTC (rev 226)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-01-28 02:10:20 UTC (rev 227)
+@@ -65,8 +65,8 @@
+     vUranus,			/*!&lt; @brief Uranus  */
+     vNeptune,			/*!&lt; @brief Neptune */
+ 
+-    vSun,                       /*!&lt; @brief Sun                   */
+-    vEMB                        /*!&lt; @brief Earth-Moon barycentre */
++    vSun,			/*!&lt; @brief Sun                   */
++    vEMB			/*!&lt; @brief Earth-Moon barycentre */
+ };
+ 
+ /*! @brief Contains a list of seasons.
+@@ -192,7 +192,8 @@
+ /* nutation.c */
+ double nut_in_lon(double jd);
+ double nut_in_obl(double jd);
+-void nut_in_ra_dec(double ra, double dec, double obl, double n_in_l, double n_in_o, double *n_in_ra, double *n_in_dec);
++void nut_in_ra_dec(double ra, double dec, double obl, double n_in_l,
++		   double n_in_o, double *n_in_ra, double *n_in_dec);
+ double obliquity_low(double jd);
+ double obliquity_hi(double jd);
+ 
+@@ -218,7 +219,7 @@
+ 		   double *raFinal, double *decFinal);
+ 
+ precession_elements_ecl precession_get_elements_ecl(const double JDinitial,
+-						     const double JDfinal);
++						    const double JDfinal);
+ 
+ void precession_ecl(const precession_elements_ecl pcecl,
+ 		    const double longInitial,
+@@ -443,17 +444,17 @@
+ /*! @brief A list of bodies recognised by the VSOP model.
+  */
+ typedef enum {
+-  vsop_mercury,			/*!&lt; @brief Mercury */
+-  vsop_venus,			/*!&lt; @brief Venus   */
+-  vsop_earth,			/*!&lt; @brief Earth   */
+-  vsop_mars,			/*!&lt; @brief Mars    */
+-  vsop_jupiter,			/*!&lt; @brief Jupiter */
+-  vsop_saturn,			/*!&lt; @brief Saturn  */
+-  vsop_uranus,			/*!&lt; @brief Uranus  */
+-  vsop_neptune,			/*!&lt; @brief Neptune */
+-  
+-  vsop_sun,                     /*!&lt; @brief Sun                   */
+-  vsop_EMB                      /*!&lt; @brief Earth-Moon barycentre */
++    vsop_mercury,		/*!&lt; @brief Mercury */
++    vsop_venus,			/*!&lt; @brief Venus   */
++    vsop_earth,			/*!&lt; @brief Earth   */
++    vsop_mars,			/*!&lt; @brief Mars    */
++    vsop_jupiter,		/*!&lt; @brief Jupiter */
++    vsop_saturn,		/*!&lt; @brief Saturn  */
++    vsop_uranus,		/*!&lt; @brief Uranus  */
++    vsop_neptune,		/*!&lt; @brief Neptune */
++
++    vsop_sun,			/*!&lt; @brief Sun                   */
++    vsop_EMB			/*!&lt; @brief Earth-Moon barycentre */
+ } vsop_body;
+ 
+ /*! @brief A list of versions available for the VSOP model.
+@@ -464,76 +465,78 @@
+     hel_sph_j2,			/*!&lt; @brief Heliocentric Spherical Variables J2000     */
+     hel_rec_date,		/*!&lt; @brief Heliocentric Rectangular Variables of date */
+     hel_sph_date,		/*!&lt; @brief Heliocentric Spherical Variables of date   */
+-    bar_rec_j2                  /*!&lt; @brief Barycentric Rectangular Variables J2000    */
++    bar_rec_j2			/*!&lt; @brief Barycentric Rectangular Variables J2000    */
+ } vsop_version;
+ 
+ 
+ /*! @brief A user-available structure to refer to VSOP data.
+  */
+ typedef struct {
+-  vsop_body planet;     /*!&lt; @brief The planet to which this data relates.  */
+-  vsop_version version; /*!&lt; @brief The series which this data is for.      */
++    vsop_body planet;		/*!&lt; @brief The planet to which this data relates.  */
++    vsop_version version;	/*!&lt; @brief The series which this data is for.      */
+ 
+-  int data_id;          /*!&lt; @brief An internally recognised data identifier to identify where the data is held. */
++    int data_id;		/*!&lt; @brief An internally recognised data identifier to identify where the data is held. */
+ } vsop_handle;
+ 
+ /*! @brief A struct to hold rectangular coordinates from a particular
+  *  calculation, including meta information about their calculation.
+  */
+ typedef struct {
+-  vsop_handle vh;       /*!&lt; @brief The VSOP handle representing the data these coordinates were calculated from. */
+-  double jd;            /*!&lt; @brief The Julian Date of these coordinates, in dynamical time.                      */
+-  rec_coords rc;        /*!&lt; @brief The XYZ coordinates.                                                          */
+-  int is_inverted;      /*!&lt; @brief Set to 1 if these coordinates are inverted (eg. for Solar coordinates), 0 otherwise. */
+-  int error_state;      /*!&lt; @brief The state of these coordinates,
+-                                    indicating if they're okay to use.
+-                                    Note that this field is only valid
+-                                    once the struct values have been
+-                                    calculated at least once.
++    vsop_handle vh;		/*!&lt; @brief The VSOP handle representing the data these coordinates were calculated from. */
++    double jd;			/*!&lt; @brief The Julian Date of these coordinates, in dynamical time.                      */
++    rec_coords rc;		/*!&lt; @brief The XYZ coordinates.                                                          */
++    int is_inverted;		/*!&lt; @brief Set to 1 if these coordinates are inverted (eg. for Solar coordinates), 0 otherwise. */
++    int error_state;		/*!&lt; @brief The state of these coordinates,
++				   indicating if they're okay to use.
++				   Note that this field is only valid
++				   once the struct values have been
++				   calculated at least once.
+ 
+-				    0 indicates no error.
+-				    -1 (vsop_get_rectangular) indicates a vsop_handle error.  (Data referenced by this handle wasn't found - perhaps it was unloaded.)
+-				    -2 (vsop_get_rectangular) indicates that a vsop_handle referenced data that wasn't rectangular, or otherwise not suitable for providing rectangular coordinates.
+-				    -3 (vsop_rec_vsop_to_fk5) indicates that supplied coordinates were unsuitable for converting to FK5.
+-			*/
++				   0 indicates no error.
++				   -1 (vsop_get_rectangular) indicates a vsop_handle error.  (Data referenced by this handle wasn't found - perhaps it was unloaded.)
++				   -2 (vsop_get_rectangular) indicates that a vsop_handle referenced data that wasn't rectangular, or otherwise not suitable for providing rectangular coordinates.
++				   -3 (vsop_rec_vsop_to_fk5) indicates that supplied coordinates were unsuitable for converting to FK5.
++				 */
+ } vsop_rec_coords;
+ 
+ /*! @brief Struct for holding spherical coordinates.
+  */
+ typedef struct {
+-  double L;             /*!&lt; @brief Heliocentric ecliptical longitude. */
+-  double B;             /*!&lt; @brief Heliocentric ecliptical latitude.  */
+-  double R;             /*!&lt; @brief The radius vector (distance to the Sun). */
++    double L;			/*!&lt; @brief Heliocentric ecliptical longitude. */
++    double B;			/*!&lt; @brief Heliocentric ecliptical latitude.  */
++    double R;			/*!&lt; @brief The radius vector (distance to the Sun). */
+ } sph_coords;
+ 
+ /*! @brief A struct to hold spherical coordinates from a particular
+  *  calculation, including meta information about their calculation.
+  */
+ typedef struct {
+-  vsop_handle vh;       /*!&lt; @brief The VSOP handle representing the data these coordinates were calculated from. */
+-  double jd;            /*!&lt; @brief The Julian Date of these coordinates, in dynamical time.                      */
+-  sph_coords sc;        /*!&lt; @brief The spherical coordinates.                                                   */
+-  int is_inverted;      /*!&lt; @brief Set to 1 if these coordinates are inverted (eg. for Solar coordinates), 0 otherwise. */
+-  int error_state;      /*!&lt; @brief The state of these coordinates,
+-                                    indicating if they're okay to use.
+-                                    Note that this field is only valid
+-                                    once the struct values have been
+-                                    calculated at least once.
++    vsop_handle vh;		/*!&lt; @brief The VSOP handle representing the data these coordinates were calculated from. */
++    double jd;			/*!&lt; @brief The Julian Date of these coordinates, in dynamical time.                      */
++    sph_coords sc;		/*!&lt; @brief The spherical coordinates.                                                   */
++    int is_inverted;		/*!&lt; @brief Set to 1 if these coordinates are inverted (eg. for Solar coordinates), 0 otherwise. */
++    int error_state;		/*!&lt; @brief The state of these coordinates,
++				   indicating if they're okay to use.
++				   Note that this field is only valid
++				   once the struct values have been
++				   calculated at least once.
+ 
+-				    0 indicates no error.
+-				    -1 (vsop_get_spherical) indicates a vsop_handle error.  (Data referenced by this handle wasn't found - perhaps it was unloaded.)
+-				    -2 (vsop_get_spherical) indicates that a vsop_handle referenced data that wasn't spherical, or otherwise not suitable for providing spherical coordinates.  (This should really only happen if the data in the struct has been corrupted somehow.)
+-				    -3 (vsop_rec_vsop_to_fk5) indicates that supplied coordinates were unsuitable for converting to FK5.
+-			*/
++				   0 indicates no error.
++				   -1 (vsop_get_spherical) indicates a vsop_handle error.  (Data referenced by this handle wasn't found - perhaps it was unloaded.)
++				   -2 (vsop_get_spherical) indicates that a vsop_handle referenced data that wasn't spherical, or otherwise not suitable for providing spherical coordinates.  (This should really only happen if the data in the struct has been corrupted somehow.)
++				   -3 (vsop_rec_vsop_to_fk5) indicates that supplied coordinates were unsuitable for converting to FK5.
++				 */
+ } vsop_sph_coords;
+ 
+ /* vsop_data_handling.c */
+ void vsop_data_init();
+ void vsop_data_cleanup();
+-int get_vsop_data_handle(const vsop_body planet, const vsop_version version, vsop_handle *vh);
++int get_vsop_data_handle(const vsop_body planet,
++			 const vsop_version version, vsop_handle * vh);
+ 
+ /* vsop_calculate.c */
+-vsop_rec_coords vsop_get_rectangular(const vsop_handle vh, const double jd);
++vsop_rec_coords vsop_get_rectangular(const vsop_handle vh,
++				     const double jd);
+ vsop_rec_coords vsop_rec_vsop_to_fk5(const vsop_rec_coords vrc);
+ vsop_rec_coords vsop_rec_invert(const vsop_rec_coords vrc);
+ vsop_sph_coords vsop_get_spherical(const vsop_handle vh, const double jd);
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_internal.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_internal.h	2006-01-28 02:04:08 UTC (rev 226)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis_vsop_internal.h	2006-01-28 02:10:20 UTC (rev 227)
+@@ -41,9 +41,9 @@
+ 
+ /* Define data path -- this should be updated to something more elegantly configurable. */
+ #ifdef VSOP_DATA_PATH
+-  #define EPH_VSOP_DATA_PATH VSOP_DATA_PATH &quot;/&quot;
++#define EPH_VSOP_DATA_PATH VSOP_DATA_PATH &quot;/&quot;
+ #else
+-  #define EPH_VSOP_DATA_PATH &quot;&quot;
++#define EPH_VSOP_DATA_PATH &quot;&quot;
+ #endif
+ 
+ 
+@@ -77,17 +77,17 @@
+ /*! @brief Represents a VSOP87 term.
+  */
+ typedef struct {
+-  double A, B, C;
++    double A, B, C;
+ } term_bin;
+ 
+ 
+ typedef struct {
+-  struct {
+-    char alpha;          /*!&lt; @brief The degree alpha of time variable for this series. */
+-    short int num_terms; /*!&lt; @brief The number of terms listed for this series. */
+-  } meta;
++    struct {
++	char alpha;		/*!&lt; @brief The degree alpha of time variable for this series. */
++	short int num_terms;	/*!&lt; @brief The number of terms listed for this series. */
++    } meta;
+ 
+-  term_bin *terms;     /*!&lt; @brief The terms. */
++    term_bin *terms;		/*!&lt; @brief The terms. */
+ } series;
+ 
+ 
+@@ -96,26 +96,26 @@
+  *  particular body.
+  */
+ typedef struct {
+-  struct{
+-    char eph_header_text[23]; /*!&lt; @brief Ephemeritis header text.                            */
+-    char body_name[8];        /*!&lt; @brief The name of the body represented by these elements. */
+-    char num_variables;       /*!&lt; @brief The number of variables included in these elements. */
+-  } meta;
++    struct {
++	char eph_header_text[23];	/*!&lt; @brief Ephemeritis header text.                            */
++	char body_name[8];	/*!&lt; @brief The name of the body represented by these elements. */
++	char num_variables;	/*!&lt; @brief The number of variables included in these elements. */
++    } meta;
+ 
+-  struct {
+     struct {
+-      char series_count;   /*!&lt; @brief The number of series' listed in the series_list field. */
+-    } meta;                /*!&lt; @brief Binary meta data about the VSOP variable.              */
++	struct {
++	    char series_count;	/*!&lt; @brief The number of series' listed in the series_list field. */
++	} meta;			/*!&lt; @brief Binary meta data about the VSOP variable.              */
+ 
+-    series *series_list;   /*!&lt; @brief The series list.                   */
+-  } variable_list[6];      /*!&lt; @brief The variables.                     */
++	series *series_list;	/*!&lt; @brief The series list.                   */
++    } variable_list[6];		/*!&lt; @brief The variables.                     */
+ 
+ } body_elements;
+ 
+ 
+ body_elements *ephint_get_body_elements_for_handle(const vsop_handle vh);
+-void ephint_free_body_elements(body_elements *b);
+-void ephint_write_body_elements(FILE *outfile, body_elements *b);
++void ephint_free_body_elements(body_elements * b);
++void ephint_write_body_elements(FILE * outfile, body_elements * b);
+ /*
+ void ephint_print_body_statistics(FILE *ostream, body_elements *b);
+ body_elements *ephint_read_body_elements(FILE *infile);
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c	2006-01-28 02:04:08 UTC (rev 226)
++++ branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c	2006-01-28 02:10:20 UTC (rev 227)
+@@ -46,13 +46,12 @@
+  */
+ double equation_of_time(const double jd)
+ {
+-  double T = jd_to_jcent(jd) / 10.0;
+-  /* (jd - 2451545.0) / 365250.0; */
+-    double _terms[] =
+-      {
++    double T = jd_to_jcent(jd) / 10.0;
++    /* (jd - 2451545.0) / 365250.0; */
++    double _terms[] = {
+ 	280.4664567, 360007.6982779, 0.03032028, 1.0 / 49931.0,
+ 	-1.0 / 15300.0, -1.0 / 2000000.0
+-      };
++    };
+     double L0 = modpi2(d_to_r(polynomial(_terms, 6, T)));
+ 
+     /* Solar longitude, latitude and radius. */
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/nutation.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/nutation.c	2006-01-28 02:04:08 UTC (rev 226)
++++ branches/new-vsop-prepare/src/c/libephemeritis/nutation.c	2006-01-28 02:10:20 UTC (rev 227)
+@@ -324,10 +324,13 @@
+  *
+  *  @author Mike McGavin.
+  */
+-void nut_in_ra_dec(double ra, double dec, double obl, double n_in_l, double n_in_o, double *n_in_ra, double *n_in_dec)
++void nut_in_ra_dec(double ra, double dec, double obl, double n_in_l,
++		   double n_in_o, double *n_in_ra, double *n_in_dec)
+ {
+-  *n_in_ra = (cos(obl) + (sin(obl) * sin(ra) * tan(dec))) * n_in_l - (cos(ra) * tan(dec) * n_in_o);
+-  *n_in_dec = (sin(obl) * cos(ra) * n_in_l) + (sin(ra) * n_in_o);
++    *n_in_ra =
++	(cos(obl) + (sin(obl) * sin(ra) * tan(dec))) * n_in_l -
++	(cos(ra) * tan(dec) * n_in_o);
++    *n_in_dec = (sin(obl) * cos(ra) * n_in_l) + (sin(ra) * n_in_o);
+ }
+ 
+ 
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/precession.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/precession.c	2006-01-28 02:04:08 UTC (rev 226)
++++ branches/new-vsop-prepare/src/c/libephemeritis/precession.c	2006-01-28 02:10:20 UTC (rev 227)
+@@ -135,7 +135,7 @@
+ 	sin(pceq.theta_rad) * sin(decInitial);
+     double C =
+ 	sin(pceq.theta_rad) * cos(decInitial) * cos(raInitial +
+-						     pceq.zeta_rad) +
++						    pceq.zeta_rad) +
+ 	cos(pceq.theta_rad) * sin(decInitial);
+ 
+     *raFinal = modpi2(atan2(A, B) + pceq.z_rad);
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-01-28 02:04:08 UTC (rev 226)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-01-28 02:10:20 UTC (rev 227)
+@@ -57,45 +57,47 @@
+  *
+  *  @author Mike McGavin.
+  */
+-static double internal_vsop_dimension_calc(const body_elements *be, const int var_num, const double jd)
++static double internal_vsop_dimension_calc(const body_elements * be,
++					   const int var_num,
++					   const double jd)
+ {
+-  if(var_num &lt; 0 || var_num &gt; be-&gt;meta.num_variables-1) {
+-    /* Oops, this variable doesn't exist. */
+-    return 0;
+-  }
++    if (var_num &lt; 0 || var_num &gt; be-&gt;meta.num_variables - 1) {
++	/* Oops, this variable doesn't exist. */
++	return 0;
++    }
+ 
+-  /* Get a reference to the series's of this variable. */
+-  int series_count = be-&gt;variable_list[var_num].meta.series_count;
+-  series *series_list = be-&gt;variable_list[var_num].series_list;
++    /* Get a reference to the series's of this variable. */
++    int series_count = be-&gt;variable_list[var_num].meta.series_count;
++    series *series_list = be-&gt;variable_list[var_num].series_list;
+ 
+-  /* Set tau to the Julian millenia. */
+-  const double T = jd_to_jcent(jd) / 10.0;
++    /* Set tau to the Julian millenia. */
++    const double T = jd_to_jcent(jd) / 10.0;
+ 
+-  double val = 0.0;
++    double val = 0.0;
+ 
+-  int sn;
+-  for(sn = 0; sn &lt; series_count; sn++) {
+-    double s_val = 0.0;
++    int sn;
++    for (sn = 0; sn &lt; series_count; sn++) {
++	double s_val = 0.0;
+ 
+-    /* Even though alphaoftime is always an integer, it's set it to a
+-       double here to save having to re-convert it every time. */
+-    double alphaoftime = (double)(series_list[sn].meta.alpha);
++	/* Even though alphaoftime is always an integer, it's set it to a
++	   double here to save having to re-convert it every time. */
++	double alphaoftime = (double) (series_list[sn].meta.alpha);
+ 
+-    /* Loop through every term in the series. */
+-    term_bin *t, *first_term, *last_term;
+-    first_term = series_list[sn].terms;
+-    last_term = first_term + (series_list[sn].meta.num_terms - 1);
++	/* Loop through every term in the series. */
++	term_bin *t, *first_term, *last_term;
++	first_term = series_list[sn].terms;
++	last_term = first_term + (series_list[sn].meta.num_terms - 1);
+ 
+-    for(t = first_term; t &lt;= last_term; t++) {
+-      s_val += t-&gt;A * (cos(t-&gt;B + (t-&gt;C * T)));
++	for (t = first_term; t &lt;= last_term; t++) {
++	    s_val += t-&gt;A * (cos(t-&gt;B + (t-&gt;C * T)));
++	}
++
++	/* Now add the result of the set of terms to the overall value for
++	   the variable, multiplying by T^alpha for the series. */
++	val += s_val * pow(T, alphaoftime);
+     }
+ 
+-    /* Now add the result of the set of terms to the overall value for
+-       the variable, multiplying by T^alpha for the series. */
+-    val += s_val * pow(T, alphaoftime);
+-  }
+-
+-  return val;
++    return val;
+ }
+ 
+ 
+@@ -119,36 +121,38 @@
+  */
+ vsop_rec_coords vsop_get_rectangular(const vsop_handle vh, const double jd)
+ {
+-  vsop_rec_coords vrc;
++    vsop_rec_coords vrc;
+ 
+-  /* Init the struct properties. */
+-  memset(&amp;vrc, '\0', sizeof(vrc));
+-  vrc.vh = vh;
+-  vrc.jd = jd;
+-  vrc.is_inverted = 0;
++    /* Init the struct properties. */
++    memset(&amp;vrc, '\0', sizeof(vrc));
++    vrc.vh = vh;
++    vrc.jd = jd;
++    vrc.is_inverted = 0;
+ 
+-  /* Get a reference to the body_elements structure for this handle. */
+-  body_elements *be;
+-  if(NULL == (be = ephint_get_body_elements_for_handle(vh))) {
+-    vrc.error_state = -1;
+-    return vrc;
+-  }
++    /* Get a reference to the body_elements structure for this handle. */
++    body_elements *be;
++    if (NULL == (be = ephint_get_body_elements_for_handle(vh))) {
++	vrc.error_state = -1;
++	return vrc;
++    }
+ 
+-  /* Confirm that the body elements for the handle contain data with rectangular coordinates. */
+-  if( ! (vh.version == hel_rec_j2 || vh.version == hel_rec_date || vh.version == bar_rec_j2) ) {
+-    vrc.error_state = -2;
+-    return vrc;
+-  }
++    /* Confirm that the body elements for the handle contain data with rectangular coordinates. */
++    if (!
++	(vh.version == hel_rec_j2 || vh.version == hel_rec_date
++	 || vh.version == bar_rec_j2)) {
++	vrc.error_state = -2;
++	return vrc;
++    }
+ 
+-  /* Now return X, Y and Z.                                 */
+-  /* X, Y and Z come from varibles 0, 1 and 2 respectively. */
+-  vrc.rc.x = internal_vsop_dimension_calc(be, 0, jd);
+-  vrc.rc.y = internal_vsop_dimension_calc(be, 1, jd);
+-  vrc.rc.z = internal_vsop_dimension_calc(be, 2, jd);
+-  vrc.error_state = 0;
++    /* Now return X, Y and Z.                                 */
++    /* X, Y and Z come from varibles 0, 1 and 2 respectively. */
++    vrc.rc.x = internal_vsop_dimension_calc(be, 0, jd);
++    vrc.rc.y = internal_vsop_dimension_calc(be, 1, jd);
++    vrc.rc.z = internal_vsop_dimension_calc(be, 2, jd);
++    vrc.error_state = 0;
+ 
+-  /* Return 0 for success. */
+-  return vrc;
++    /* Return 0 for success. */
++    return vrc;
+ }
+ 
+ /*! @brief Rotate rectangular VSOP coordinates from the dynamical
+@@ -173,26 +177,34 @@
+  */
+ vsop_rec_coords vsop_rec_vsop_to_fk5(const vsop_rec_coords vrc)
+ {
+-  /* Make a variable to return, and inialise it to the existing incoming values. */
+-  vsop_rec_coords output = vrc;
++    /* Make a variable to return, and inialise it to the existing incoming values. */
++    vsop_rec_coords output = vrc;
+ 
+-  /* Stop right here if the incoming coordinates are in an error state. */
+-  if(output.error_state != 0) {
+-    return output;
+-  }
++    /* Stop right here if the incoming coordinates are in an error state. */
++    if (output.error_state != 0) {
++	return output;
++    }
+ 
+-  /* Check that the incoming coordinates are of a version designed to be rotated. */
+-  if(! (output.vh.version == hel_rec_j2 || output.vh.version == bar_rec_j2)) {
+-    output.error_state = -3;
+-    return output;
+-  }
++    /* Check that the incoming coordinates are of a version designed to be rotated. */
++    if (!
++	(output.vh.version == hel_rec_j2
++	 || output.vh.version == bar_rec_j2)) {
++	output.error_state = -3;
++	return output;
++    }
+ 
+-  output.rc.x = vrc.rc.x*1.000000000000  + vrc.rc.y*0.000000440360 + vrc.rc.z*-0.000000190919;
+-  output.rc.y = vrc.rc.x*-0.000000479966 + vrc.rc.y*0.917482137087 + vrc.rc.z*-0.397776982902;
+-  output.rc.z = vrc.rc.x*0.000000000000  + vrc.rc.y*0.397776982902 + vrc.rc.z*+0.917482137087;
+-  output.error_state = 0;
++    output.rc.x =
++	vrc.rc.x * 1.000000000000 + vrc.rc.y * 0.000000440360 +
++	vrc.rc.z * -0.000000190919;
++    output.rc.y =
++	vrc.rc.x * -0.000000479966 + vrc.rc.y * 0.917482137087 +
++	vrc.rc.z * -0.397776982902;
++    output.rc.z =
++	vrc.rc.x * 0.000000000000 + vrc.rc.y * 0.397776982902 +
++	vrc.rc.z * +0.917482137087;
++    output.error_state = 0;
+ 
+-  return output;
++    return output;
+ }
+ 
+ /*! @brief Given a set of rectangular VSOP coordinates, invert them.
+@@ -211,18 +223,18 @@
+  */
+ vsop_rec_coords vsop_rec_invert(const vsop_rec_coords vrc)
+ {
+-  vsop_rec_coords output = vrc;
++    vsop_rec_coords output = vrc;
+ 
+-  /* Stop right here if the incoming coordinates are in an error state. */
+-  if(output.error_state != 0) {
++    /* Stop right here if the incoming coordinates are in an error state. */
++    if (output.error_state != 0) {
++	return output;
++    }
++
++    output.rc.x = -output.rc.x;
++    output.rc.y = -output.rc.y;
++    output.rc.z = -output.rc.z;
++    output.is_inverted = output.is_inverted ^ 0x01;
+     return output;
+-  }
+-
+-  output.rc.x = -output.rc.x;
+-  output.rc.y = -output.rc.y;
+-  output.rc.z = -output.rc.z;
+-  output.is_inverted = output.is_inverted ^ 0x01;
+-  return output;
+ }
+ 
+ 
+@@ -245,36 +257,36 @@
+  */
+ vsop_sph_coords vsop_get_spherical(const vsop_handle vh, const double jd)
+ {
+-  vsop_sph_coords vsc;
++    vsop_sph_coords vsc;
+ 
+-  /* Init the struct properties. */
+-  memset(&amp;vsc, '\0', sizeof(vsc));
+-  vsc.vh = vh;
+-  vsc.jd = jd;
+-  vsc.is_inverted = 0;
++    /* Init the struct properties. */
++    memset(&amp;vsc, '\0', sizeof(vsc));
++    vsc.vh = vh;
++    vsc.jd = jd;
++    vsc.is_inverted = 0;
+ 
+-  /* Get a reference to the body_elements structure for this handle. */
+-  body_elements *be;
+-  if(NULL == (be = ephint_get_body_elements_for_handle(vh))) {
+-    vsc.error_state = -1;
+-    return vsc;
+-  }
++    /* Get a reference to the body_elements structure for this handle. */
++    body_elements *be;
++    if (NULL == (be = ephint_get_body_elements_for_handle(vh))) {
++	vsc.error_state = -1;
++	return vsc;
++    }
+ 
+-  /* Confirm that the body elements for the handle contain data with spherical coordinates. */
+-  if( ! (vh.version == hel_sph_j2 || vh.version == hel_sph_date) ) {
+-    vsc.error_state = -2;
+-    return vsc;
+-  }
++    /* Confirm that the body elements for the handle contain data with spherical coordinates. */
++    if (!(vh.version == hel_sph_j2 || vh.version == hel_sph_date)) {
++	vsc.error_state = -2;
++	return vsc;
++    }
+ 
+-  /* Now return L, B and R.                                 */
+-  /* L, B and R come from varibles 0, 1 and 2 respectively. */
+-  vsc.sc.L = modpi2(internal_vsop_dimension_calc(be, 0, jd));
+-  vsc.sc.B = internal_vsop_dimension_calc(be, 1, jd);
+-  vsc.sc.R = internal_vsop_dimension_calc(be, 2, jd);
++    /* Now return L, B and R.                                 */
++    /* L, B and R come from varibles 0, 1 and 2 respectively. */
++    vsc.sc.L = modpi2(internal_vsop_dimension_calc(be, 0, jd));
++    vsc.sc.B = internal_vsop_dimension_calc(be, 1, jd);
++    vsc.sc.R = internal_vsop_dimension_calc(be, 2, jd);
+ 
+-  /* Return 0 for success. */
+-  vsc.error_state = 0;
+-  return vsc;
++    /* Return 0 for success. */
++    vsc.error_state = 0;
++    return vsc;
+ }
+ 
+ 
+@@ -304,44 +316,47 @@
+  *
+  *  @author Mike McGavin.
+  */
+-vsop_sph_coords vsop_sph_vsop_to_fk5(const vsop_sph_coords vsc) {
+-  /* Make a variable to return, and inialise it to the existing incoming values. */
+-  vsop_sph_coords output = vsc;
++vsop_sph_coords vsop_sph_vsop_to_fk5(const vsop_sph_coords vsc)
++{
++    /* Make a variable to return, and inialise it to the existing incoming values. */
++    vsop_sph_coords output = vsc;
+ 
+-  /* Stop right here if the incoming coordinates are in an error state. */
+-  if(output.error_state != 0) {
+-    return output;
+-  }
++    /* Stop right here if the incoming coordinates are in an error state. */
++    if (output.error_state != 0) {
++	return output;
++    }
+ 
+-  /* Check that the incoming coordinates are spherical. */
+-  if(! (output.vh.version == hel_sph_j2 || output.vh.version == hel_sph_date)) {
+-    output.error_state = -3;
+-    return output;
+-  }
++    /* Check that the incoming coordinates are spherical. */
++    if (!
++	(output.vh.version == hel_sph_j2
++	 || output.vh.version == hel_sph_date)) {
++	output.error_state = -3;
++	return output;
++    }
+ 
+-  static double l1, l2;
+-  static double terms[3];
+-  static bool static_set = false;
+-  if(!static_set) {
+-    static_set = true;
+-    l1 = -d_to_r(dms_to_d(0,0,0.09033));
+-    l2 =  d_to_r(dms_to_d(0,0,0.03916));
+-    terms[0] = 0.0;
+-    terms[1] = d_to_r(1.397);
+-    terms[2] = d_to_r(0.00031);
+-  }
++    static double l1, l2;
++    static double terms[3];
++    static bool static_set = false;
++    if (!static_set) {
++	static_set = true;
++	l1 = -d_to_r(dms_to_d(0, 0, 0.09033));
++	l2 = d_to_r(dms_to_d(0, 0, 0.03916));
++	terms[0] = 0.0;
++	terms[1] = d_to_r(1.397);
++	terms[2] = d_to_r(0.00031);
++    }
+ 
+-  double T = jd_to_jcent(vsc.jd) / 10.0;
+-  double L1 = vsc.sc.L - polynomial(terms, 3, T);
+-  double cosL1 = cos(L1);
+-  double sinL1 = sin(L1);
++    double T = jd_to_jcent(vsc.jd) / 10.0;
++    double L1 = vsc.sc.L - polynomial(terms, 3, T);
++    double cosL1 = cos(L1);
++    double sinL1 = sin(L1);
+ 
+-  double deltaL = l1 + (l2 * (cosL1 + sinL1) * tan(vsc.sc.B));
+-  double deltaB = l2 * (cosL1 - sinL1);
++    double deltaL = l1 + (l2 * (cosL1 + sinL1) * tan(vsc.sc.B));
++    double deltaB = l2 * (cosL1 - sinL1);
+ 
+-  output.sc.L += deltaL;
+-  output.sc.B += deltaB;
+-  return output;
++    output.sc.L += deltaL;
++    output.sc.B += deltaB;
++    return output;
+ }
+ 
+ /*! @brief Given a set of spherical VSOP coordinates, invert them.
+@@ -360,15 +375,15 @@
+  */
+ vsop_sph_coords vsop_sph_invert(const vsop_sph_coords vsc)
+ {
+-  vsop_sph_coords output = vsc;
++    vsop_sph_coords output = vsc;
+ 
+-  /* Stop right here if the incoming coordinates are in an error state. */
+-  if(output.error_state != 0) {
++    /* Stop right here if the incoming coordinates are in an error state. */
++    if (output.error_state != 0) {
++	return output;
++    }
++
++    output.sc.L = modpi2(output.sc.L + pi);
++    output.sc.B = -output.sc.B;
++    output.is_inverted = output.is_inverted ^ 0x01;
+     return output;
+-  }
+-
+-  output.sc.L = modpi2(output.sc.L + pi);
+-  output.sc.B = -output.sc.B;
+-  output.is_inverted = output.is_inverted ^ 0x01;
+-  return output;
+ }
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c	2006-01-28 02:04:08 UTC (rev 226)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c	2006-01-28 02:10:20 UTC (rev 227)
+@@ -39,9 +39,9 @@
+  */
+ static void destroy_series(series s)
+ {
+-  if(NULL != s.terms) {
+-    free(s.terms);
+-  }
++    if (NULL != s.terms) {
++	free(s.terms);
++    }
+ }
+ 
+ /*! @brief De-allocates the space that was allocated for a
+@@ -57,30 +57,30 @@
+  *  if the various allocated structures were zero'd before assigning
+  *  data and other pointers to them.
+  */
+-void ephint_free_body_elements(body_elements *b)
++void ephint_free_body_elements(body_elements * b)
+ {
+-  if(NULL == b) {
+-    /* Ignore, because it's null. */
+-    return;
+-  }
++    if (NULL == b) {
++	/* Ignore, because it's null. */
++	return;
++    }
+ 
+-  int n;
+-  for(n = 0; n &lt; b-&gt;meta.num_variables; n++) {
+-    /* Make sure the series_list was successfully allocated before
+-       trying to dig into each of its series' collections. */
+-    if(NULL != b-&gt;variable_list[n].series_list) {
+-      int o;
+-      for(o = 0; o &lt; b-&gt;variable_list[n].meta.series_count; o++) {
+-	/* Destroy each series. */
+- 	destroy_series(b-&gt;variable_list[n].series_list[o]);
+-      }
++    int n;
++    for (n = 0; n &lt; b-&gt;meta.num_variables; n++) {
++	/* Make sure the series_list was successfully allocated before
++	   trying to dig into each of its series' collections. */
++	if (NULL != b-&gt;variable_list[n].series_list) {
++	    int o;
++	    for (o = 0; o &lt; b-&gt;variable_list[n].meta.series_count; o++) {
++		/* Destroy each series. */
++		destroy_series(b-&gt;variable_list[n].series_list[o]);
++	    }
++	}
++
++	/* Free the list of series for the variable. */
++	free(b-&gt;variable_list[n].series_list);
+     }
+ 
+-    /* Free the list of series for the variable. */
+-    free(b-&gt;variable_list[n].series_list);
+-  }
+-  
+-  free(b);
++    free(b);
+ }
+ 
+ /*! @brief Prints details about the body elements in a human readable
+@@ -89,22 +89,26 @@
+  *  @param[in] ostream A stream pointer to which the text should be printed.  (eg. stdin, stderr, or an open file.)
+  *  @param[in] b       Pointer to the body elements.
+  */
+-void ephint_print_body_statistics(FILE *ostream, body_elements *b)
++void ephint_print_body_statistics(FILE * ostream, body_elements * b)
+ {
+-  fprintf(ostream, &quot;Ephemeritis Version String: %s.\n&quot;, b-&gt;meta.eph_header_text);
+-  fprintf(ostream, &quot;Data for \&quot;%s\&quot;.\n&quot;, b-&gt;meta.body_name);
+-  fprintf(ostream, &quot;%d variables overall.\n&quot;, b-&gt;meta.num_variables);
++    fprintf(ostream, &quot;Ephemeritis Version String: %s.\n&quot;,
++	    b-&gt;meta.eph_header_text);
++    fprintf(ostream, &quot;Data for \&quot;%s\&quot;.\n&quot;, b-&gt;meta.body_name);
++    fprintf(ostream, &quot;%d variables overall.\n&quot;, b-&gt;meta.num_variables);
+ 
+-  int v;
+-  for(v=0; v&lt;b-&gt;meta.num_variables; v++) {
+-    fprintf(ostream, &quot;\nVariable %d contains %d series':\n\n&quot;, v, b-&gt;variable_list[v].meta.series_count);
++    int v;
++    for (v = 0; v &lt; b-&gt;meta.num_variables; v++) {
++	fprintf(ostream, &quot;\nVariable %d contains %d series':\n\n&quot;, v,
++		b-&gt;variable_list[v].meta.series_count);
+ 
+-    int s;
+-    for(s=0; s&lt;b-&gt;variable_list[v].meta.series_count; s++) {
+-      series *ser = &amp;(b-&gt;variable_list[v].series_list[s]);
+-      fprintf(ostream, &quot;  Series %d has alpha %d and contains %d terms.\n&quot;, s, ser-&gt;meta.alpha, (ser-&gt;meta.num_terms));
++	int s;
++	for (s = 0; s &lt; b-&gt;variable_list[v].meta.series_count; s++) {
++	    series *ser = &amp;(b-&gt;variable_list[v].series_list[s]);
++	    fprintf(ostream,
++		    &quot;  Series %d has alpha %d and contains %d terms.\n&quot;, s,
++		    ser-&gt;meta.alpha, (ser-&gt;meta.num_terms));
++	}
+     }
+-  }
+ }
+ 
+ /*! @brief Given an open output file and a body_elements structure,
+@@ -113,26 +117,28 @@
+  *  @param[in] outfile An open file to which the data should be written. The file is not closed after the operation.
+  *  @param[in] b       Pointer to the body elements.
+  */
+-void ephint_write_body_elements(FILE *outfile, body_elements *b)
++void ephint_write_body_elements(FILE * outfile, body_elements * b)
+ {
+-  /* Write the header data. */
+-  fwrite(&amp;b-&gt;meta, sizeof(b-&gt;meta), 1, outfile);
++    /* Write the header data. */
++    fwrite(&amp;b-&gt;meta, sizeof(b-&gt;meta), 1, outfile);
+ 
+-  /* Loop through the variables, writing data of each one. */
+-  int v;
+-  for(v = 0; v &lt; b-&gt;meta.num_variables; v++) {
+-    fwrite(&amp;b-&gt;variable_list[v].meta, sizeof(b-&gt;variable_list[v].meta), 1, outfile);
++    /* Loop through the variables, writing data of each one. */
++    int v;
++    for (v = 0; v &lt; b-&gt;meta.num_variables; v++) {
++	fwrite(&amp;b-&gt;variable_list[v].meta, sizeof(b-&gt;variable_list[v].meta),
++	       1, outfile);
+ 
+-    /* Loop through the series variables, writing data of each one. */
+-    int s;
+-    for(s = 0; s &lt; b-&gt;variable_list[v].meta.series_count; s++) {
+-      series *ser = &amp;b-&gt;variable_list[v].series_list[s];
+-      fwrite(&amp;ser-&gt;meta, sizeof(ser-&gt;meta), 1, outfile);
++	/* Loop through the series variables, writing data of each one. */
++	int s;
++	for (s = 0; s &lt; b-&gt;variable_list[v].meta.series_count; s++) {
++	    series *ser = &amp;b-&gt;variable_list[v].series_list[s];
++	    fwrite(&amp;ser-&gt;meta, sizeof(ser-&gt;meta), 1, outfile);
+ 
+-      /* Write the list of terms. */
+-      fwrite(ser-&gt;terms, sizeof(*(ser-&gt;terms)), ser-&gt;meta.num_terms, outfile);
++	    /* Write the list of terms. */
++	    fwrite(ser-&gt;terms, sizeof(*(ser-&gt;terms)), ser-&gt;meta.num_terms,
++		   outfile);
++	}
+     }
+-  }
+ }
+ 
+ 
+@@ -158,93 +164,103 @@
+  *          as corrupted data), all the bits and pieces allocated up
+  *          to that point will be released, an NULL is returned.
+  */
+-static body_elements *ephint_read_body_elements(FILE *infile, int *error_ret)
++static body_elements *ephint_read_body_elements(FILE * infile,
++						int *error_ret)
+ {
+-  /* Note -- there's a goto label at the end of the function to
+-     collect any memory allocation problems.  (Traditionally yucky,
+-     but I think it's slightly clearer in this case.)  It'll
+-     deallocate whatever's been created so far, and return NULL. */
++    /* Note -- there's a goto label at the end of the function to
++       collect any memory allocation problems.  (Traditionally yucky,
++       but I think it's slightly clearer in this case.)  It'll
++       deallocate whatever's been created so far, and return NULL. */
+ 
+-  body_elements *b = NULL;
+-  size_t numread = 0;
+-  *error_ret = 0;
++    body_elements *b = NULL;
++    size_t numread = 0;
++    *error_ret = 0;
+ 
+-  /* Allocate memory for the body_elements. */
+-  b = (body_elements *)malloc(sizeof(body_elements));
+-  if(NULL == b) {
+-    /* Oops, there wasn't enough memory. */
+-    goto mem_screwup;
+-  }
+-  /* Fill it with 0's, to make it safer to clean up if things fail later. */
+-  memset(b, '\0', sizeof(*b));
++    /* Allocate memory for the body_elements. */
++    b = (body_elements *) malloc(sizeof(body_elements));
++    if (NULL == b) {
++	/* Oops, there wasn't enough memory. */
++	goto mem_screwup;
++    }
++    /* Fill it with 0's, to make it safer to clean up if things fail later. */
++    memset(b, '\0', sizeof(*b));
+ 
+ 
+-  /* Read the header data. */
+-  numread = fread(&amp;b-&gt;meta, sizeof(b-&gt;meta), 1, infile);
+-  if(1 != numread) {
+-    goto file_screwup;
+-  }
+-
+-  /* Loop through the variables, reading data for each one. */
+-  int v;
+-  for(v = 0; v &lt; b-&gt;meta.num_variables; v++) {
+-    numread = fread(&amp;b-&gt;variable_list[v].meta, sizeof(b-&gt;variable_list[v].meta), 1, infile);
+-    if(1 != numread) {
+-      goto file_screwup;
++    /* Read the header data. */
++    numread = fread(&amp;b-&gt;meta, sizeof(b-&gt;meta), 1, infile);
++    if (1 != numread) {
++	goto file_screwup;
+     }
+ 
+-    /* Allocate memory to hold the list of series' for this variable. */
+-    b-&gt;variable_list[v].series_list = (series *)calloc(b-&gt;variable_list[v].meta.series_count, sizeof(series));
+-    if(NULL == b-&gt;variable_list[v].series_list) {
+-      /* Oops, there wasn't enough memory. */
+-      goto mem_screwup;
+-    }
+-    /* Fill it with 0's, to make it safer to clean up if things fail later. */
+-    /* Note that calloc() sets memory to 0 anyway (but malloc()
+-       doesn't!), so the following line is more of a safety thing. */
+-    memset(b-&gt;variable_list[v].series_list, '\0', b-&gt;variable_list[v].meta.series_count * sizeof(series));
+- 
+-    /* Loop through the series variables, reading data from each one. */
+-    int s;
+-    for(s = 0; s &lt; b-&gt;variable_list[v].meta.series_count; s++) {
+-      /* Read meta data for this series. */
+-      series *ser = &amp;b-&gt;variable_list[v].series_list[s];
+-      numread = fread(&amp;ser-&gt;meta, sizeof(ser-&gt;meta), 1, infile);
+-      if(1 != numread) {
+-	goto file_screwup;
+-      }
++    /* Loop through the variables, reading data for each one. */
++    int v;
++    for (v = 0; v &lt; b-&gt;meta.num_variables; v++) {
++	numread =
++	    fread(&amp;b-&gt;variable_list[v].meta,
++		  sizeof(b-&gt;variable_list[v].meta), 1, infile);
++	if (1 != numread) {
++	    goto file_screwup;
++	}
+ 
+-      /* Allocate memory for the terms. */
+-      ser-&gt;terms = (term_bin *)calloc(ser-&gt;meta.num_terms, sizeof(term_bin));
+-      if(NULL == ser-&gt;terms) {
+-	/* Oops, there wasn't enough memory. */
+-	goto mem_screwup;
+-      }
+-      /* Set the memory to 0's.  (Safety thing again, as above.) */
+-      memset(ser-&gt;terms, '\0', ser-&gt;meta.num_terms * sizeof(term_bin));
++	/* Allocate memory to hold the list of series' for this variable. */
++	b-&gt;variable_list[v].series_list =
++	    (series *) calloc(b-&gt;variable_list[v].meta.series_count,
++			      sizeof(series));
++	if (NULL == b-&gt;variable_list[v].series_list) {
++	    /* Oops, there wasn't enough memory. */
++	    goto mem_screwup;
++	}
++	/* Fill it with 0's, to make it safer to clean up if things fail later. */
++	/* Note that calloc() sets memory to 0 anyway (but malloc()
++	   doesn't!), so the following line is more of a safety thing. */
++	memset(b-&gt;variable_list[v].series_list, '\0',
++	       b-&gt;variable_list[v].meta.series_count * sizeof(series));
+ 
+-      /* Read the list of terms. */
+-      numread = fread(ser-&gt;terms, sizeof(*(ser-&gt;terms)), ser-&gt;meta.num_terms, infile);
+-      if(ser-&gt;meta.num_terms != numread) {
+-	goto file_screwup;
+-      }
++	/* Loop through the series variables, reading data from each one. */
++	int s;
++	for (s = 0; s &lt; b-&gt;variable_list[v].meta.series_count; s++) {
++	    /* Read meta data for this series. */
++	    series *ser = &amp;b-&gt;variable_list[v].series_list[s];
++	    numread = fread(&amp;ser-&gt;meta, sizeof(ser-&gt;meta), 1, infile);
++	    if (1 != numread) {
++		goto file_screwup;
++	    }
++
++	    /* Allocate memory for the terms. */
++	    ser-&gt;terms =
++		(term_bin *) calloc(ser-&gt;meta.num_terms, sizeof(term_bin));
++	    if (NULL == ser-&gt;terms) {
++		/* Oops, there wasn't enough memory. */
++		goto mem_screwup;
++	    }
++	    /* Set the memory to 0's.  (Safety thing again, as above.) */
++	    memset(ser-&gt;terms, '\0',
++		   ser-&gt;meta.num_terms * sizeof(term_bin));
++
++	    /* Read the list of terms. */
++	    numread =
++		fread(ser-&gt;terms, sizeof(*(ser-&gt;terms)),
++		      ser-&gt;meta.num_terms, infile);
++	    if (ser-&gt;meta.num_terms != numread) {
++		goto file_screwup;
++	    }
++	}
+     }
+-  }
+ 
+-  return b;
++    return b;
+ 
+-  /* If things fail, we'll end up somewhere near here. */
+- mem_screwup:
+-  *error_ret = errno;
+-  goto mem_cleanup;
++    /* If things fail, we'll end up somewhere near here. */
++  mem_screwup:
++    *error_ret = errno;
++    goto mem_cleanup;
+ 
+- file_screwup:
+-  *error_ret = EIO;
+-  goto mem_cleanup;
++  file_screwup:
++    *error_ret = EIO;
++    goto mem_cleanup;
+ 
+- mem_cleanup:
+-  ephint_free_body_elements(b);
+-  return NULL;
++  mem_cleanup:
++    ephint_free_body_elements(b);
++    return NULL;
+ }
+ 
+ 
+@@ -254,8 +270,8 @@
+ /*! @brief Internal struct to hold id data about a vsop_handle.
+  */
+ typedef struct {
+-  vsop_handle h;
+-  body_elements *be;
++    vsop_handle h;
++    body_elements *be;
+ } vsop_handle_wrapper;
+ 
+ static vsop_handle_wrapper *vhw_list = NULL;
+@@ -270,8 +286,8 @@
+  */
+ void vsop_data_init()
+ {
+-  vhw_list = NULL;
+-  vhw_list_size = 0;
++    vhw_list = NULL;
++    vhw_list_size = 0;
+ }
+ 
+ /*! @brief Cleans up the VSOP data handling functionality.  This
+@@ -282,12 +298,12 @@
+  */
+ void vsop_data_cleanup()
+ {
+-  /* Loop through every loaded data set, and release it. */
++    /* Loop through every loaded data set, and release it. */
+ 
+-  /* Release the list, and re-initialise the meta variables. */
+-  free(vhw_list);
+-  vhw_list = NULL;
+-  vhw_list_size = 0;
++    /* Release the list, and re-initialise the meta variables. */
++    free(vhw_list);
++    vhw_list = NULL;
++    vhw_list_size = 0;
+ }
+ 
+ 
+@@ -301,137 +317,144 @@
+  *
+  *  @return true if the data was loaded and returned, otherwise false.
+  */
+-static bool get_vsop_handle(const vsop_body planet, const vsop_version version, vsop_handle *h)
++static bool get_vsop_handle(const vsop_body planet,
++			    const vsop_version version, vsop_handle * h)
+ {
+-  int n;
+-  for(n = 0; n &lt; vhw_list_size; n++) {
+-    if(planet == vhw_list[n].h.planet &amp;&amp; version == vhw_list[n].h.version) {
+-      *h = vhw_list[n].h;
+-      return true;
++    int n;
++    for (n = 0; n &lt; vhw_list_size; n++) {
++	if (planet == vhw_list[n].h.planet
++	    &amp;&amp; version == vhw_list[n].h.version) {
++	    *h = vhw_list[n].h;
++	    return true;
++	}
+     }
+-  }
+-  return false;
++    return false;
+ }
+ 
+ 
+ typedef struct {
+-  vsop_version v;
+-  char *str;
++    vsop_version v;
++    char *str;
+ } version_str_map_type;
+ 
+ 
+ typedef struct {
+-  vsop_body p;
+-  char *str;
++    vsop_body p;
++    char *str;
+ } body_str_map_type;
+ 
+ static version_str_map_type version_str_map[] = {
+-  {hel_ell_j2,   EPH_VSOP_HEJ2},
+-  {hel_rec_j2,   EPH_VSOP_HRJ2},
+-  {hel_sph_j2,   EPH_VSOP_HSJ2},
+-  {hel_rec_date, EPH_VSOP_HRD },
+-  {hel_sph_date, EPH_VSOP_HSD },
+-  {bar_rec_j2,   EPH_VSOP_BRJ2}
++    {hel_ell_j2, EPH_VSOP_HEJ2},
++    {hel_rec_j2, EPH_VSOP_HRJ2},
++    {hel_sph_j2, EPH_VSOP_HSJ2},
++    {hel_rec_date, EPH_VSOP_HRD},
++    {hel_sph_date, EPH_VSOP_HSD},
++    {bar_rec_j2, EPH_VSOP_BRJ2}
+ };
+ 
+ static char *version_map_lookup(vsop_version v)
+ {
+-  int n;
+-  for(n = 0; n &lt; sizeof(version_str_map) / sizeof(*version_str_map); n++) {
+-    if(v == version_str_map[n].v) {
+-      return version_str_map[n].str;
++    int n;
++    for (n = 0; n &lt; sizeof(version_str_map) / sizeof(*version_str_map);
++	 n++) {
++	if (v == version_str_map[n].v) {
++	    return version_str_map[n].str;
++	}
+     }
+-  }
+-  return NULL;
++    return NULL;
+ }
+ 
+ static body_str_map_type body_str_map[] = {
+-  {vsop_mercury, EPH_MER},
+-  {vsop_venus,   EPH_VEN},
+-  {vsop_earth,   EPH_EAR},
+-  {vsop_mars,    EPH_MAR},
+-  {vsop_jupiter, EPH_JUP},
+-  {vsop_saturn,  EPH_SAT},
+-  {vsop_uranus,  EPH_URA},
+-  {vsop_neptune, EPH_NEP},
+-  {vsop_sun,     EPH_SOL},
+-  {vsop_EMB,     EPH_EMB}
++    {vsop_mercury, EPH_MER},
++    {vsop_venus, EPH_VEN},
++    {vsop_earth, EPH_EAR},
++    {vsop_mars, EPH_MAR},
++    {vsop_jupiter, EPH_JUP},
++    {vsop_saturn, EPH_SAT},
++    {vsop_uranus, EPH_URA},
++    {vsop_neptune, EPH_NEP},
++    {vsop_sun, EPH_SOL},
++    {vsop_EMB, EPH_EMB}
+ };
+ 
+ static char *planet_map_lookup(vsop_body p)
+ {
+-  int n;
+-  for(n = 0; n &lt; sizeof(body_str_map) / sizeof(*body_str_map); n++) {
+-    if(p == body_str_map[n].p) {
+-      return body_str_map[n].str;
++    int n;
++    for (n = 0; n &lt; sizeof(body_str_map) / sizeof(*body_str_map); n++) {
++	if (p == body_str_map[n].p) {
++	    return body_str_map[n].str;
++	}
+     }
+-  }
+-  return NULL;
++    return NULL;
+ }
+ 
+ /* Assumes that the handle isn't already loaded, and that the data in
+    the file isn't corrupt, so use with care. */
+-static int load_vsop_handle(const vsop_body planet, const vsop_version version, vsop_handle *vh)
++static int load_vsop_handle(const vsop_body planet,
++			    const vsop_version version, vsop_handle * vh)
+ {
+-  /* Construct the filename. */
+-  char filename[512];
+-  strncpy(filename, EPH_VSOP_DATA_PATH, 512);
+-  strncat(filename, EPH_VSOP_PREFIX, 512);
+-  strncat(filename, version_map_lookup(version), 512);
+-  strncat(filename, &quot;.&quot;, 512);
+-  strncat(filename, planet_map_lookup(planet), 512);
+-  strncat(filename, EPH_VSOP_SUFFIX, 512);
+-  filename[511] = '\0';
++    /* Construct the filename. */
++    char filename[512];
++    strncpy(filename, EPH_VSOP_DATA_PATH, 512);
++    strncat(filename, EPH_VSOP_PREFIX, 512);
++    strncat(filename, version_map_lookup(version), 512);
++    strncat(filename, &quot;.&quot;, 512);
++    strncat(filename, planet_map_lookup(planet), 512);
++    strncat(filename, EPH_VSOP_SUFFIX, 512);
++    filename[511] = '\0';
+ 
+-  /* Try to open the file. */
+-  FILE *f;
+-  errno = 0;
+-  if(NULL == (f = fopen(filename, &quot;rb&quot;))) {
+-    /* File didn't open for some reason.  Probably not there. */
+-    return errno;
+-  }
++    /* Try to open the file. */
++    FILE *f;
++    errno = 0;
++    if (NULL == (f = fopen(filename, &quot;rb&quot;))) {
++	/* File didn't open for some reason.  Probably not there. */
++	return errno;
++    }
+ 
+-  /* Attempt to read data from the file. */
+-  int error_ret;
+-  body_elements *be = ephint_read_body_elements(f, &amp;error_ret);
+-  if(NULL == be) {
+-    /* Oops, there was some problem loading data from the file.
+-       error_ret should have been set to either a malloc or calloc
+-       error, or to EIO. */
+-    return error_ret;
+-  }
++    /* Attempt to read data from the file. */
++    int error_ret;
++    body_elements *be = ephint_read_body_elements(f, &amp;error_ret);
++    if (NULL == be) {
++	/* Oops, there was some problem loading data from the file.
++	   error_ret should have been set to either a malloc or calloc
++	   error, or to EIO. */
++	return error_ret;
++    }
+ 
+-  /* Close the file. */
+-  errno = 0;
+-  if(0 != fclose(f)) {
+-    return errno;
+-  }
+-  
+-  /* Allocate more space in the list of vsop handle wrappers. */
+-  vsop_handle_wrapper *realloc_result;
+-  realloc_result = (vsop_handle_wrapper *)realloc(vhw_list, ++vhw_list_size * sizeof(vsop_handle_wrapper));
++    /* Close the file. */
++    errno = 0;
++    if (0 != fclose(f)) {
++	return errno;
++    }
+ 
+-  /* Check to make sure that realloc() found more memory successfully. */
+-  if(NULL == realloc_result) {
+-    /* Oops, not enough memory, or some other error. */
++    /* Allocate more space in the list of vsop handle wrappers. */
++    vsop_handle_wrapper *realloc_result;
++    realloc_result =
++	(vsop_handle_wrapper *) realloc(vhw_list,
++					++vhw_list_size *
++					sizeof(vsop_handle_wrapper));
+ 
+-    /* Free up those elements that were just read, since there's nowhere to put them. */
+-    ephint_free_body_elements(be);
++    /* Check to make sure that realloc() found more memory successfully. */
++    if (NULL == realloc_result) {
++	/* Oops, not enough memory, or some other error. */
+ 
+-    /* Return the error value. */
+-    return errno;
+-  } else {
+-    /* Memory was re-allocated fine, so assign the list's address to wherever it's been placed. */
+-    vhw_list = realloc_result;
+-  }
++	/* Free up those elements that were just read, since there's nowhere to put them. */
++	ephint_free_body_elements(be);
+ 
+-  vhw_list[vhw_list_size-1].be = be;
+-  vhw_list[vhw_list_size-1].h.data_id = next_data_id++;
+-  vhw_list[vhw_list_size-1].h.planet = planet;
+-  vhw_list[vhw_list_size-1].h.version = version;
++	/* Return the error value. */
++	return errno;
++    } else {
++	/* Memory was re-allocated fine, so assign the list's address to wherever it's been placed. */
++	vhw_list = realloc_result;
++    }
+ 
+-  *vh = vhw_list[vhw_list_size-1].h;
+-  return 0;
++    vhw_list[vhw_list_size - 1].be = be;
++    vhw_list[vhw_list_size - 1].h.data_id = next_data_id++;
++    vhw_list[vhw_list_size - 1].h.planet = planet;
++    vhw_list[vhw_list_size - 1].h.version = version;
++
++    *vh = vhw_list[vhw_list_size - 1].h;
++    return 0;
+ }
+ 
+ /*! @brief Returns a handle for accessing available VSOP data.
+@@ -457,16 +480,17 @@
+  *  fclose(), realloc(), malloc() or calloc() is usually returned.
+  *  EIO is returned if there was a problem loading some file data.
+  */
+-int get_vsop_data_handle(const vsop_body planet, const vsop_version version, vsop_handle *vh)
++int get_vsop_data_handle(const vsop_body planet,
++			 const vsop_version version, vsop_handle * vh)
+ {
+-  /* Check to see if the data for this planet/series is already loaded. */
+-  if(get_vsop_handle(planet, version, vh)) {
+-    /* If so, return the handle.       */
+-    return 0;
+-  } else {
+-    /* If not, load it, then return it. */
+-    return load_vsop_handle(planet, version, vh);
+-  }
++    /* Check to see if the data for this planet/series is already loaded. */
++    if (get_vsop_handle(planet, version, vh)) {
++	/* If so, return the handle.       */
++	return 0;
++    } else {
++	/* If not, load it, then return it. */
++	return load_vsop_handle(planet, version, vh);
++    }
+ }
+ 
+ /*! @brief Maps a specified vsop_handle to the loaded body elements that it represents.
+@@ -484,14 +508,14 @@
+  */
+ body_elements *ephint_get_body_elements_for_handle(const vsop_handle vh)
+ {
+-  int n;
+-  for(n = 0; n &lt; vhw_list_size; n++) {
+-    if(vh.data_id == vhw_list[n].h.data_id) {
+-      /* Found the handle, so return its associated body_elements structure. */
+-      return vhw_list[n].be;
++    int n;
++    for (n = 0; n &lt; vhw_list_size; n++) {
++	if (vh.data_id == vhw_list[n].h.data_id) {
++	    /* Found the handle, so return its associated body_elements structure. */
++	    return vhw_list[n].be;
++	}
+     }
+-  }
+ 
+-  /* The handle wasn't found in the list of loaded data, so return NULL. */
+-  return NULL;
++    /* The handle wasn't found in the list of loaded data, so return NULL. */
++    return NULL;
+ }
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000079.html">[Ephemeritis-svn] r226 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+	<LI>Next message: <A HREF="000080.html">[Ephemeritis-svn] r228 - in branches/new-vsop-prepare/src/c: tests utils
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#81">[ date ]</a>
+              <a href="thread.html#81">[ thread ]</a>
+              <a href="subject.html#81">[ subject ]</a>
+              <a href="author.html#81">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

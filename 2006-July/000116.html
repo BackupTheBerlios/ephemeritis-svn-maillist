@@ -1,0 +1,919 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r263 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-July/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r263%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607241031.k6OAVqaS005638%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000115.html">
+   <LINK REL="Next"  HREF="000117.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r263 - in branches/new-vsop-prepare/src/c:	libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r263%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607241031.k6OAVqaS005638%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r263 - in branches/new-vsop-prepare/src/c:	libephemeritis tests">izogi at mail.berlios.de
+       </A><BR>
+    <I>Mon Jul 24 12:31:52 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000115.html">[Ephemeritis-svn] r262 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000117.html">[Ephemeritis-svn] r264 - in branches/new-vsop-prepare/src/c:	libephemeritis utils
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#116">[ date ]</a>
+              <a href="thread.html#116">[ thread ]</a>
+              <a href="subject.html#116">[ subject ]</a>
+              <a href="author.html#116">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-07-24 12:31:47 +0200 (Mon, 24 Jul 2006)
+New Revision: 263
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/constellations.c
+   branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+   branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c
+   branches/new-vsop-prepare/src/c/libephemeritis/equinox.c
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+Finished adding eph prefix to the rest of the functions headed in ephemeritis.h.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/constellations.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/constellations.c	2006-07-24 09:04:01 UTC (rev 262)
++++ branches/new-vsop-prepare/src/c/libephemeritis/constellations.c	2006-07-24 10:31:47 UTC (rev 263)
+@@ -571,7 +571,7 @@
+  *  Precession/nutation/etc from 1950.0 should really be taken into
+  *  account.
+  */
+-int get_const_id(const double ra, const double dec, const double epoch)
++int ephGetConstId(const double ra, const double dec, const double epoch)
+ {
+     int index;
+     index = raw_scan_boundaries(const_data, ra, dec);
+@@ -593,7 +593,7 @@
+  *  later, but it should not be written over or modified.
+  *
+  */
+-void constid_name(const const_id constid, EPH_ConstellationName * namedata)
++void ephConstidName(const const_id constid, EPH_ConstellationName * namedata)
+ {
+     const_id c = constid;
+     if ((c &lt; 0) || (c &gt; 88)) {
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-07-24 09:04:01 UTC (rev 262)
++++ branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-07-24 10:31:47 UTC (rev 263)
+@@ -196,7 +196,7 @@
+  *
+  *  @author Bill McClain, Mike McGavin.
+  */
+-EPH_VsopErrorState ecliptic_planet(double jd,
++EPH_VsopErrorState ephEclipticPlanet(double jd,
+ 				 EPH_VsopBody planet,
+ 				 EPH_VsopErrorState (*heliocentric_f) (double, EPH_VsopBody, EPH_SphCoords *),
+ 				 double delta,
+@@ -310,7 +310,7 @@
+  *
+  *  @return         The mean anomoly, in radians.
+  */
+-double mean_anomoly(double jd, double T, double n)
++double ephMeanAnomoly(double jd, double T, double n)
+ {
+     return (jd - T) * n;
+ }
+@@ -372,7 +372,7 @@
+  *
+  *  @author Mike McGavin.
+  */
+-double eccentricity_anomoly(double M, double e, int iterations)
++double ephEccentricityAnomoly(double M, double e, int iterations)
+ {
+     int f = eph_sgn(M);
+ 
+@@ -433,7 +433,7 @@
+   emc-&gt;Qy = (cosO * b1) - (sinO * b2);
+   emc-&gt;Qz = (sinO * b1) + (cosO * b2);
+ 
+-  emc-&gt;E = eccentricity_anomoly(elements-&gt;M, elements-&gt;e, iterations);
++  emc-&gt;E = ephEccentricityAnomoly(elements-&gt;M, elements-&gt;e, iterations);
+   emc-&gt;a = elements-&gt;a;
+   emc-&gt;e = elements-&gt;e;
+ }
+@@ -450,11 +450,11 @@
+  *
+  *  @return The calculated constants for the provided orbital elements.
+  *
+- *  @sa elliptical_orbit_rectangular
++ *  @sa ephEllipticalOrbitRectangular
+  *
+  *  @author Mike McGavin.
+  */
+-EPH_ElementConstants get_element_constants(const double obl,
++EPH_ElementConstants ephGetElementConstants(const double obl,
+ 					const EPH_OrbitalElements elements,
+ 					const int iterations)
+ {
+@@ -484,7 +484,7 @@
+     ec._b = sqrt(G * G + Q * Q);
+     ec._c = sqrt(H * H + R * R);
+ 
+-    ec.E = eccentricity_anomoly(elements.M, elements.e, iterations);
++    ec.E = ephEccentricityAnomoly(elements.M, elements.e, iterations);
+ 
+     ec.w = elements.w;
+     ec.M = elements.M;
+@@ -508,7 +508,7 @@
+  *
+  *  @author Mike McGavin.
+  */
+-EPH_RecCoords elliptical_orbit_rectangular(const EPH_ElementConstants ec,
++EPH_RecCoords ephEllipticalOrbitRectangular(const EPH_ElementConstants ec,
+ 					const double r_sun)
+ {
+     double v = true_anomoly(ec.e, ec.E);
+@@ -525,12 +525,12 @@
+  *  Sun) given the body's set of element constants.
+  *
+  *  @param[in]  ec  The calculated constants that apply for the orbit
+- *                  being calculated.  Use get_element_constants to generate this
++ *                  being calculated.  Use ephGetElementConstants to generate this
+  *                  data.
+  *
+  *  @return         The radius vector (distance to the Sun), in Astronomical Units.
+  */
+-double get_r_sun(const EPH_ElementConstants ec)
++double ephGetRSun(const EPH_ElementConstants ec)
+ {
+     return radius_vector(ec.a, ec.e, ec.E);
+ }
+@@ -547,7 +547,7 @@
+  *
+  *  @return Estimated magnitude.
+  */
+-double mag_abs(const double g, const double k, const double r_sun,
++double ephMagAbs(const double g, const double k, const double r_sun,
+ 	       const double r_earth)
+ {
+     return g + (5 * log10(r_earth)) + (k * log10(r_sun));
+@@ -568,8 +568,8 @@
+  *
+  *  @author Mike McGavin.
+  */
+-double mag_iau(const double H, const double G, const double r_sun,
+-	       const double r_earth, const double B)
++double ephMagIau(const double H, const double G, const double r_sun,
++                 const double r_earth, const double B)
+ {
+     double z1 = exp(-3.33 * (pow(tan(B / 2), 0.63)));
+     double z2 = exp(-1.87 * (pow(tan(B / 2), 1.22)));
+@@ -677,7 +677,7 @@
+  *
+  *  @author Mike McGavin.
+  */
+-EPH_OrbitalElements populate_orbital_elements(const double epoch,
++EPH_OrbitalElements ephPopulateOrbitalElements(const double epoch,
+ 					   const double M_epoch,
+ 					   const double jd,
+ 					   const double n,
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-24 09:04:01 UTC (rev 262)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-24 10:31:47 UTC (rev 263)
+@@ -340,8 +340,8 @@
+     char *name;			/* Points to a string containing the name.         */
+ } EPH_ConstellationName;
+ 
+-void constid_name(const const_id constid, EPH_ConstellationName * namedata);
+-int get_const_id(const double ra, const double dec, const double epoch);
++void ephConstidName(const const_id constid, EPH_ConstellationName * namedata);
++int  ephGetConstId(const double ra, const double dec, const double epoch);
+ 
+ 
+ 
+@@ -389,35 +389,35 @@
+                         (vsop_simple_heliocentric_spherical_date) A
+                         VSOP handle couldn't be loaded for some
+                         reason. */
+-  bailout,           /*!&lt; @brief (ecliptic_planet, equinox_exact)
++  bailout,           /*!&lt; @brief (ephEclipticPlanet, ephEquinoxExact)
+                         Indicates that the calculation bailed out,
+                         because the desired accuracy couldn't be
+                         reached within a pre-programmed number of
+                         iterations. */
+-  vh_access_error,   /*!&lt; @brief (vsop_get_rectangular,
+-		        vsop_get_spherical) indicates a EPH_VsopHandle
++  vh_access_error,   /*!&lt; @brief (ephVsopGetRectangular,
++                        ephVsopGetSpherical) indicates a EPH_VsopHandle
+ 		        error.  (Data referenced by this handle wasn't
+ 		        available - perhaps it was unloaded.) */
+-  bad_data,          /*!&lt; @brief (vsop_get_rectangular,
+-                        vsop_get_spherical, sol_sph_to_rec) indicates
++  bad_data,          /*!&lt; @brief (ephVsopGetRectangular,
++                        ephVsopGetSpherical, ephSolSphToRec) indicates
+                         that a EPH_VsopHandle referenced data that wasn't
+                         rectangular or spherical, when the function
+                         required one of those two. */
+-  bad_for_fk5,       /*!&lt; @brief (vsop_rec_to_fk5, vsop_sph_to_fk5)
++  bad_for_fk5,       /*!&lt; @brief (ephVsopRecToFk5, ephVsopSphToFk5)
+                         indicates that supplied coordinates were
+                         unsuitable for converting to FK5 by this
+                         function. */
+-  not_earth,         /*!&lt; @brief (vsop_rec_sol, vsop_sph_sol)
++  not_earth,         /*!&lt; @brief (ephVsopRecSol, ephVsopSphSol)
+                         indicates that supplied coordinates were not
+                         Earth coordinates, and therefore unsuitable
+                         for converting to solar coordinates.  Note
+                         that even if the input planet is vsop_earth,
+                         is_inverted must be set to 0 or this error
+                         will be returned. */
+-  wrong_source,      /*!&lt; @brief (vsop_rec_sol, vsop_sph_sol)
++  wrong_source,      /*!&lt; @brief (ephVsopRecSol, ephVsopSphSol)
+                         indicates that supplied coordinates were not
+                         rectangular J2000 or date coordinates. */
+-  not_solar          /*!&lt; @brief (sol_sph_to_rec) indicates that the
++  not_solar          /*!&lt; @brief (ephSolSphToRec) indicates that the
+                         incoming spherical coordinates were not solar
+                         coordinates. */
+ 
+@@ -480,26 +480,27 @@
+ } EPH_VsopSphCoords;
+ 
+ /* vsop_data_handling.c */
+-void vsop_data_init();
+-void vsop_data_cleanup();
+-int get_vsop_data_handle(const EPH_VsopBody planet,
+-			 const EPH_VsopVersion version, EPH_VsopHandle * vh);
++void ephVsopDataInit();
++void ephVsopDataCleanup();
++int  ephGetVsopDataHandle(const EPH_VsopBody planet,
++                          const EPH_VsopVersion version,
++                          EPH_VsopHandle * vh);
+ 
+ /* vsop_calculate.c */
+-EPH_VsopRecCoords vsop_get_rectangular(const EPH_VsopHandle vh,
+-				     const double jd);
+-EPH_VsopRecCoords vsop_rec_to_fk5(const EPH_VsopRecCoords vrc);
+-EPH_VsopRecCoords vsop_rec_sol(const EPH_VsopRecCoords earth_vrc);
++EPH_VsopRecCoords ephVsopGetRectangular(const EPH_VsopHandle vh,
++                                        const double jd);
++EPH_VsopRecCoords ephVsopRecToFk5(const EPH_VsopRecCoords vrc);
++EPH_VsopRecCoords ephVsopRecSol(const EPH_VsopRecCoords earth_vrc);
+ 
+-EPH_VsopSphCoords vsop_get_spherical(const EPH_VsopHandle vh, const double jd);
+-EPH_VsopSphCoords vsop_sph_to_fk5(const EPH_VsopSphCoords vsc);
+-EPH_VsopSphCoords vsop_sph_sol(const EPH_VsopSphCoords earth_vsc);
++EPH_VsopSphCoords ephVsopGetSpherical(const EPH_VsopHandle vh, const double jd);
++EPH_VsopSphCoords ephVsopSphToFk5(const EPH_VsopSphCoords vsc);
++EPH_VsopSphCoords ephVsopSphSol(const EPH_VsopSphCoords earth_vsc);
+ 
+-EPH_VsopRecCoords sol_sph_to_rec(EPH_VsopSphCoords vsc);
++EPH_VsopRecCoords ephSolSphToRec(EPH_VsopSphCoords vsc);
+ 
+ 
+-EPH_VsopErrorState vsop_simple_heliocentric_spherical_date_fk5(double jd, EPH_VsopBody planet, EPH_SphCoords *sc);
+-EPH_VsopErrorState vsop_sol_geocentric_spherical_date_fk5(double jd, EPH_SphCoords *sc);
++EPH_VsopErrorState ephVsopSimpleHeliocentricSphericalDateFk5(double jd, EPH_VsopBody planet, EPH_SphCoords *sc);
++EPH_VsopErrorState ephVsopSolGeocentricSphericalDateFk5(double jd, EPH_SphCoords *sc);
+ 
+ 
+ /* elliptical.c */
+@@ -518,7 +519,7 @@
+ typedef struct {
+     double M;			/*!&lt; @brief The Mean anonomy.
+ 				 *
+-				 *   @sa mean_anomoly, for calculating the mean anomoly if it's unknown.
++                                 *   @sa ephMeanAnomoly, for calculating the mean anomoly if it's unknown.
+ 				 */
+     double a;			/*!&lt; @brief The length of the semi-major axis, in astronomical units. */
+     double e;			/*!&lt; @brief The orbital eccentricity. */
+@@ -549,14 +550,14 @@
+ 
+ /*! @brief A structure to hold the calculated values that are constant
+  *  for particular elements, and can be re-used for different times.
+- *  This structure should be populated using get_element_constants.
++ *  This structure should be populated using ephGetElementConstants.
+  *
+  *  This structure is an intermediate structure that is used between
+  *  the initial orbital elements and the calculations.  It is used to
+  *  extract those calculated values that can be re-used over and over
+  *  again for positions at different times.
+  *
+- *  @sa get_element_constants, for generating the data to fill this
++ *  @sa ephGetElementConstants, for generating the data to fill this
+  *  structure.
+  */
+ typedef struct {
+@@ -570,7 +571,7 @@
+     double e;			/*!&lt; @brief The orbital eccentricity. */
+ } EPH_ElementConstants;
+ 
+-double eccentricity_anomoly(double M, double e, int iterations);
++double ephEccentricityAnomoly(double M, double e, int iterations);
+ 
+ /*
+ int geocentric_planet(double jd,
+@@ -582,7 +583,7 @@
+ 		      double *ra, double *dec);
+ */
+ 
+-EPH_VsopErrorState ecliptic_planet(double jd,
++EPH_VsopErrorState ephEclipticPlanet(double jd,
+ 				 EPH_VsopBody planet,
+ 				 EPH_VsopErrorState (*heliocentric_f) (double, EPH_VsopBody, EPH_SphCoords *),
+ 				 double delta,
+@@ -590,15 +591,15 @@
+ 
+ 
+ 
+-EPH_ElementConstants get_element_constants(const double obl,
++EPH_ElementConstants ephGetElementConstants(const double obl,
+ 					const EPH_OrbitalElements elements,
+ 					const int iterations);
+-double get_r_sun(const EPH_ElementConstants ec);
++double ephGetRSun(const EPH_ElementConstants ec);
+ 
+-EPH_RecCoords elliptical_orbit_rectangular(const EPH_ElementConstants ec,
++EPH_RecCoords ephEllipticalOrbitRectangular(const EPH_ElementConstants ec,
+ 					const double r_sun);
+ 
+-double mean_anomoly(double jd, double T, double n);
++double ephMeanAnomoly(double jd, double T, double n);
+ void elliptical_orbit_ecliptical(const EPH_RecCoords sol,
+ 				 const EPH_RecCoords body,
+ 				 const double r_sun,
+@@ -607,13 +608,13 @@
+ 				 double *phase_angle,
+ 				 double *r_earth);
+ 
+-double mag_abs(const double g, const double k, const double r_sun,
+-	       const double r_earth);
++double ephMagAbs(const double g, const double k, const double r_sun,
++                 const double r_earth);
+ 
+-double mag_iau(const double H, const double G, const double r_sun,
+-	       const double r_earth, const double B);
++double ephMagIau(const double H, const double G, const double r_sun,
++                 const double r_earth, const double B);
+ 
+-EPH_OrbitalElements populate_orbital_elements(const double epoch,
++EPH_OrbitalElements ephPopulateOrbitalElements(const double epoch,
+ 					   const double M_epoch,
+ 					   const double jd,
+ 					   const double n,
+@@ -628,15 +629,15 @@
+ 
+ 
+ /* equinox.c */
+-double equinox_approx(int yr, EPH_Season season);
+-EPH_VsopErrorState equinox_exact(double jd,
++double ephEquinoxApprox(int yr, EPH_Season season);
++EPH_VsopErrorState ephEquinoxExact(double jd,
+ 			       EPH_Season season,
+ 			       EPH_VsopErrorState (*heliocentric_sol_f) (double, EPH_SphCoords *),
+ 			       double delta,
+ 			       double *equinox_result);
+ 
+ /* equationoftime.c */
+-EPH_VsopErrorState equation_of_time(const double jd, EPH_VsopErrorState (*geocentric_sol_f) (double, EPH_SphCoords *), double *eot_result);
++EPH_VsopErrorState ephEquationOfTime(const double jd, EPH_VsopErrorState (*geocentric_sol_f) (double, EPH_SphCoords *), double *eot_result);
+ 
+ 
+ 
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c	2006-07-24 09:04:01 UTC (rev 262)
++++ branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c	2006-07-24 10:31:47 UTC (rev 263)
+@@ -48,7 +48,7 @@
+  *
+  *  @author Mike McGavin
+  */
+-EPH_VsopErrorState equation_of_time(const double jd,
++EPH_VsopErrorState ephEquationOfTime(const double jd,
+ 				  EPH_VsopErrorState (*geocentric_sol_f) (double, EPH_SphCoords *),
+ 				  double *eot_result
+ 				  )
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/equinox.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/equinox.c	2006-07-24 09:04:01 UTC (rev 262)
++++ branches/new-vsop-prepare/src/c/libephemeritis/equinox.c	2006-07-24 10:31:47 UTC (rev 263)
+@@ -148,7 +148,7 @@
+  *
+  *  @sa ephDtToUt
+  */
+-double equinox_approx(int yr, EPH_Season season)
++double ephEquinoxApprox(int yr, EPH_Season season)
+ {
+     if (yr &lt; -1000 || yr &gt; 3000) {
+ 	return -1;
+@@ -204,7 +204,7 @@
+ }
+ 
+ 
+-/* This struct is used for a const array declared in the equinox_exact function.
++/* This struct is used for a const array declared in the ephEquinoxExact function.
+  * Its only purpose is to map each season to an angle of a circle.
+  */
+ struct season_circle_data {
+@@ -237,7 +237,7 @@
+  *
+  *  @author Bill McClain, Mike McGavin.
+  */
+-EPH_VsopErrorState equinox_exact(double jd,
++EPH_VsopErrorState ephEquinoxExact(double jd,
+ 			       EPH_Season season,
+ 			       EPH_VsopErrorState (*geocentric_sol_f) (double, EPH_SphCoords *),
+ 			       double delta,
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-07-24 09:04:01 UTC (rev 262)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-07-24 10:31:47 UTC (rev 263)
+@@ -116,11 +116,11 @@
+  *  @param jd The Julian Date for which to
+  *            calculate coordinates, in dynamical time.
+  *
+- *  @sa vsop_rec_to_fk5
++ *  @sa ephVsopRecToFk5
+  *
+  *  @author Mike McGavin.
+  */
+-EPH_VsopRecCoords vsop_get_rectangular(const EPH_VsopHandle vh, const double jd)
++EPH_VsopRecCoords ephVsopGetRectangular(const EPH_VsopHandle vh, const double jd)
+ {
+     EPH_VsopRecCoords vrc;
+ 
+@@ -181,7 +181,7 @@
+  *
+  *  @author Mike McGavin.
+  */
+-EPH_VsopRecCoords vsop_rec_to_fk5(const EPH_VsopRecCoords vrc)
++EPH_VsopRecCoords ephVsopRecToFk5(const EPH_VsopRecCoords vrc)
+ {
+     /* Make a variable to return, and inialise it to the existing incoming values. */
+     EPH_VsopRecCoords output = vrc;
+@@ -260,7 +260,7 @@
+  *
+  *  @return    A set of geocentric rectangular Sun coordinates.
+  */
+-EPH_VsopRecCoords vsop_rec_sol(const EPH_VsopRecCoords earth_vrc) {
++EPH_VsopRecCoords ephVsopRecSol(const EPH_VsopRecCoords earth_vrc) {
+     EPH_VsopRecCoords output = earth_vrc;
+ 
+     /* Stop right here if the incoming coordinates are in an error state. */
+@@ -298,11 +298,11 @@
+  *  @param jd The Julian Date for which to
+  *            calculate coordinates, in dynamical time.
+  *
+- *  @sa vsop_sph_to_fk5
++ *  @sa ephVsopSphToFk5
+  *
+  *  @author Mike McGavin.
+  */
+-EPH_VsopSphCoords vsop_get_spherical(const EPH_VsopHandle vh, const double jd)
++EPH_VsopSphCoords ephVsopGetSpherical(const EPH_VsopHandle vh, const double jd)
+ {
+     EPH_VsopSphCoords vsc;
+ 
+@@ -360,7 +360,7 @@
+  *
+  *  @author Mike McGavin.
+  */
+-EPH_VsopSphCoords vsop_sph_to_fk5(const EPH_VsopSphCoords vsc)
++EPH_VsopSphCoords ephVsopSphToFk5(const EPH_VsopSphCoords vsc)
+ {
+     /* Make a variable to return, and inialise it to the existing incoming values. */
+     EPH_VsopSphCoords output = vsc;
+@@ -448,7 +448,7 @@
+  *
+  *  @return    A set of geocentric spherical Sun coordinates.
+  */
+-EPH_VsopSphCoords vsop_sph_sol(const EPH_VsopSphCoords earth_vsc)
++EPH_VsopSphCoords ephVsopSphSol(const EPH_VsopSphCoords earth_vsc)
+ {
+     EPH_VsopSphCoords output = earth_vsc;
+ 
+@@ -504,7 +504,7 @@
+  *
+  *  @author Mike McGavin.
+  */
+-EPH_VsopRecCoords sol_sph_to_rec(EPH_VsopSphCoords vsc)
++EPH_VsopRecCoords ephSolSphToRec(EPH_VsopSphCoords vsc)
+ {
+   EPH_VsopRecCoords vrc;
+   memset(&amp;vrc, '\0', sizeof(vrc));
+@@ -549,19 +549,19 @@
+ /*! @brief Calculates the heliocentric spherical coordinates for a
+  *  specified planet at a given date, using VSOP methods.
+  *
+- *  vsop_data_init() must have been called, or this will fail.
++ *  ephVsopDataInit() must have been called, or this will fail.
+  *
+  *  @todo Finish documenting.
+  */
+-EPH_VsopErrorState vsop_simple_heliocentric_spherical_date_fk5(double jd, EPH_VsopBody planet, EPH_SphCoords *sc)
++EPH_VsopErrorState ephVsopSimpleHeliocentricSphericalDateFk5(double jd, EPH_VsopBody planet, EPH_SphCoords *sc)
+ {
+   EPH_VsopHandle vh_planet;
+-  int result = get_vsop_data_handle(planet, hel_sph_date, &amp;vh_planet);
++  int result = ephGetVsopDataHandle(planet, hel_sph_date, &amp;vh_planet);
+   if(0 != result) {
+       return vh_load_error;
+   }
+ 
+-  EPH_VsopSphCoords vsc = vsop_sph_to_fk5(vsop_get_spherical(vh_planet, jd));
++  EPH_VsopSphCoords vsc = ephVsopSphToFk5(ephVsopGetSpherical(vh_planet, jd));
+   if(ok != vsc.error_state) {
+       return vsc.error_state;
+   } else {
+@@ -573,19 +573,19 @@
+ /*! @brief Calculates the geocentric spherical coordinates for the Sun
+  *  at a given date, using VSOP methods.
+  *
+- *  vsop_data_init() must have been called, or this will fail.
++ *  ephVsopDataInit() must have been called, or this will fail.
+  *
+  *  @todo Finish documenting.
+  */
+-EPH_VsopErrorState vsop_sol_geocentric_spherical_date_fk5(double jd, EPH_SphCoords *sc)
++EPH_VsopErrorState ephVsopSolGeocentricSphericalDateFk5(double jd, EPH_SphCoords *sc)
+ {
+   EPH_VsopHandle vh_earth;
+-  int result = get_vsop_data_handle(vsop_earth, hel_sph_date, &amp;vh_earth);
++  int result = ephGetVsopDataHandle(vsop_earth, hel_sph_date, &amp;vh_earth);
+   if(0 != result) {
+       return vh_load_error;
+   }
+ 
+-  EPH_VsopSphCoords vsc = vsop_sph_sol(vsop_sph_to_fk5(vsop_get_spherical(vh_earth, jd)));
++  EPH_VsopSphCoords vsc = ephVsopSphSol(ephVsopSphToFk5(ephVsopGetSpherical(vh_earth, jd)));
+   if(ok != vsc.error_state) {
+       return vsc.error_state;
+   } else {
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c	2006-07-24 09:04:01 UTC (rev 262)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c	2006-07-24 10:31:47 UTC (rev 263)
+@@ -284,7 +284,7 @@
+  *  Calling this function initialises all the internal memory handling
+  *  overheads, and so on.
+  */
+-void vsop_data_init()
++void ephVsopDataInit()
+ {
+     vhw_list = NULL;
+     vhw_list_size = 0;
+@@ -296,7 +296,7 @@
+  *  Calling this function cleans up all the internal memory handling
+  *  overheads, and so on.
+  */
+-void vsop_data_cleanup()
++void ephVsopDataCleanup()
+ {
+     /* Loop through every loaded data set, and release it. */
+ 
+@@ -480,7 +480,7 @@
+  *  fclose(), realloc(), malloc() or calloc() is usually returned.
+  *  EIO is returned if there was a problem loading some file data.
+  */
+-int get_vsop_data_handle(const EPH_VsopBody planet,
++int ephGetVsopDataHandle(const EPH_VsopBody planet,
+ 			 const EPH_VsopVersion version, EPH_VsopHandle * vh)
+ {
+     /* Check to see if the data for this planet/series is already loaded. */
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-24 09:04:01 UTC (rev 262)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-24 10:31:47 UTC (rev 263)
+@@ -90,8 +90,8 @@
+ 			     double *radius)
+ {
+     EPH_VsopHandle vh;
+-    if (0 == get_vsop_data_handle(planet, hel_sph_date, &amp;vh)) {
+-	EPH_VsopSphCoords vsc = vsop_get_spherical(vh, jd);
++    if (0 == ephGetVsopDataHandle(planet, hel_sph_date, &amp;vh)) {
++        EPH_VsopSphCoords vsc = ephVsopGetSpherical(vh, jd);
+ 	if (vsc.error_state != ok) {
+ 	    printf(&quot;Error calculating spherical coordinates: %d\n&quot;,
+ 		   vsc.error_state);
+@@ -113,9 +113,9 @@
+ 			    double *radius)
+ {
+     EPH_VsopHandle vh;
+-    if (0 == get_vsop_data_handle(planet, hel_sph_date, &amp;vh)) {
++    if (0 == ephGetVsopDataHandle(planet, hel_sph_date, &amp;vh)) {
+ 	EPH_VsopSphCoords vsc =
+-	    vsop_sph_to_fk5(vsop_get_spherical(vh, jd));
++                ephVsopSphToFk5(ephVsopGetSpherical(vh, jd));
+ 	if (vsc.error_state != ok) {
+ 	    printf(&quot;Error calculating spherical coordinates: %d\n&quot;,
+ 		   vsc.error_state);
+@@ -756,15 +756,15 @@
+ 
+ 	EPH_VsopHandle vh;
+ 	EPH_VsopSphCoords vsc;
+-	if(0 == get_vsop_data_handle(vsop_earth, hel_sph_date, &amp;vh)) {
+-	  vsc = vsop_sph_sol(vsop_get_spherical(vh, jd));
++        if(0 == ephGetVsopDataHandle(vsop_earth, hel_sph_date, &amp;vh)) {
++            vsc = ephVsopSphSol(ephVsopGetSpherical(vh, jd));
+ 	  report(&quot;longitude&quot;, ephRToD(vsc.sc.ecl.longitude) * 3600, 199.907372 * 3600, 1.0,
+ 		 &quot;arc-seconds&quot;);
+ 	  report(&quot;latitude&quot;, ephRToD(vsc.sc.ecl.latitude) * 3600, 0.644, 1.0, &quot;arc-seconds&quot;);
+ 	  report(&quot;radius&quot;, vsc.sc.R * km_per_au, 0.99760775 * km_per_au, 150.0,
+ 		 &quot;km&quot;);
+ 
+-	  vsc = vsop_sph_to_fk5(vsc);
++          vsc = ephVsopSphToFk5(vsc);
+ 
+ 	  report(&quot;corrected fk5 longitude&quot;, ephRToD(vsc.sc.ecl.longitude) * 3600,
+ 		 199.907347 * 3600, 0.5, &quot;arc-seconds&quot;);
+@@ -815,13 +815,13 @@
+ 	EPH_VsopHandle vh;
+ 	if (0 !=
+ 	    (result =
+-	     get_vsop_data_handle(vsop_earth, hel_sph_date, &amp;vh))) {
++                   ephGetVsopDataHandle(vsop_earth, hel_sph_date, &amp;vh))) {
+ 	    printf(&quot;Problem opening file: %s&quot;, strerror(result));
+ 	} else {
+-	    EPH_VsopSphCoords vsc = vsop_get_spherical(vh, jd);
++	    EPH_VsopSphCoords vsc = ephVsopGetSpherical(vh, jd);
+ 
+-	    vsc = vsop_sph_to_fk5(vsc);
+-	    vsc = vsop_sph_sol(vsc);
++            vsc = ephVsopSphToFk5(vsc);
++            vsc = ephVsopSphSol(vsc);
+ 	    /*
+             double obl = ephObliquityHi(jd);
+ 	    */
+@@ -829,7 +829,7 @@
+ 	    report_diff(&quot;B&quot;, ephRToD(vsc.sc.ecl.latitude) * 3600.0, ephDmsToD(0,0,0.62) * 3600.0, &quot;arc-seconds&quot;);
+ 	    report_diff(&quot;R&quot;, vsc.sc.R * km_per_au, 0.99760775 * km_per_au, &quot;km&quot;);
+ 
+-	    EPH_VsopRecCoords vrc = sol_sph_to_rec(vsc);
++            EPH_VsopRecCoords vrc = ephSolSphToRec(vsc);
+ 	    report_diff(&quot;X&quot;, vrc.rc.x * km_per_au, -0.9379952 * km_per_au, &quot;km&quot;);
+ 	    report_diff(&quot;Y&quot;, vrc.rc.y * km_per_au, -0.3116544 * km_per_au, &quot;km&quot;);
+ 	    report_diff(&quot;Z&quot;, vrc.rc.z * km_per_au, -0.1351215 * km_per_au, &quot;km&quot;);
+@@ -839,7 +839,7 @@
+ 
+     printf(&quot;27.a Approximate solstice\n&quot;);
+     {
+-	const double jd = equinox_approx(1962, kJune);
++        const double jd = ephEquinoxApprox(1962, kJune);
+ 	report(&quot;julian day&quot;, jd, 2437837.39245, 1e-5, &quot;days&quot;);
+     }
+ 
+@@ -847,10 +847,10 @@
+     {
+       /*
+ 	const double jd =
+-	    equinox_exact(2437837.38589, kJune, days_per_second);
++        ephEquinoxExact(2437837.38589, kJune, days_per_second);
+       */
+ 	double jd;
+-	EPH_VsopErrorState e_state = equinox_exact(2437837.38589, kJune, vsop_sol_geocentric_spherical_date_fk5, days_per_second, &amp;jd);
++        EPH_VsopErrorState e_state = ephEquinoxExact(2437837.38589, kJune, ephVsopSolGeocentricSphericalDateFk5, days_per_second, &amp;jd);
+ 	if(ok != e_state) {
+ 	  printf(&quot;There was some kind of problem calculating the equinox: %d\n&quot;, e_state);
+ 	} else {
+@@ -917,10 +917,10 @@
+ 	int n;
+ 	for (n = 0; n &lt; tbl_size; n++) {
+ 	    const struct Data_27_Solstice *p = &amp;(_tbl[n]);
+-	    const double approx = equinox_approx(p-&gt;yr, p-&gt;season);
++            const double approx = ephEquinoxApprox(p-&gt;yr, p-&gt;season);
+ 
+ 	    double jd;
+-	    EPH_VsopErrorState e_state = equinox_exact(approx, p-&gt;season, vsop_sol_geocentric_spherical_date_fk5, days_per_second, &amp;jd);
++            EPH_VsopErrorState e_state = ephEquinoxExact(approx, p-&gt;season, ephVsopSolGeocentricSphericalDateFk5, days_per_second, &amp;jd);
+ 	    if(ok != e_state) {
+ 	      printf(&quot;There was some kind of problem calculating the equinox: %d\n&quot;, e_state);
+ 	      continue;
+@@ -945,7 +945,7 @@
+ 	double jd = 2448908.5;
+ 	EPH_VsopErrorState e_state;
+ 	double eot_result;
+-	if(ok != (e_state = equation_of_time(jd, vsop_sol_geocentric_spherical_date_fk5, &amp;eot_result))) {
++        if(ok != (e_state = ephEquationOfTime(jd, ephVsopSolGeocentricSphericalDateFk5, &amp;eot_result))) {
+ 	  printf(&quot;There was a problem calculating the equation of time: %d\n&quot;, e_state);
+ 	} else {
+ 	  report(&quot;Equation of time&quot;, eot_result * 3600.0,
+@@ -958,7 +958,7 @@
+     {
+ 	double e = 0.100;
+ 	double M = ephDToR(5.0);
+-	double eok_result = eccentricity_anomoly(M, e, 33);
++        double eok_result = ephEccentricityAnomoly(M, e, 33);
+ 	report(&quot;Eccentricity anoomly&quot;, eok_result, ephDToR(5.554589),
+ 	       0.0000001, &quot;radians&quot;);
+     }
+@@ -995,10 +995,10 @@
+ 			  ephDToR(23.439669), days_per_second, &amp;ra, &amp;dec);
+       */
+ 
+-	EPH_VsopErrorState result = ecliptic_planet(
++      EPH_VsopErrorState result = ephEclipticPlanet(
+ 						  jd,
+ 						  vsop_venus,
+-						  vsop_simple_heliocentric_spherical_date_fk5,
++                                                  ephVsopSimpleHeliocentricSphericalDateFk5,
+ 						  days_per_second,
+ 						  &amp;ecl_pos);
+ 
+@@ -1036,13 +1036,13 @@
+ 	el.L = ephDToR(334.75006);
+ 	el.w = ephDToR(186.23352);
+ 	el.n = 0.01720209895 / (el.a * sqrt(el.a));
+-	el.M = mean_anomoly(jd, T, el.n);
++        el.M = ephMeanAnomoly(jd, T, el.n);
+ 
+ 	double r_sun;
+         double obl2000 = ephObliquityHi(ephJeToJd(2000.0));
+-	EPH_ElementConstants ec = get_element_constants(obl2000, el, 53);
+-	r_sun = get_r_sun(ec);
+-	EPH_RecCoords rc = elliptical_orbit_rectangular(ec, r_sun);
++        EPH_ElementConstants ec = ephGetElementConstants(obl2000, el, 53);
++        r_sun = ephGetRSun(ec);
++        EPH_RecCoords rc = ephEllipticalOrbitRectangular(ec, r_sun);
+ 
+ 	report(&quot;x&quot;, rc.x, 0.2508066, 0.0000001, &quot;AU&quot;);
+ 	report(&quot;y&quot;, rc.y, 0.4849175, 0.0000001, &quot;AU&quot;);
+@@ -1052,17 +1052,17 @@
+ 	EPH_VsopHandle vh;
+ 	int result;
+ 	if (0 !=
+-	    (result = get_vsop_data_handle(vsop_earth, hel_sph_j2, &amp;vh))) {
++                   (result = ephGetVsopDataHandle(vsop_earth, hel_sph_j2, &amp;vh))) {
+ 	    printf(&quot;Problem opening file: %s&quot;, strerror(result));
+ 	} else {
+-/* 	    EPH_VsopRecCoords vrc = vsop_rec_to_fk5(vsop_rec_sol(vsop_get_rectangular(vh, jd))); */
++            /* 	    EPH_VsopRecCoords vrc = ephVsopRecToFk5(ephVsopRecSol(ephVsopGetRectangular(vh, jd))); */
+ /* 	    /\* */
+             /* 	    double E = ephObliquityHi(jd); */
+ /* 	    *\/ */
+ /* 	    EPH_RecCoords src = vrc.rc; */
+ 
+-	    EPH_VsopSphCoords vsc = vsop_sph_to_fk5(vsop_sph_sol(vsop_get_spherical(vh, jd)));
+-	    EPH_VsopRecCoords vrc = sol_sph_to_rec(vsc);
++            EPH_VsopSphCoords vsc = ephVsopSphToFk5(ephVsopSphSol(ephVsopGetSpherical(vh, jd)));
++            EPH_VsopRecCoords vrc = ephSolSphToRec(vsc);
+ 	    EPH_RecCoords src = vrc.rc;
+ 
+ 	    report(&quot;solar x&quot;, src.x * km_per_au, -0.9756732 * km_per_au, 0.0000001 * km_per_au,
+@@ -1082,10 +1082,10 @@
+ 
+ 	    double tau = 0.0057755183 * body_r_earth;
+ 	    jd = jd - tau;
+-	    el.M = mean_anomoly(jd, T, el.n);
+-	    ec = get_element_constants(obl2000, el, 53);
+-	    r_sun = get_r_sun(ec);
+-	    rc = elliptical_orbit_rectangular(ec, r_sun);
++            el.M = ephMeanAnomoly(jd, T, el.n);
++            ec = ephGetElementConstants(obl2000, el, 53);
++            r_sun = ephGetRSun(ec);
++            rc = ephEllipticalOrbitRectangular(ec, r_sun);
+ 
+ 	    report(&quot;recalc-x&quot;, rc.x, 0.2509310, 0.000001, &quot;AU&quot;);
+ 	    report(&quot;recalc-y&quot;, rc.y, 0.4849477, 0.000001, &quot;AU&quot;);
+@@ -1209,17 +1209,17 @@
+ 	    printf(&quot;Testing %s, test %d\n&quot;, or-&gt;name, o);
+ 
+ 	    EPH_VsopHandle vh;
+-	    get_vsop_data_handle(vsop_earth, hel_sph_j2, &amp;vh);
++            ephGetVsopDataHandle(vsop_earth, hel_sph_j2, &amp;vh);
+ 	    EPH_VsopSphCoords vsc =
+-	      vsop_sph_sol(vsop_sph_to_fk5(vsop_get_spherical(vh, test-&gt;jd)));
+-	    EPH_VsopRecCoords vrc = sol_sph_to_rec(vsc);
++                    ephVsopSphSol(ephVsopSphToFk5(ephVsopGetSpherical(vh, test-&gt;jd)));
++            EPH_VsopRecCoords vrc = ephSolSphToRec(vsc);
+ 	    EPH_RecCoords sun_rec = vrc.rc;
+ 
+ 	    /*
+ 	    EPH_VsopHandle vh2;
+-	    get_vsop_data_handle(vsop_earth, hel_rec_j2, &amp;vh2);
++            ephGetVsopDataHandle(vsop_earth, hel_rec_j2, &amp;vh2);
+ 	    EPH_VsopRecCoords vrc =
+-	      vsop_rec_to_fk5(vsop_rec_sol(vsop_get_rectangular(vh2, test-&gt;jd)));
++            ephVsopRecToFk5(ephVsopRecSol(ephVsopGetRectangular(vh2, test-&gt;jd)));
+ 	    EPH_RecCoords sun_rec = vrc.rc;
+ 	    */
+ 
+@@ -1233,16 +1233,16 @@
+ 	    double this_jd = test-&gt;jd;
+ 	    int c;
+ 	    for (c = 0; c &lt; 5; c++) {
+-		cd = populate_orbital_elements(or-&gt;epoch, or-&gt;M, this_jd,
++                cd = ephPopulateOrbitalElements(or-&gt;epoch, or-&gt;M, this_jd,
+ 					       or-&gt;n, or-&gt;a, or-&gt;e, or-&gt;i,
+ 					       or-&gt;w, or-&gt;L, iau_s, or-&gt;H,
+ 					       or-&gt;G);
+ 
+ 		EPH_ElementConstants ec =
+-                        get_element_constants(ephObliquityHi(ephJeToJd(2000)), cd, 53);
+-		body_r_sun = get_r_sun(ec);
++                        ephGetElementConstants(ephObliquityHi(ephJeToJd(2000)), cd, 53);
++                body_r_sun = ephGetRSun(ec);
+ 		EPH_RecCoords body_rec =
+-		    elliptical_orbit_rectangular(ec, body_r_sun);
++                        ephEllipticalOrbitRectangular(ec, body_r_sun);
+ 
+ 		elliptical_orbit_ecliptical(sun_rec, body_rec, body_r_sun,
+ 					    &amp;equ_pos, &amp;elongation,
+@@ -1256,8 +1256,8 @@
+ 
+ 
+ 	    double mag =
+-		mag_iau(cd.magdata._iau.H, cd.magdata._iau.G, body_r_sun,
+-			body_r_earth, phase_angle);
++                        ephMagIau(cd.magdata._iau.H, cd.magdata._iau.G, body_r_sun,
++                                    body_r_earth, phase_angle);
+ 
+ 	    int h, m;
+ 	    double s;
+@@ -1310,11 +1310,11 @@
+ /* 	{ */
+ /* 	    EPH_VsopHandle vh; */
+ 
+-/* 	    if (0 != get_vsop_data_handle(vsop_earth, hel_rec_j2, &amp;vh)) { */
++    /* 	    if (0 != ephGetVsopDataHandle(vsop_earth, hel_rec_j2, &amp;vh)) { */
+ /* 		printf(&quot;\t\tError loading Earth handle.\n&quot;); */
+ /* 	    } else { */
+ /* 		double jd = 2448170.5; */
+-/* 		EPH_VsopRecCoords vrc = vsop_rec_sol(vsop_rec_to_fk5(vsop_get_rectangular(vh, jd))); */
++    /* 		EPH_VsopRecCoords vrc = ephVsopRecSol(ephVsopRecToFk5(ephVsopGetRectangular(vh, jd))); */
+ 
+ /* 		report(&quot;X&quot;, vrc.rc.x * km_per_au, */
+ /* 		       -0.975673220683 * km_per_au, 1.0e-4, &quot;km&quot;); */
+@@ -1331,12 +1331,12 @@
+ /* 	{ */
+ /* 	  printf(&quot;Venus spherical\n&quot;); */
+ /* 	  EPH_VsopHandle vh; */
+-/* 	  if(0 != get_vsop_data_handle(vsop_venus, hel_sph_date, &amp;vh)) { */
++    /* 	  if(0 != ephGetVsopDataHandle(vsop_venus, hel_sph_date, &amp;vh)) { */
+ /* 	    printf(&quot;\t\tError loading Venus handle.\n&quot;); */
+ /* 	  } else { */
+-/* 	    EPH_VsopSphCoords vsc = vsop_get_spherical(vh, 2448976.5); */
++/* 	    EPH_VsopSphCoords vsc = ephVsopGetSpherical(vh, 2448976.5); */
+ /* 	    /\* */
+-/* 	    vsc = vsop_sph_to_fk5(vsc); */
++    /* 	    vsc = ephVsopSphToFk5(vsc); */
+ /* 	    *\/ */
+     /* 	    report(&quot;longitude&quot;, ephRToD(ephModPi2(vsc.sc.L)) * 3600, 26.11428 * 3600, 0.001, &quot;arc-seconds&quot;); */
+ /* 	    report(&quot;latitude&quot;, ephRToD(vsc.sc.B) * 3600, -2.62070 * 3600, 0.001, &quot;arc-seconds&quot;); */
+@@ -1358,9 +1358,9 @@
+ 
+ int main(int argc, char *argv[])
+ {
+-    vsop_data_init();
++    ephVsopDataInit();
+     _main();
+-    vsop_data_cleanup();
++    ephVsopDataCleanup();
+ 
+     printf
+ 	(&quot;\nWarning: Former exception throws (now error return values)&quot;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000115.html">[Ephemeritis-svn] r262 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000117.html">[Ephemeritis-svn] r264 - in branches/new-vsop-prepare/src/c:	libephemeritis utils
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#116">[ date ]</a>
+              <a href="thread.html#116">[ thread ]</a>
+              <a href="subject.html#116">[ subject ]</a>
+              <a href="author.html#116">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

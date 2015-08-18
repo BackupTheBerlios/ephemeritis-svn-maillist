@@ -1,0 +1,223 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r225 - branches/new-vsop-prepare/src/c/libephemeritis
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-January/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r225%20-%20branches/new-vsop-prepare/src/c/libephemeritis&In-Reply-To=%3C200601280200.k0S20S79026178%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000077.html">
+   <LINK REL="Next"  HREF="000079.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r225 - branches/new-vsop-prepare/src/c/libephemeritis</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r225%20-%20branches/new-vsop-prepare/src/c/libephemeritis&In-Reply-To=%3C200601280200.k0S20S79026178%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r225 - branches/new-vsop-prepare/src/c/libephemeritis">izogi at berlios.de
+       </A><BR>
+    <I>Sat Jan 28 03:00:28 CET 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000077.html">[Ephemeritis-svn] r224 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+        <LI>Next message: <A HREF="000079.html">[Ephemeritis-svn] r226 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#78">[ date ]</a>
+              <a href="thread.html#78">[ thread ]</a>
+              <a href="subject.html#78">[ subject ]</a>
+              <a href="author.html#78">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-01-28 03:00:16 +0100 (Sat, 28 Jan 2006)
+New Revision: 225
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c
+Log:
+Added error checking for the possibility of reading from a corrupted file. 
+If the file ends early, or some-such error, EIO will be returned by
+get_vsop_data_handle.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c	2006-01-27 20:22:42 UTC (rev 224)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_data_handling.c	2006-01-28 02:00:16 UTC (rev 225)
+@@ -143,45 +143,61 @@
+  *                     read. The file should be set to the beginning of its data, and is
+  *                     not closed after the operation.
+  *
++ *  @param[out] error_ret An integer space to collect a value
++ *                        indicating if there was an error.  On
++ *                        success, this will be set to 0 and the
++ *                        function's return value will be non-NULL.
++ *                        This will be set to either ENOMEM (for a
++ *                        memory allocation error from malloc or
++ *                        calloc), or EIO (for a file read error, such
++ *                        as the file's data being corrupted or
++ *                        otherwise ending unexpectedly).
++ *
+  *  @return Pointer to the body elements that have been read.  In case
+- *          of memory allocation failure, all the bits and pieces allocated up
++ *          of memory allocation failure or file reading error (such
++ *          as corrupted data), all the bits and pieces allocated up
+  *          to that point will be released, an NULL is returned.
+- *
+- *  @bug Doesn't indicate if there was corrupted data.  What should
+- *  properly happen is that the function should clean up whatever
+- *  memory mess it's caused, and return NULL.
+  */
+-static body_elements *ephint_read_body_elements(FILE *infile)
++static body_elements *ephint_read_body_elements(FILE *infile, int *error_ret)
+ {
+   /* Note -- there's a goto label at the end of the function to
+-     collect any memory allocation problems.  It'll deallocate
+-     whatever's been created so far, and return NULL. */
++     collect any memory allocation problems.  (Traditionally yucky,
++     but I think it's slightly clearer in this case.)  It'll
++     deallocate whatever's been created so far, and return NULL. */
+ 
+   body_elements *b = NULL;
++  size_t numread = 0;
++  *error_ret = 0;
+ 
+   /* Allocate memory for the body_elements. */
+   b = (body_elements *)malloc(sizeof(body_elements));
+   if(NULL == b) {
+     /* Oops, there wasn't enough memory. */
+-    goto mem_cleanup;
++    goto mem_screwup;
+   }
+   /* Fill it with 0's, to make it safer to clean up if things fail later. */
+   memset(b, '\0', sizeof(*b));
+ 
+ 
+   /* Read the header data. */
+-  fread(&amp;b-&gt;meta, sizeof(b-&gt;meta), 1, infile);
++  numread = fread(&amp;b-&gt;meta, sizeof(b-&gt;meta), 1, infile);
++  if(1 != numread) {
++    goto file_screwup;
++  }
+ 
+   /* Loop through the variables, reading data for each one. */
+   int v;
+   for(v = 0; v &lt; b-&gt;meta.num_variables; v++) {
+-    fread(&amp;b-&gt;variable_list[v].meta, sizeof(b-&gt;variable_list[v].meta), 1, infile);
++    numread = fread(&amp;b-&gt;variable_list[v].meta, sizeof(b-&gt;variable_list[v].meta), 1, infile);
++    if(1 != numread) {
++      goto file_screwup;
++    }
+ 
+     /* Allocate memory to hold the list of series' for this variable. */
+     b-&gt;variable_list[v].series_list = (series *)calloc(b-&gt;variable_list[v].meta.series_count, sizeof(series));
+     if(NULL == b-&gt;variable_list[v].series_list) {
+       /* Oops, there wasn't enough memory. */
+-      goto mem_cleanup;
++      goto mem_screwup;
+     }
+     /* Fill it with 0's, to make it safer to clean up if things fail later. */
+     /* Note that calloc() sets memory to 0 anyway (but malloc()
+@@ -193,24 +209,39 @@
+     for(s = 0; s &lt; b-&gt;variable_list[v].meta.series_count; s++) {
+       /* Read meta data for this series. */
+       series *ser = &amp;b-&gt;variable_list[v].series_list[s];
+-      fread(&amp;ser-&gt;meta, sizeof(ser-&gt;meta), 1, infile);
++      numread = fread(&amp;ser-&gt;meta, sizeof(ser-&gt;meta), 1, infile);
++      if(1 != numread) {
++	goto file_screwup;
++      }
+ 
+       /* Allocate memory for the terms. */
+       ser-&gt;terms = (term_bin *)calloc(ser-&gt;meta.num_terms, sizeof(term_bin));
+       if(NULL == ser-&gt;terms) {
+ 	/* Oops, there wasn't enough memory. */
+-	goto mem_cleanup;
++	goto mem_screwup;
+       }
+       /* Set the memory to 0's.  (Safety thing again, as above.) */
+       memset(ser-&gt;terms, '\0', ser-&gt;meta.num_terms * sizeof(term_bin));
+ 
+       /* Read the list of terms. */
+-      fread(ser-&gt;terms, sizeof(*(ser-&gt;terms)), ser-&gt;meta.num_terms, infile);
++      numread = fread(ser-&gt;terms, sizeof(*(ser-&gt;terms)), ser-&gt;meta.num_terms, infile);
++      if(ser-&gt;meta.num_terms != numread) {
++	goto file_screwup;
++      }
+     }
+   }
+ 
+   return b;
+ 
++  /* If things fail, we'll end up somewhere near here. */
++ mem_screwup:
++  *error_ret = errno;
++  goto mem_cleanup;
++
++ file_screwup:
++  *error_ret = EIO;
++  goto mem_cleanup;
++
+  mem_cleanup:
+   ephint_free_body_elements(b);
+   return NULL;
+@@ -361,9 +392,15 @@
+   }
+ 
+   /* Attempt to read data from the file. */
+-  body_elements *be = ephint_read_body_elements(f);
++  int error_ret;
++  body_elements *be = ephint_read_body_elements(f, &amp;error_ret);
++  if(NULL == be) {
++    /* Oops, there was some problem loading data from the file.
++       error_ret should have been set to either a malloc or calloc
++       error, or to EIO. */
++    return error_ret;
++  }
+ 
+-
+   /* Note that there's no checking to make sure the file was loaded successfully.  This is bad. */
+ 
+ 
+@@ -420,7 +457,8 @@
+  *
+  *  @return 0 if the requested data was available (and returned),
+  *  otherwise an errno value that could have been set by fopen(),
+- *  fclose(), or realloc() is returned.
++ *  fclose(), realloc(), malloc() or calloc() is usually returned.
++ *  EIO is returned if there was a problem loading some file data.
+  */
+ int get_vsop_data_handle(const vsop_body planet, const vsop_version version, vsop_handle *vh)
+ {
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000077.html">[Ephemeritis-svn] r224 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+	<LI>Next message: <A HREF="000079.html">[Ephemeritis-svn] r226 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#78">[ date ]</a>
+              <a href="thread.html#78">[ thread ]</a>
+              <a href="subject.html#78">[ subject ]</a>
+              <a href="author.html#78">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,689 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r262 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-July/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r262%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607240904.k6O942DJ028680%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000114.html">
+   <LINK REL="Next"  HREF="000116.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r262 - in branches/new-vsop-prepare/src/c:	libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r262%20-%20in%20branches/new-vsop-prepare/src/c%3A%0A%09libephemeritis%20tests&In-Reply-To=%3C200607240904.k6O942DJ028680%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r262 - in branches/new-vsop-prepare/src/c:	libephemeritis tests">izogi at mail.berlios.de
+       </A><BR>
+    <I>Mon Jul 24 11:04:02 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000114.html">[Ephemeritis-svn] r261 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000116.html">[Ephemeritis-svn] r263 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#115">[ date ]</a>
+              <a href="thread.html#115">[ thread ]</a>
+              <a href="subject.html#115">[ subject ]</a>
+              <a href="author.html#115">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-07-24 11:04:01 +0200 (Mon, 24 Jul 2006)
+New Revision: 262
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/aberration.c
+   branches/new-vsop-prepare/src/c/libephemeritis/dynamical.c
+   branches/new-vsop-prepare/src/c/libephemeritis/elp2000.c
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+   branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c
+   branches/new-vsop-prepare/src/c/libephemeritis/equinox.c
+   branches/new-vsop-prepare/src/c/libephemeritis/nutation.c
+   branches/new-vsop-prepare/src/c/libephemeritis/precession.c
+   branches/new-vsop-prepare/src/c/libephemeritis/refraction.c
+   branches/new-vsop-prepare/src/c/libephemeritis/riseset.c
+   branches/new-vsop-prepare/src/c/libephemeritis/separation.c
+   branches/new-vsop-prepare/src/c/libephemeritis/solar.c
+   branches/new-vsop-prepare/src/c/libephemeritis/util.c
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+Adding eph prefix to more functions.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/aberration.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/aberration.c	2006-07-24 08:38:27 UTC (rev 261)
++++ branches/new-vsop-prepare/src/c/libephemeritis/aberration.c	2006-07-24 09:04:01 UTC (rev 262)
+@@ -49,8 +49,8 @@
+     double p_terms[] =
+     { ephDToR(102.93735), ephDToR(1.71946), ephDToR(0.00046) };
+ 
+-    *e = polynomial(e_terms, 3, T);
+-    *p = polynomial(p_terms, 3, T);
++    *e = ephPolynomial(e_terms, 3, T);
++    *p = ephPolynomial(p_terms, 3, T);
+ 
+     *K = ephDToR(ephDmsToD(0, 0, 20.49552));
+ }
+@@ -74,10 +74,10 @@
+  *
+  *  @todo Unit tests.
+  *
+- *  @sa aberration_in_ra_dec_low
++ *  @sa ephAberrationInRaDecLow
+  *  @sa aberration_in_ra_dec
+  */
+-void aberration_in_lon_lat_low(double jd, double lon, double lat,
++void ephAberrationInLonLatLow(double jd, double lon, double lat,
+ 			       double sol_lon, double *delta_lon,
+ 			       double *delta_lat)
+ {
+@@ -108,7 +108,7 @@
+  *  @sa aberration_in_lat_lon_low
+  *  @sa aberration_in_ra_dec
+  */
+-void aberration_in_ra_dec_low(double jd, double ra, double dec, double obl,
++void ephAberrationInRaDecLow(double jd, double ra, double dec, double obl,
+ 			      double sol_lon, double *delta_ra,
+ 			      double *delta_dec)
+ {
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/dynamical.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/dynamical.c	2006-07-24 08:38:27 UTC (rev 261)
++++ branches/new-vsop-prepare/src/c/libephemeritis/dynamical.c	2006-07-24 09:04:01 UTC (rev 262)
+@@ -381,14 +381,14 @@
+      */
+     if (yr &lt; 948) {
+ 	static const double _ktbl[] = { 2177, 497, 44.1 };
+-	return polynomial(_ktbl, 3, t);
++        return ephPolynomial(_ktbl, 3, t);
+     }
+ 
+     /*
+      * 948 - 1620 and after 2000 [Meeus-1998: equation 10.2)
+      */
+     static const double _ktbl[] = { 102, 102, 25.3 };
+-    double result = polynomial(_ktbl, 3, t);
++    double result = ephPolynomial(_ktbl, 3, t);
+ 
+     /*
+      * correction for 2000-2100 [Meeus-1998: pg 78]
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/elp2000.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/elp2000.c	2006-07-24 08:38:27 UTC (rev 261)
++++ branches/new-vsop-prepare/src/c/libephemeritis/elp2000.c	2006-07-24 09:04:01 UTC (rev 262)
+@@ -218,17 +218,17 @@
+     const double _kA3[] = { ephDToR(313.45), ephDToR(481266.484) };
+     const double _kE[] = { 1.0, -0.002516, -0.0000074 };
+ 
+-    *L1 = ephModPi2(polynomial(_kL1, 5, T));
+-    *D = ephModPi2(polynomial(_kD, 5, T));
+-    *M = ephModPi2(polynomial(_kM, 4, T));
+-    *M1 = ephModPi2(polynomial(_kM1, 5, T));
+-    *F = ephModPi2(polynomial(_kF, 5, T));
++    *L1 = ephModPi2(ephPolynomial(_kL1, 5, T));
++    *D = ephModPi2(ephPolynomial(_kD, 5, T));
++    *M = ephModPi2(ephPolynomial(_kM, 4, T));
++    *M1 = ephModPi2(ephPolynomial(_kM1, 5, T));
++    *F = ephModPi2(ephPolynomial(_kF, 5, T));
+ 
+-    *A1 = ephModPi2(polynomial(_kA1, 2, T));
+-    *A2 = ephModPi2(polynomial(_kA2, 2, T));
+-    *A3 = ephModPi2(polynomial(_kA3, 2, T));
++    *A1 = ephModPi2(ephPolynomial(_kA1, 2, T));
++    *A2 = ephModPi2(ephPolynomial(_kA2, 2, T));
++    *A3 = ephModPi2(ephPolynomial(_kA3, 2, T));
+ 
+-    *E = polynomial(_kE, 3, T);
++    *E = ephPolynomial(_kE, 3, T);
+     *E2 = (*E) * (*E);
+ }
+ 
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-24 08:38:27 UTC (rev 261)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-07-24 09:04:01 UTC (rev 262)
+@@ -282,19 +282,19 @@
+ double ephCircumPi(double x);
+ 
+ /* refraction.c */
+-double apparent_to_geom_alt(const double ap_alt, const double P,
++double ephApparentToGeomAlt(const double ap_alt, const double P,
+ 			    const double T);
+-double geom_to_apparent_alt(const double ge_alt, const double P,
++double ephGeomToApparentAlt(const double ge_alt, const double P,
+ 			    const double T);
+ 
+ /* separation.c */
+-double separation(const double ra1, const double dec1, const double ra2,
+-		  const double dec2);
++double ephSeparation(const double ra1, const double dec1, const double ra2,
++                     const double dec2);
+ 
+ /* util.c */
+-double interpolate3(double n, const double y[]);
+-double interpolate_angle3(double n, const double y[]);
+-double polynomial(const double terms[], const int len, double x);
++double ephInterpolate3(double n, const double y[]);
++double ephInterpolateAngle3(double n, const double y[]);
++double ephPolynomial(const double terms[], const int len, double x);
+ 
+ /* vsop87d.c */
+ /*
+@@ -310,10 +310,10 @@
+ */
+ 
+ /* aberration.c */
+-void aberration_in_lon_lat_low(double jd, double lon, double lat,
++void ephAberrationInLonLatLow(double jd, double lon, double lat,
+ 			       double sol_lon, double *delta_lon,
+ 			       double *delta_lat);
+-void aberration_in_ra_dec_low(double jd, double ra, double dec, double obl,
++void ephAberrationInRaDecLow(double jd, double ra, double dec, double obl,
+ 			      double sol_lon, double *delta_ra,
+ 			      double *delta_dec);
+ 
+@@ -325,9 +325,9 @@
+ /* 			 double *radius); */
+ /* void sol_dimension3_fk5(double jd, double *L, double *B, double *R); */
+ 
+-void longitude_radius_low(double jd, double *L, double *R);
+-double apparent_longitude_low(double jd, double L);
+-double aberration_low(double R);
++void ephLongitudeRadiusLow(double jd, double *L, double *R);
++double ephApparentLongitudeLow(double jd, double L);
++double ephAberrationLow(double R);
+ /* EPH_RecCoords sol_rectangular(double L, double B, double R, double obl); */
+ 
+ 
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c	2006-07-24 08:38:27 UTC (rev 261)
++++ branches/new-vsop-prepare/src/c/libephemeritis/equationoftime.c	2006-07-24 09:04:01 UTC (rev 262)
+@@ -58,7 +58,7 @@
+ 	280.4664567, 360007.6982779, 0.03032028, 1.0 / 49931.0,
+ 	-1.0 / 15300.0, -1.0 / 2000000.0
+     };
+-    double L0 = ephModPi2(ephDToR(polynomial(_terms, 6, T)));
++    double L0 = ephModPi2(ephDToR(ephPolynomial(_terms, 6, T)));
+ 
+     /* Solar longitude, latitude and radius. */
+     EPH_VsopErrorState e_state;
+@@ -67,7 +67,7 @@
+         return e_state;
+     }
+ 
+-    double aberration = aberration_low(s_sc.R);
++    double aberration = ephAberrationLow(s_sc.R);
+ 
+     /* Correct the longitude for nutation and aberration. */
+     s_sc.ecl.longitude = s_sc.ecl.longitude - ephNutInLon(jd) + aberration;
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/equinox.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/equinox.c	2006-07-24 08:38:27 UTC (rev 261)
++++ branches/new-vsop-prepare/src/c/libephemeritis/equinox.c	2006-07-24 09:04:01 UTC (rev 262)
+@@ -186,7 +186,7 @@
+ 	    break;
+ 	}
+     }
+-    double jd = polynomial(series_poly, 5, Y);
++    double jd = ephPolynomial(series_poly, 5, Y);
+ 
+     const double T = ephJdToJCent(jd);
+     const double W = ephDToR(35999.373 * T - 2.47);
+@@ -277,7 +277,7 @@
+   	    *equinox_result = jd;
+   	    return result;
+ 	}
+-        sc_s.ecl.longitude += ephNutInLon(jd) + aberration_low(sc_s.R);
++        sc_s.ecl.longitude += ephNutInLon(jd) + ephAberrationLow(sc_s.R);
+ 
+ 	/* Meeus uses jd + 58 * sin(diff(...)) */
+         jd += ephDiffAngle(sc_s.ecl.longitude, circ) * _k_sun_motion;
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/nutation.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/nutation.c	2006-07-24 08:38:27 UTC (rev 261)
++++ branches/new-vsop-prepare/src/c/libephemeritis/nutation.c	2006-07-24 09:04:01 UTC (rev 262)
+@@ -220,11 +220,11 @@
+ 	_ko[3] = ephDToR(1.0 / 450000);
+     }
+ 
+-    *D = ephModPi2(polynomial(_kD, 4, T));
+-    *M = ephModPi2(polynomial(_kM, 4, T));
+-    *M1 = ephModPi2(polynomial(_kM1, 4, T));
+-    *F = ephModPi2(polynomial(_kF, 4, T));
+-    *omega = ephModPi2(polynomial(_ko, 4, T));
++    *D = ephModPi2(ephPolynomial(_kD, 4, T));
++    *M = ephModPi2(ephPolynomial(_kM, 4, T));
++    *M1 = ephModPi2(ephPolynomial(_kM1, 4, T));
++    *F = ephModPi2(ephPolynomial(_kF, 4, T));
++    *omega = ephModPi2(ephPolynomial(_ko, 4, T));
+ }
+ 
+ 
+@@ -366,7 +366,7 @@
+     }
+ 
+     const double T = ephJdToJCent(jd);
+-    return polynomial(_el0, sizeof(_el0) / sizeof(*_el0), T);
++    return ephPolynomial(_el0, sizeof(_el0) / sizeof(*_el0), T);
+ }
+ 
+ /*! @brief Returns the mean obliquity of the ecliptic.
+@@ -406,5 +406,5 @@
+ 
+ 
+     const double U = ephJdToJCent(jd) / 100;
+-    return polynomial(_el1, sizeof(_el1) / sizeof(*_el1), U);
++    return ephPolynomial(_el1, sizeof(_el1) / sizeof(*_el1), U);
+ }
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/precession.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/precession.c	2006-07-24 08:38:27 UTC (rev 261)
++++ branches/new-vsop-prepare/src/c/libephemeritis/precession.c	2006-07-24 09:04:01 UTC (rev 262)
+@@ -75,25 +75,25 @@
+     double data1[] = { 2306.2181, 1.39656, -0.000139 };
+     double data2[] = { 0.30188, -0.000344 };
+     double data3[] =
+-	{ 0.0, polynomial(data1, 3, T), polynomial(data2, 2, T),
++    { 0.0, ephPolynomial(data1, 3, T), ephPolynomial(data2, 2, T),
+ 	0.017998
+     };
+-    double zeta = polynomial(data3, 4, t);
++    double zeta = ephPolynomial(data3, 4, t);
+ 
+     double data4[] = { 1.09468, 0.000066 };
+     double data5[] =
+-	{ 0.0, polynomial(data1, 3, T), polynomial(data4, 2, T),
++    { 0.0, ephPolynomial(data1, 3, T), ephPolynomial(data4, 2, T),
+ 	0.018203
+     };
+-    double z = polynomial(data5, 4, t);
++    double z = ephPolynomial(data5, 4, t);
+ 
+     double data6[] = { 2004.3109, -0.85330, -0.000217 };
+     double data7[] = { 0.42665, 0.000217 };
+     double data8[] =
+-	{ 0.0, polynomial(data6, 3, T), -1 * polynomial(data7, 2, T),
++	{ 0.0, ephPolynomial(data6, 3, T), -1 * ephPolynomial(data7, 2, T),
+ 	0.041833
+     };
+-    double theta = polynomial(data8, 4, t);
++    double theta = ephPolynomial(data8, 4, t);
+ 
+     EPH_PrecessionElEquatorial pceq;
+     pceq.zeta_rad = ephModPi2((zeta * 2 * pi) / (3600.0 * 360.0));
+@@ -175,24 +175,24 @@
+     double data1[] = { 47.0029, -0.06603, 0.000598 };
+     double data2[] = { -0.03302, 0.000598 };
+     double data3[] =
+-	{ 0.0, polynomial(data1, 3, T), polynomial(data2, 2, T),
++	{ 0.0, ephPolynomial(data1, 3, T), ephPolynomial(data2, 2, T),
+ 	0.000060
+     };
+-    double n = polynomial(data3, 4, t);
++    double n = ephPolynomial(data3, 4, t);
+ 
+     double data4[] = { 174.876384 * 60.0 * 60.0, 3289.4789, 0.60622 };
+     double data5[] = { 869.8089, 0.50491 };
+     double data6[] =
+-	{ polynomial(data4, 3, T), -1 * polynomial(data5, 2, T), 0.03536 };
+-    double II = polynomial(data6, 3, t);
++	{ ephPolynomial(data4, 3, T), -1 * ephPolynomial(data5, 2, T), 0.03536 };
++    double II = ephPolynomial(data6, 3, t);
+ 
+     double data7[] = { 5029.0966, 2.22226, -0.000042 };
+     double data8[] = { 1.11113, 0.000042 };
+     double data9[] =
+-	{ 0.0, polynomial(data7, 3, T), polynomial(data8, 2, T),
++	{ 0.0, ephPolynomial(data7, 3, T), ephPolynomial(data8, 2, T),
+ 	-0.000006
+     };
+-    double p = polynomial(data9, 4, t);
++    double p = ephPolynomial(data9, 4, t);
+ 
+     EPH_PrecessionElEcliptical pcecl;
+     pcecl.n_rad = ephModPi2((n * 2 * pi) / (3600.0 * 360.0));
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/refraction.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/refraction.c	2006-07-24 08:38:27 UTC (rev 261)
++++ branches/new-vsop-prepare/src/c/libephemeritis/refraction.c	2006-07-24 09:04:01 UTC (rev 262)
+@@ -51,7 +51,7 @@
+  *
+  *  @todo Make more efficient by removing the need to convert to degrees and back again.
+  */
+-double apparent_to_geom_alt(const double ap_alt, const double P,
++double ephApparentToGeomAlt(const double ap_alt, const double P,
+ 			    const double T)
+ {
+     double R;
+@@ -94,7 +94,7 @@
+  *
+  *  @todo Make more efficient by removing the need to convert to degrees and back again.
+  */
+-double geom_to_apparent_alt(const double ge_alt, const double P,
++double ephGeomToApparentAlt(const double ge_alt, const double P,
+ 			    const double T)
+ {
+     double R;
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/riseset.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/riseset.c	2006-07-24 08:38:27 UTC (rev 261)
++++ branches/new-vsop-prepare/src/c/libephemeritis/riseset.c	2006-07-24 09:04:01 UTC (rev 262)
+@@ -159,8 +159,8 @@
+ 	     */
+ 	}
+ 
+-	const double ra = interpolate_angle3(n, raList);
+-	const double dec = interpolate3(n, decList);
++        const double ra = ephInterpolateAngle3(n, raList);
++        const double dec = ephInterpolate3(n, decList);
+ 	double H = theta0 - geo_pos.longitude - ra;
+         H = ephDiffAngle(0.0, H);
+ 
+@@ -242,7 +242,7 @@
+ 	       throw NotPossibleError(&quot;astrolabe::riseset::horizon: event dropped due to bug&quot;, rTooComplicated);
+ 	     */
+ 	}
+-	const double ra = interpolate_angle3(n, raList);
++        const double ra = ephInterpolateAngle3(n, raList);
+ 	double H = theta0 - geo_pos.longitude - ra;
+         H = ephDiffAngle(0.0, H);
+ 	const double dm = -H / pi2;
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/separation.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/separation.c	2006-07-24 08:38:27 UTC (rev 261)
++++ branches/new-vsop-prepare/src/c/libephemeritis/separation.c	2006-07-24 09:04:01 UTC (rev 262)
+@@ -46,8 +46,8 @@
+  *  @todo Add functionality to ensure betwen pi/2 and pi if z is negative (as per p115)
+  *  @todo Write unit tests.
+  */
+-double separation(const double ra1, const double dec1, const double ra2,
+-		  const double dec2)
++double ephSeparation(const double ra1, const double dec1, const double ra2,
++                     const double dec2)
+ {
+     double x =
+ 	(cos(dec1) * sin(dec2)) - (sin(dec1) * cos(dec2) * cos(ra2 - ra1));
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/solar.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/solar.c	2006-07-24 08:38:27 UTC (rev 261)
++++ branches/new-vsop-prepare/src/c/libephemeritis/solar.c	2006-07-24 09:04:01 UTC (rev 262)
+@@ -51,7 +51,7 @@
+  *
+  *  @sa ephDeltaTSeconds for calculating %dynamical time offset.
+  */
+-void longitude_radius_low(double jd, double *L, double *R)
++void ephLongitudeRadiusLow(double jd, double *L, double *R)
+ {
+     /*
+      * Constant terms:
+@@ -69,10 +69,10 @@
+     const double _ck5 = ephDToR(0.000289);
+ 
+     const double T = ephJdToJCent(jd);
+-    const double L0 = polynomial(_kL0, 3, T);
+-    const double M = polynomial(_kM, 3, T);
+-    const double e = polynomial(_ke, 3, T);
+-    const double C = (polynomial(_kC, 3, T) * sin(M))
++    const double L0 = ephPolynomial(_kL0, 3, T);
++    const double M = ephPolynomial(_kM, 3, T);
++    const double e = ephPolynomial(_ke, 3, T);
++    const double C = (ephPolynomial(_kC, 3, T) * sin(M))
+ 	+ ((_ck3 - (_ck4 * T)) * sin(2 * M))
+ 	+ (_ck5 * sin(3 * M));
+     *L = ephModPi2(L0 + C);
+@@ -92,7 +92,7 @@
+  *
+  *  @sa ephDeltaTSeconds for calculating %dynamical time offset.
+  */
+-double apparent_longitude_low(double jd, double L)
++double ephApparentLongitudeLow(double jd, double L)
+ {
+     /*
+      * Constant terms:
+@@ -115,7 +115,7 @@
+  *
+  *  @return               The correction, in radians.
+  */
+-double aberration_low(double R)
++double ephAberrationLow(double R)
+ {
+     /*
+      * Constant terms:
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/util.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/util.c	2006-07-24 08:38:27 UTC (rev 261)
++++ branches/new-vsop-prepare/src/c/libephemeritis/util.c	2006-07-24 09:04:01 UTC (rev 262)
+@@ -37,11 +37,11 @@
+  *
+  *  @return        The interpolated value of y.
+  *
+- *  @sa interpolate_angle3
++ *  @sa ephInterpolateAngle3
+  *
+  *  @bug The exception throw that used to be here (before the C port) needs to be reinstated somehow.
+  */
+-double interpolate3(double n, const double y[])
++double ephInterpolate3(double n, const double y[])
+ {
+     /*
+        if (n &lt; -1 || n &gt; 1)
+@@ -68,11 +68,11 @@
+  *
+  *  @return        The interpolated value of y.
+  *
+- *  @sa interpolate3
++ *  @sa ephInterpolate3
+  *
+  *  @bug The exception throw that used to be here (before the C port) needs to be reinstated somehow.
+  */
+-double interpolate_angle3(double n, const double y[])
++double ephInterpolateAngle3(double n, const double y[])
+ {
+     /* Interpolate from three equally spaced tabular angular values.
+ 
+@@ -107,7 +107,7 @@
+  *  Where: terms[0] is constant, terms[1] is for x, terms[2] is
+  *  for x^2, etc.
+  *
+- *  eg. y = polynomial((1.1, 2.2, 3.3, 4.4), t)
++ *  eg. y = ephPolynomial((1.1, 2.2, 3.3, 4.4), t)
+  *
+  *  returns the value of: 1.1 + 2.2 * t + 3.3 * t^2 + 4.4 * t^3
+  *
+@@ -119,7 +119,7 @@
+  *
+  *  @todo Confirm that C-ported algorithm matches original algorithm.
+  */
+-double polynomial(const double terms[], const int len, double x)
++double ephPolynomial(const double terms[], const int len, double x)
+ {
+     double result = terms[len - 1];
+     int n = 0;
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-07-24 08:38:27 UTC (rev 261)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-07-24 09:04:01 UTC (rev 262)
+@@ -393,7 +393,7 @@
+     }
+ 
+     double T = (output.vh.version == hel_sph_date) ? (ephJdToJCent(output.jd) / 10.0) : 0.0;
+-    double L1 = vsc.sc.ecl.longitude - polynomial(terms, 3, T);
++    double L1 = vsc.sc.ecl.longitude - ephPolynomial(terms, 3, T);
+     double cosL1 = cos(L1);
+     double sinL1 = sin(L1);
+ 
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-24 08:38:27 UTC (rev 261)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-07-24 09:04:01 UTC (rev 262)
+@@ -171,7 +171,7 @@
+     printf(&quot;3.a Interpolate3\n&quot;);
+     {
+ 	const double _tbl[] = { 0.884226, 0.877366, 0.870531 };
+-	const double y = interpolate3(0.18125, _tbl);
++        const double y = ephInterpolate3(0.18125, _tbl);
+ 	report(&quot;au&quot;, y, 0.876125, 1e-6, &quot;au&quot;);
+     }
+ 
+@@ -469,21 +469,21 @@
+ 	   Meeus' examples are for a low degree of accuracy.
+ 	 */
+ 	double h0 = ephDToR(0.5);
+-	double R = apparent_to_geom_alt(h0, 1010, 10);
++        double R = ephApparentToGeomAlt(h0, 1010, 10);
+ 	report(&quot;geometric altitude&quot;, ephRToD(R), 1.246 / 60.0, 0.001,
+ 	       &quot;degrees&quot;);
+ 
+ 	h0 = ephDToR(90.0);
+-	R = apparent_to_geom_alt(h0, 1010, 10);
++        R = ephApparentToGeomAlt(h0, 1010, 10);
+ 	report(&quot;geometric altitude&quot;, ephRToD(R), 90.0, 0.002, &quot;degrees&quot;);
+ 
+ 	double h = ephDToR(0.5541);
+-	R = geom_to_apparent_alt(h, 1010, 10);
++        R = ephGeomToApparentAlt(h, 1010, 10);
+ 	report(&quot;apparent altitude&quot;, ephRToD(R), 57.864 / 60.0, 0.01,
+ 	       &quot;degrees&quot;);
+ 
+ 	h = ephDToR(90.0);
+-	R = geom_to_apparent_alt(h, 1010, 10);
++        R = ephGeomToApparentAlt(h, 1010, 10);
+ 	report(&quot;apparent altitude&quot;, ephRToD(R), 90.0, 0.002, &quot;degrees&quot;);
+     }
+ 
+@@ -493,7 +493,7 @@
+ 	int n;
+ 
+ 	result =
+-	    separation(ephDToR(213.9154), ephDToR(19.1825), ephDToR(201.2983),
++                ephSeparation(ephDToR(213.9154), ephDToR(19.1825), ephDToR(201.2983),
+ 		       ephDToR(-11.1614));
+ 	report(&quot;1. separation&quot;, result, ephDToR(32.7930), 0.000001,
+ 	       &quot;radians&quot;);
+@@ -535,7 +535,7 @@
+ 	};
+ 	for (n = 0; n &lt; 5; n++) {
+ 	    double result =
+-		separation(_ra1List[n], _dec1List[n], _ra2List[n],
++                        ephSeparation(_ra1List[n], _dec1List[n], _ra2List[n],
+ 			   _dec2List[n]);
+ 	    report(&quot;page 110-111&quot;, result, _resultList[n], 0.000001,
+ 		   &quot;radians&quot;);
+@@ -546,23 +546,23 @@
+ 	   for basic stuff that should be obvious.
+ 	 */
+ 	result =
+-	    separation(ephDToR(-45.0), ephDToR(0.0), ephDToR(45.0),
++                ephSeparation(ephDToR(-45.0), ephDToR(0.0), ephDToR(45.0),
+ 		       ephDToR(0.0));
+ 	report(&quot;2. separation&quot;, result, ephDToR(90.0), 0.000001, &quot;radians&quot;);
+ 
+ 	result =
+-	    separation(ephDToR(-30.0), ephDToR(0.0), ephDToR(90.0),
++                ephSeparation(ephDToR(-30.0), ephDToR(0.0), ephDToR(90.0),
+ 		       ephDToR(0.0));
+ 	report(&quot;3. separation&quot;, ephRToD(result), 120.0, 0.000001,
+ 	       &quot;degrees&quot;);
+ 
+ 	result =
+-	    separation(ephDToR(-30.0), ephDToR(0.0), ephDToR(300.0),
++                ephSeparation(ephDToR(-30.0), ephDToR(0.0), ephDToR(300.0),
+ 		       ephDToR(0.0));
+ 	report(&quot;4. separation&quot;, ephRToD(result), 30.0, 0.000001, &quot;degrees&quot;);
+ 
+ 	result =
+-	    separation(ephDToR(0.0), ephDToR(0.0), ephDToR(45.0),
++                ephSeparation(ephDToR(0.0), ephDToR(0.0), ephDToR(45.0),
+ 		       ephDToR(45.0));
+ 	report(&quot;5. separation&quot;, ephRToD(result), 60.0, 0.000001, &quot;degrees&quot;);
+     }
+@@ -695,7 +695,7 @@
+ 	 */
+ 
+ 	double sol_lon, sol_rad;
+-	longitude_radius_low(jd, &amp;sol_lon, &amp;sol_rad);
++        ephLongitudeRadiusLow(jd, &amp;sol_lon, &amp;sol_rad);
+ 	/*
+ 	   sol_lon = ephDToR(231.328);
+ 	 */
+@@ -704,7 +704,7 @@
+         ephNutInRaDec(ra, dec, obl, n_in_l, n_in_o, &amp;n_in_ra, &amp;n_in_dec);
+ 
+ 	double a_in_ra, a_in_dec;
+-	aberration_in_ra_dec_low(jd, ra, dec, obl, sol_lon, &amp;a_in_ra,
++        ephAberrationInRaDecLow(jd, ra, dec, obl, sol_lon, &amp;a_in_ra,
+ 				 &amp;a_in_dec);
+ 
+ 	/*
+@@ -743,10 +743,10 @@
+     printf(&quot;25.a Sun position, low precision\n&quot;);
+     {
+ 	double L, R;
+-	longitude_radius_low(2448908.5, &amp;L, &amp;R);
++        ephLongitudeRadiusLow(2448908.5, &amp;L, &amp;R);
+ 	report(&quot;longitude&quot;, ephRToD(L), 199.90988, 1e-5, &quot;degrees&quot;);
+ 	report(&quot;radius&quot;, R, 0.99766, 1e-5, &quot;au&quot;);
+-	L = apparent_longitude_low(2448908.5, L);
++        L = ephApparentLongitudeLow(2448908.5, L);
+ 	report(&quot;longitude&quot;, ephRToD(L), 199.90895, 1e-5, &quot;degrees&quot;);
+     }
+ 
+@@ -779,7 +779,7 @@
+           const double n_in_l = ephNutInLon(jd);
+           const double n_in_o = ephNutInObl(jd);
+           const double obl = ephObliquityHi(jd) + n_in_o;
+-	  const double aberration = aberration_low(vsc.sc.R);
++          const double aberration = ephAberrationLow(vsc.sc.R);
+ 
+ 	  report(&quot;nutation in lon&quot;, ephRToD(n_in_l) * 3600, 15.908, 0.001,
+ 		 &quot;arc-seconds&quot;);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000114.html">[Ephemeritis-svn] r261 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000116.html">[Ephemeritis-svn] r263 - in branches/new-vsop-prepare/src/c:	libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#115">[ date ]</a>
+              <a href="thread.html#115">[ thread ]</a>
+              <a href="subject.html#115">[ subject ]</a>
+              <a href="author.html#115">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

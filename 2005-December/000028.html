@@ -1,0 +1,200 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r172 - in trunk/src/c: libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2005-December/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r172%20-%20in%20trunk/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200512180710.jBI7ARfV017468%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000027.html">
+   <LINK REL="Next"  HREF="000029.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r172 - in trunk/src/c: libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r172%20-%20in%20trunk/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200512180710.jBI7ARfV017468%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r172 - in trunk/src/c: libephemeritis tests">izogi at berlios.de
+       </A><BR>
+    <I>Sun Dec 18 08:10:27 CET 2005</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000027.html">[Ephemeritis-svn] r171 - in trunk/src/c: libephemeritis tests
+</A></li>
+        <LI>Next message: <A HREF="000029.html">[Ephemeritis-svn] r173 - in trunk/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#28">[ date ]</a>
+              <a href="thread.html#28">[ thread ]</a>
+              <a href="subject.html#28">[ subject ]</a>
+              <a href="author.html#28">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2005-12-18 08:10:12 +0100 (Sun, 18 Dec 2005)
+New Revision: 172
+
+Modified:
+   trunk/src/c/libephemeritis/ephemeritis.h
+   trunk/src/c/libephemeritis/solar.c
+   trunk/src/c/tests/validate_meeus.c
+Log:
+Wrote code and test case for Meeus' rectangular coordinates of the Sun.
+
+
+Modified: trunk/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- trunk/src/c/libephemeritis/ephemeritis.h	2005-12-18 06:21:39 UTC (rev 171)
++++ trunk/src/c/libephemeritis/ephemeritis.h	2005-12-18 07:10:12 UTC (rev 172)
+@@ -304,6 +304,7 @@
+ void longitude_radius_low(double jd, double *L, double *R);
+ double apparent_longitude_low(double jd, double L);
+ double aberration_low(double R);
++void sol_rectangular(double L, double B, double R, double E, double *X, double *Y, double *Z);
+ 
+ 
+ /* constellations.c */
+
+Modified: trunk/src/c/libephemeritis/solar.c
+===================================================================
+--- trunk/src/c/libephemeritis/solar.c	2005-12-18 06:21:39 UTC (rev 171)
++++ trunk/src/c/libephemeritis/solar.c	2005-12-18 07:10:12 UTC (rev 172)
+@@ -116,7 +116,7 @@
+  *  precision.
+  *
+  *  The longitude is accurate to 0.01 degree.  The latitude should be
+- *  presumed to be 0.0. [Meeus-1998: equations 25.2 through 25.5.
++ *  presumed to be 0.0. [Meeus-1998: equations 25.2 through 25.5.]
+  *
+  *  @param[in]  jd        Julian Day in dynamical time.
+  *  @param[out] L         Longitude, in radians.
+@@ -198,21 +198,52 @@
+ 
+ /*! @brief Calculates the rectangular geocentric coordinates of the Sun.
+  *
++ *  [Meeus-1998: equation 26.1.]
++ *
+  *  The rectangular geocentric coordinates of the Sun are centred on
+  *  the Earth as a point of origin.  The X axis is directed towards
+  *  the vernal equinox at 0 degrees longitude, the Y axis is in the
+  *  plane of the equator, towards 90 degrees longitude, and the Z axis
+  *  is pointed towards the north celestial pole.
+  *
+- *  @param[in]  jd Julian Day, in dynamical time.
++ *  To use this function, it's necessary to provide the geometric
++ *  coordinates of the Sun in the fk5 system, and the obliquity of the
++ *  ecliptic, at the time in question.  These can be calculated using
++ *  sol_dimension3_fk5 and obliquity_hi.
++ *
++ *  @param[in]  L  Geometric longitude of the Sun, in radians/fk5.
++ *  @param[in]  B  Geometric latitude of the Sun, in radians/fk5.
++ *  @param[in]  R  Geometric radius of the Sun, in radians/fk5.
++ *  @param[in]  E  The mean obliquity of the ecliptic.
+  *  @param[out] X  The X coordinate, in astronomical units.
+  *  @param[out] Y  The Y coordinate, in astronomical units.
+  *  @param[out] Z  The Z coordinate, in astronomical units.
+  *
+- *  @bugs No actual code.
++ *  @sa sol_dimension3_fk5
++ *  @sa obliquity
++ *  @sa obliquity_hi
+  *
+  *  @author Mike McGavin.
+  */
+-void sol_rectangular(double jd, double *X, double *Y, double *Z)
++void sol_rectangular(double L, double B, double R, double E, double *X, double *Y, double *Z)
+ {
++    /* Declare Longitude, Latitude and Radius.
++    double L;
++    double B;
++    double R;
++
++    sol_dimension3_fk5(jd, &amp;L, &amp;B, &amp;R);
++    */
++    /* Get the obliquity of the ecliptic.
++    double E = obliquity_hi(jd);
++    */
++
++    double cosB = cos(B);
++    double sinL = sin(L);
++    double sinB = sin(B);
++    double sinE = sin(E);
++    double cosE = cos(E);
++    *X = R * (cosB * cos(L));
++    *Y = R * ((cosB * sinL * cosE) - (sinB * sinE));
++    *Z = R * ((cosB * sinL * sinE) + (sinB * cosE));
+ }
+
+Modified: trunk/src/c/tests/validate_meeus.c
+===================================================================
+--- trunk/src/c/tests/validate_meeus.c	2005-12-18 06:21:39 UTC (rev 171)
++++ trunk/src/c/tests/validate_meeus.c	2005-12-18 07:10:12 UTC (rev 172)
+@@ -45,7 +45,7 @@
+  *
+  *  Note that Meeus presents a truncated version of VSOP87d and some
+  *  differences are to be expected when comparing results with the
+- *  complete version that Astrolabe uses. He sometimes prints values
++ *  complete version that Ephemeritis uses. He sometimes prints values
+  *  are derived from the complete theory, and we use those where
+  *  possible.
+  *
+@@ -648,8 +648,7 @@
+ 	report(&quot;aberration&quot;, r_to_d(aberration) * 3600, -20.539, 0.001,
+ 	       &quot;arc-seconds&quot;);
+ 
+-	printf
+-	    (&quot;25.b Sun position, high precision (complete theory pg 165)\n&quot;);
++	printf(&quot;25.b Sun position, high precision (complete theory pg 165)\n&quot;);
+ 	report(&quot;longitude&quot;, r_to_d(L) * 3600 * 100,
+ 	       dms_to_d(199, 54, 26.18) * 3600 * 100, 1,
+ 	       &quot;arc-seconds/100&quot;);
+@@ -658,6 +657,19 @@
+ 	report(&quot;radius&quot;, R, 0.99760853, 1e-8, &quot;au&quot;);
+     }
+ 
++    printf(&quot;26.a Rectangular coordinates of the Sun\n&quot;);
++    {
++        double jd = 2448908.5;
++	double L, B, R;
++	sol_dimension3_fk5(jd, &amp;L, &amp;B, &amp;R);
++	double E = obliquity_hi(jd);
++	double X, Y, Z;
++	sol_rectangular(L, B, R, E, &amp;X, &amp;Y, &amp;Z);
++	report(&quot;X&quot;, X, -0.9379952, 0.0000001, &quot;AU&quot;);
++	report(&quot;Y&quot;, Y, -0.3116544, 0.0000001, &quot;AU&quot;);
++	report(&quot;Z&quot;, Z, -0.1351215, 0.0000001, &quot;AU&quot;);
++    }
++
+     printf(&quot;27.a Approximate solstice\n&quot;);
+     {
+ 	const double jd = equinox_approx(1962, kJune);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000027.html">[Ephemeritis-svn] r171 - in trunk/src/c: libephemeritis tests
+</A></li>
+	<LI>Next message: <A HREF="000029.html">[Ephemeritis-svn] r173 - in trunk/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#28">[ date ]</a>
+              <a href="thread.html#28">[ thread ]</a>
+              <a href="subject.html#28">[ subject ]</a>
+              <a href="author.html#28">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

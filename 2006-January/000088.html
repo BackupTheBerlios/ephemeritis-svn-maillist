@@ -1,0 +1,331 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r235 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-January/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r235%20-%20in%20branches/new-vsop-prepare/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200601301036.k0UAa0QK024228%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000087.html">
+   <LINK REL="Next"  HREF="000089.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r235 - in branches/new-vsop-prepare/src/c: libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r235%20-%20in%20branches/new-vsop-prepare/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200601301036.k0UAa0QK024228%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r235 - in branches/new-vsop-prepare/src/c: libephemeritis tests">izogi at berlios.de
+       </A><BR>
+    <I>Mon Jan 30 11:36:00 CET 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000087.html">[Ephemeritis-svn] r234 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+        <LI>Next message: <A HREF="000089.html">[Ephemeritis-svn] r236 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#88">[ date ]</a>
+              <a href="thread.html#88">[ thread ]</a>
+              <a href="subject.html#88">[ subject ]</a>
+              <a href="author.html#88">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-01-30 11:35:58 +0100 (Mon, 30 Jan 2006)
+New Revision: 235
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+   branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+More attempting to get Meeus' examples to work in 6.a.  I think the problems may simply be because Meeus isn't using the most accurate VSOP data.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-01-29 19:00:41 UTC (rev 234)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-01-30 10:35:58 UTC (rev 235)
+@@ -553,11 +553,11 @@
+ /* vsop_calculate.c */
+ vsop_rec_coords vsop_get_rectangular(const vsop_handle vh,
+ 				     const double jd);
+-vsop_rec_coords vsop_rec_vsop_to_fk5(const vsop_rec_coords vrc);
++vsop_rec_coords vsop_rec_to_fk5(const vsop_rec_coords vrc);
+ vsop_rec_coords vsop_rec_sol(const vsop_rec_coords earth_vrc);
+ 
+ vsop_sph_coords vsop_get_spherical(const vsop_handle vh, const double jd);
+-vsop_sph_coords vsop_sph_vsop_to_fk5(const vsop_sph_coords vsc);
++vsop_sph_coords vsop_sph_to_fk5(const vsop_sph_coords vsc);
+ vsop_sph_coords vsop_sph_sol(const vsop_sph_coords earth_vsc);
+ 
+ 
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-01-29 19:00:41 UTC (rev 234)
++++ branches/new-vsop-prepare/src/c/libephemeritis/vsop_calculate.c	2006-01-30 10:35:58 UTC (rev 235)
+@@ -115,7 +115,7 @@
+  *  @param jd The Julian Date for which to
+  *            calculate coordinates, in dynamical time.
+  *
+- *  @sa vsop_rec_vsop_to_fk5
++ *  @sa vsop_rec_to_fk5
+  *
+  *  @author Mike McGavin.
+  */
+@@ -180,7 +180,7 @@
+  *
+  *  @author Mike McGavin.
+  */
+-vsop_rec_coords vsop_rec_vsop_to_fk5(const vsop_rec_coords vrc)
++vsop_rec_coords vsop_rec_to_fk5(const vsop_rec_coords vrc)
+ {
+     /* Make a variable to return, and inialise it to the existing incoming values. */
+     vsop_rec_coords output = vrc;
+@@ -193,6 +193,7 @@
+     /* Check that the incoming coordinates are of a version designed to be rotated. */
+     if (!
+ 	(output.vh.version == hel_rec_j2
++	 || output.vh.version == hel_rec_date
+ 	 || output.vh.version == bar_rec_j2)) {
+ 	output.error_state = -3;
+ 	return output;
+@@ -294,7 +295,7 @@
+  *  @param jd The Julian Date for which to
+  *            calculate coordinates, in dynamical time.
+  *
+- *  @sa vsop_sph_vsop_to_fk5
++ *  @sa vsop_sph_to_fk5
+  *
+  *  @author Mike McGavin.
+  */
+@@ -356,7 +357,7 @@
+  *
+  *  @author Mike McGavin.
+  */
+-vsop_sph_coords vsop_sph_vsop_to_fk5(const vsop_sph_coords vsc)
++vsop_sph_coords vsop_sph_to_fk5(const vsop_sph_coords vsc)
+ {
+     /* Make a variable to return, and inialise it to the existing incoming values. */
+     vsop_sph_coords output = vsc;
+@@ -382,26 +383,23 @@
+ 	static_set = true;
+ 	l1 = -d_to_r(dms_to_d(0, 0, 0.09033));
+ 	l2 = d_to_r(dms_to_d(0, 0, 0.03916));
++
+ 	terms[0] = 0.0;
+ 	terms[1] = d_to_r(1.397);
+ 	terms[2] = d_to_r(0.00031);
+     }
+ 
+-    double T = 0;
+-    if(output.vh.version == hel_sph_date) {
+-      T = jd_to_jcent(vsc.jd) / 10.0;
+-    } else {
+-      T = 0.0;
+-    }
++    double T = (output.vh.version == hel_sph_date) ? (jd_to_jcent(output.jd) / 10.0) : 0.0;
+     double L1 = vsc.sc.L - polynomial(terms, 3, T);
+     double cosL1 = cos(L1);
+     double sinL1 = sin(L1);
+ 
+-    double deltaL = l1 + (l2 * (cosL1 + sinL1) * tan(vsc.sc.B));
++    double deltaL = l1 + (l2 * (cosL1 + sinL1) * tan(output.sc.B));
+     double deltaB = l2 * (cosL1 - sinL1);
+ 
+     output.sc.L += deltaL;
+     output.sc.B += deltaB;
++
+     return output;
+ }
+ 
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-01-29 19:00:41 UTC (rev 234)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-01-30 10:35:58 UTC (rev 235)
+@@ -115,7 +115,7 @@
+     vsop_handle vh;
+     if (0 == get_vsop_data_handle(planet, hel_sph_date, &amp;vh)) {
+ 	vsop_sph_coords vsc =
+-	    vsop_sph_vsop_to_fk5(vsop_get_spherical(vh, jd));
++	    vsop_sph_to_fk5(vsop_get_spherical(vh, jd));
+ 	if (vsc.error_state != 0) {
+ 	    printf(&quot;Error calculating spherical coordinates: %d\n&quot;,
+ 		   vsc.error_state);
+@@ -754,10 +754,10 @@
+ 	  report(&quot;radius&quot;, vsc.sc.R * km_per_au, 0.99760775 * km_per_au, 150.0,
+ 		 &quot;km&quot;);
+ 
+-	  vsc = vsop_sph_vsop_to_fk5(vsc);
++	  vsc = vsop_sph_to_fk5(vsc);
+ 
+ 	  report(&quot;corrected fk5 longitude&quot;, r_to_d(vsc.sc.L) * 3600,
+-		 199.907347 * 3600, 1.0, &quot;arc-seconds&quot;);
++		 199.907347 * 3600, 0.1, &quot;arc-seconds&quot;);
+ 	  report(&quot;corrected fk5 latitude&quot;, r_to_d(vsc.sc.B) * 3600, 0.644 - 0.023,
+ 		 0.1, &quot;arc-seconds&quot;);
+ 
+@@ -797,58 +797,53 @@
+ 
+     printf(&quot;26.a Rectangular coordinates of the Sun\n&quot;);
+     {
+-        printf(&quot;This code appears to have all sorts of problems matching Meeus exactly.  I think it's because Meeus uses non-complete VSOP data in the example, though he doesn't say.&quot;);
++        printf(&quot;This code appears to have all sorts of problems matching Meeus exactly.  I think it's because Meeus uses non-complete VSOP data in the example, though he doesn't say clearly.\n&quot;);
+ 	double jd = 2448908.5;
+ 
+ 	printf(&quot;\t- Calculating rectangular coordinates directly:\n&quot;);
+ 	vsop_handle vh;
+ 	if(0 == get_vsop_data_handle(vsop_earth, hel_rec_date, &amp;vh)) {
+-	  vsop_rec_coords vrc = vsop_rec_sol(vsop_rec_vsop_to_fk5(vsop_get_rectangular(vh, jd)));
+-	  printf(&quot;Error value of vrc is: %d&quot;, vrc.error_state);
+-	  report(&quot;aX&quot;, vrc.rc.x * km_per_au, -0.9379952 * km_per_au, 1.0, &quot;km&quot;);
+-	  report(&quot;aY&quot;, vrc.rc.y * km_per_au, -0.3116544 * km_per_au, 1.0, &quot;km&quot;);
+-	  report(&quot;aZ&quot;, vrc.rc.z * km_per_au, -0.1351215 * km_per_au, 1.0, &quot;km&quot;);
++	  vsop_rec_coords vrc = vsop_rec_sol(vsop_rec_to_fk5(vsop_get_rectangular(vh, jd)));
++	  printf(&quot;Error value of vrc is: %d\n&quot;, vrc.error_state);
++	  report(&quot;rec-X&quot;, vrc.rc.x * km_per_au, -0.9379952 * km_per_au, 1.0, &quot;km&quot;);
++	  report(&quot;rec-Y&quot;, vrc.rc.y * km_per_au, -0.3116544 * km_per_au, 1.0, &quot;km&quot;);
++	  report(&quot;rec-Z&quot;, vrc.rc.z * km_per_au, -0.1351215 * km_per_au, 1.0, &quot;km&quot;);
+ 	  
+ 	} else {
+ 	  printf(&quot;Problem getting a data handle.\n&quot;);
+ 	}
+ 
++/* 	double L, B, R; */
++/* 	sol_dimension3_fk5(jd, &amp;L, &amp;B, &amp;R); */
+ 
++/* 	/\* VSOP calculates slightly different values from the book, so */
++/* 	   L, B and R will, here, be overridden from those stated on */
++/* 	   p172. *\/ */
++/* /\* 	L = d_to_r(199.907347); *\/ */
++/* /\* 	B = d_to_r(dms_to_d(0, 0, 0.62)); *\/ */
++/* /\* 	R = 0.99760775; *\/ */
+ 
+-	double L, B, R;
+-	sol_dimension3_fk5(jd, &amp;L, &amp;B, &amp;R);
++/* 	double E = obliquity_hi(jd); */
++/* 	rec_coords rc = sol_rectangular(L, B, R, E); */
++/* 	report(&quot;aX&quot;, rc.x * km_per_au, -0.9379952 * km_per_au, 5.0, &quot;km&quot;); */
++/* 	report(&quot;aY&quot;, rc.y * km_per_au, -0.3116544 * km_per_au, 5.0, &quot;km&quot;); */
++/* 	report(&quot;aZ&quot;, rc.z * km_per_au, -0.1351215 * km_per_au, 5.0, &quot;km&quot;); */
+ 
+-	/* VSOP calculates slightly different values from the book, so
+-	   L, B and R will, here, be overridden from those stated on
+-	   p172. */
+-/* 	L = d_to_r(199.907347); */
+-/* 	B = d_to_r(dms_to_d(0, 0, 0.62)); */
+-/* 	R = 0.99760775; */
+-
+-	double E = obliquity_hi(jd);
+-	rec_coords rc = sol_rectangular(L, B, R, E);
+-	report(&quot;aX&quot;, rc.x * km_per_au, -0.9379952 * km_per_au, 5.0, &quot;km&quot;);
+-	report(&quot;aY&quot;, rc.y * km_per_au, -0.3116544 * km_per_au, 5.0, &quot;km&quot;);
+-	report(&quot;aZ&quot;, rc.z * km_per_au, -0.1351215 * km_per_au, 5.0, &quot;km&quot;);
+-
+-
+-
+-/* 	vsop_handle vh; */
+ 	int result;
+ 	if (0 !=
+ 	    (result =
+ 	     get_vsop_data_handle(vsop_earth, hel_sph_date, &amp;vh))) {
+ 	    printf(&quot;Problem opening file: %s&quot;, strerror(result));
+ 	} else {
+-	    vsop_sph_coords vsc =
+-		vsop_sph_vsop_to_fk5(vsop_get_spherical(vh, jd));
++	    vsop_sph_coords vsc = vsop_get_spherical(vh, jd);
+ 
+-	    double E = obliquity_hi(jd);
++	    vsc = vsop_sph_to_fk5(vsc);
+ 
+-	    printf(&quot;L=%.12f B=%.12f R=%.12f E=%.12f\n&quot;, vsc.sc.L, vsc.sc.B, vsc.sc.R, E);
++	    double obl = obliquity_hi(jd);
+ 
+ 	    rec_coords rc =
+-		sol_rectangular(vsc.sc.L, vsc.sc.B, vsc.sc.R, E);
++		sol_rectangular(vsc.sc.L, vsc.sc.B, vsc.sc.R, obl);
++
+ 	    report(&quot;X&quot;, -rc.x * km_per_au, -0.9379952 * km_per_au, 5.0,
+ 		   &quot;km&quot;);
+ 	    report(&quot;Y&quot;, -rc.y * km_per_au, -0.3116544 * km_per_au, 5.0,
+@@ -856,9 +851,9 @@
+ 	    report(&quot;Z&quot;, -rc.z * km_per_au, -0.1351215 * km_per_au, 5.0,
+ 		   &quot;km&quot;);
+ 
+-	    report(&quot;X&quot;, -rc.x, -0.9379952, 1e-9, &quot;au&quot;);
+-	    report(&quot;Y&quot;, -rc.y, -0.3116544, 1e-9, &quot;au&quot;);
+-	    report(&quot;Z&quot;, -rc.z, -0.1351215, 1e-9, &quot;au&quot;);
++	    report(&quot;lX&quot;, -rc.x, -0.9379952, 1e-9, &quot;au&quot;);
++	    report(&quot;lY&quot;, -rc.y, -0.3116544, 1e-9, &quot;au&quot;);
++	    report(&quot;lZ&quot;, -rc.z, -0.1351215, 1e-9, &quot;au&quot;);
+ 
+ 	}
+ 
+@@ -1037,7 +1032,7 @@
+ 	    printf(&quot;Problem opening file: %s&quot;, strerror(result));
+ 	} else {
+ 	    vsop_sph_coords vsc =
+-		vsop_sph_vsop_to_fk5(vsop_get_spherical(vh, jd));
++		vsop_sph_to_fk5(vsop_get_spherical(vh, jd));
+ 
+ 	    double E = obliquity_hi(jd);
+ 	    rec_coords src =
+@@ -1200,7 +1195,7 @@
+ 	    vsop_handle vh;
+ 	    get_vsop_data_handle(vsop_earth, hel_sph_j2, &amp;vh);
+ 	    vsop_sph_coords vsc =
+-		vsop_sph_vsop_to_fk5(vsop_get_spherical(vh, test-&gt;jd));
++		vsop_sph_to_fk5(vsop_get_spherical(vh, test-&gt;jd));
+ 
+ 	    double E = obliquity_hi(test-&gt;jd);
+ 	    vsc.sc.L = modpi2(vsc.sc.L + pi);
+@@ -1317,7 +1312,7 @@
+ 		printf(&quot;\t\tError loading Earth handle.\n&quot;);
+ 	    } else {
+ 		double jd = 2448170.5;
+-		vsop_rec_coords vrc = vsop_rec_sol(vsop_rec_vsop_to_fk5(vsop_get_rectangular(vh, jd)));
++		vsop_rec_coords vrc = vsop_rec_sol(vsop_rec_to_fk5(vsop_get_rectangular(vh, jd)));
+ 
+ 		report(&quot;X&quot;, vrc.rc.x * km_per_au,
+ 		       -0.975673220683 * km_per_au, 1.0e-4, &quot;km&quot;);
+@@ -1336,7 +1331,7 @@
+ /* 	  } else { */
+ /* 	    vsop_sph_coords vsc = vsop_get_spherical(vh, 2448976.5); */
+ /* 	    /\* */
+-/* 	    vsc = vsop_sph_vsop_to_fk5(vsc); */
++/* 	    vsc = vsop_sph_to_fk5(vsc); */
+ /* 	    *\/ */
+ /* 	    report(&quot;longitude&quot;, r_to_d(modpi2(vsc.sc.L)) * 3600, 26.11428 * 3600, 0.001, &quot;arc-seconds&quot;); */
+ /* 	    report(&quot;latitude&quot;, r_to_d(vsc.sc.B) * 3600, -2.62070 * 3600, 0.001, &quot;arc-seconds&quot;); */
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000087.html">[Ephemeritis-svn] r234 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+	<LI>Next message: <A HREF="000089.html">[Ephemeritis-svn] r236 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#88">[ date ]</a>
+              <a href="thread.html#88">[ thread ]</a>
+              <a href="subject.html#88">[ subject ]</a>
+              <a href="author.html#88">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

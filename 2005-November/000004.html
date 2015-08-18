@@ -1,0 +1,150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r137 - in trunk: . doc old-src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2005-November/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r137%20-%20in%20trunk%3A%20.%20doc%20old-src&In-Reply-To=%3C200511290754.jAT7sqcr004785%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000003.html">
+   
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r137 - in trunk: . doc old-src</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r137%20-%20in%20trunk%3A%20.%20doc%20old-src&In-Reply-To=%3C200511290754.jAT7sqcr004785%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r137 - in trunk: . doc old-src">izogi at berlios.de
+       </A><BR>
+    <I>Tue Nov 29 08:54:52 CET 2005</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000003.html">[Ephemeritis-svn] r136 - in trunk/doc: . src-doxygen-main
+</A></li>
+        
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#4">[ date ]</a>
+              <a href="thread.html#4">[ thread ]</a>
+              <a href="subject.html#4">[ subject ]</a>
+              <a href="author.html#4">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2005-11-29 08:54:39 +0100 (Tue, 29 Nov 2005)
+New Revision: 137
+
+Added:
+   trunk/old-src/todo.txt
+Removed:
+   trunk/doc/todo.txt
+Modified:
+   trunk/configure.ac
+   trunk/doc/Makefile.am
+Log:
+Moved old astrolabe todo.txt file into deprecated directory.
+Upped version to 0.4.3, and checked dist generation worked.
+
+
+Modified: trunk/configure.ac
+===================================================================
+--- trunk/configure.ac	2005-11-29 07:41:16 UTC (rev 136)
++++ trunk/configure.ac	2005-11-29 07:54:39 UTC (rev 137)
+@@ -10,7 +10,7 @@
+ DX_PDF_FEATURE(OFF)
+ DX_PS_FEATURE(OFF)
+ 
+-AM_INIT_AUTOMAKE(ephemeritis, 0.4.2)
++AM_INIT_AUTOMAKE(ephemeritis, 0.4.3)
+ AM_CONFIG_HEADER(config.h)
+ 
+ DX_INIT_DOXYGEN(ephemeritis, doxygen.cfg)
+
+Modified: trunk/doc/Makefile.am
+===================================================================
+--- trunk/doc/Makefile.am	2005-11-29 07:41:16 UTC (rev 136)
++++ trunk/doc/Makefile.am	2005-11-29 07:54:39 UTC (rev 137)
+@@ -1,4 +1,4 @@
+ AUTOMAKE_OPTIONS = gnu
+ SUBDIRS = src-doxygen-main
+ 
+-EXTRA_DIST = index.html todo.txt
++EXTRA_DIST = index.html
+
+Deleted: trunk/doc/todo.txt
+===================================================================
+--- trunk/doc/todo.txt	2005-11-29 07:41:16 UTC (rev 136)
++++ trunk/doc/todo.txt	2005-11-29 07:54:39 UTC (rev 137)
+@@ -1,42 +0,0 @@
+-todo file from William McClain / Astrolabe.
+-
+-==
+-
+-cronus
+-    begin and end of 3 twilights
+-    heliacal rising and setting of planets and bright stars
+-    acronychian rising and setting of planets and bright stars (Pannekoek pg 22)
+-    cosmic rising and setting
+-    real time clock
+-    bright stars, rise-set-transit
+-    aphelion, perihelion
+-    apogee, perigee
+-    planetary conjunctions, elongations, oppositions, stationary points
+-    moon, planets at the nodes
+-    moon crater sun rise and set
+-    constellation boundary crossings
+-
+-vsop accuracy:
+-
+-    delta = { \
+-        &quot;Mercury&quot; : ( 0.3871,  0.6e-8), 
+-        &quot;Venus&quot;   : ( 0.7233,  2.5e-8),
+-        &quot;Earth&quot;   : ( 1.0000,  2.5e-8),
+-        &quot;Mars&quot;    : ( 1.5237, 10.0e-8),
+-        &quot;Jupiter&quot; : ( 5.2026, 35.0e-8),
+-        &quot;Saturn&quot;  : ( 9.5547, 70.0e-8),
+-        &quot;Uranus&quot;  : (19.2181,  8.0e-8),
+-        &quot;Neptune&quot; : (30.1096, 42.0e-8)}
+-
+-delete zip file from ftp dir
+-
+-establish mailing list for announcements
+-
+-diff between py and C++, cronus:
+-    last day of year
+-    rst failures
+-    winter solstice position in queue: rst are exhausted before new set are queued.
+-
+-test suite
+-
+-factor divisors into nutation tables
+
+Copied: trunk/old-src/todo.txt (from rev 136, trunk/doc/todo.txt)
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000003.html">[Ephemeritis-svn] r136 - in trunk/doc: . src-doxygen-main
+</A></li>
+	
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#4">[ date ]</a>
+              <a href="thread.html#4">[ thread ]</a>
+              <a href="subject.html#4">[ subject ]</a>
+              <a href="author.html#4">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>

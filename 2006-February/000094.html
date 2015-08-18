@@ -1,0 +1,487 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Ephemeritis-svn] r241 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/ephemeritis-svn/2006-February/index.html" >
+   <LINK REL="made" HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r241%20-%20in%20branches/new-vsop-prepare/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200602031023.k13ANeNj024495%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000093.html">
+   <LINK REL="Next"  HREF="000095.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Ephemeritis-svn] r241 - in branches/new-vsop-prepare/src/c: libephemeritis tests</H1>
+    <B>izogi at BerliOS</B> 
+    <A HREF="mailto:ephemeritis-svn%40lists.berlios.de?Subject=Re%3A%20%5BEphemeritis-svn%5D%20r241%20-%20in%20branches/new-vsop-prepare/src/c%3A%20libephemeritis%20tests&In-Reply-To=%3C200602031023.k13ANeNj024495%40sheep.berlios.de%3E"
+       TITLE="[Ephemeritis-svn] r241 - in branches/new-vsop-prepare/src/c: libephemeritis tests">izogi at berlios.de
+       </A><BR>
+    <I>Fri Feb  3 11:23:40 CET 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000093.html">[Ephemeritis-svn] r240 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+        <LI>Next message: <A HREF="000095.html">[Ephemeritis-svn] r242 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#94">[ date ]</a>
+              <a href="thread.html#94">[ thread ]</a>
+              <a href="subject.html#94">[ subject ]</a>
+              <a href="author.html#94">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: izogi
+Date: 2006-02-03 11:23:39 +0100 (Fri, 03 Feb 2006)
+New Revision: 241
+
+Modified:
+   branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+   branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+   branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+Log:
+Adjusted validate_meeus code to use ecliptical_planet instead of geocentric_planet.
+Commented out old geocentric_planet() function.
+
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-02-03 09:51:45 UTC (rev 240)
++++ branches/new-vsop-prepare/src/c/libephemeritis/elliptical.c	2006-02-03 10:23:39 UTC (rev 241)
+@@ -41,27 +41,149 @@
+ #include &lt;stdlib.h&gt;
+ 
+ 
+-/*! @brief Calculates the equatorial coordinates of a planet.
++/* /\*! @brief Calculates the equatorial coordinates of a planet. */
++/*  * */
++/*  *  The results will be geocentric, corrected for light-time and */
++/*  *  aberration. */
++/*  * */
++/*  *  @param[in]  jd        Julian Day of an approximate time of the event */
++/*  *                        in dynamical time. */
++/*  *  @param[in]  basePlanet        The planet from which the observation takes */
++/*  *                                place.  This is likely to always be Earth, and hasn't been */
++/*  *                                seriously tested from any other planets. */
++/*  *  @param[in]  targetPlanet      The planet for which the position should be calculated. */
++/*  *  @param[in]  (*heliocentic_f)  A function to calculate three heliocentric dimensions, returning the results in fk5 coordinates. */
++/*  *  @param[in]  n_in_l    Nutation in longitude, in radians. */
++/*  *  @param[in]  epsilon   True obliquity (corrected for nutation), in radians. */
++/*  *  @param[in]  delta     Desired accuracy, in days. */
++/*  * */
++/*  *  @param[out] ra        Right ascension, in radians. */
++/*  *  @param[out] dec       Declination, in radians. */
++/*  * */
++/*  *  @returns             Returns  0 if successful. */
++/*  *                       Returns -1 if bailing out as desired accuracy was unreachable within a preset number of iterations. */
++/*  * */
++/*  *  @sa deltaT_seconds for calculating %dynamical time offset. */
++/*  *  @sa nut_in_lon for calculating %nutation in longitude. */
++/*  *  @sa (obliquity_low or obliquity_hi) + nut_in_obl for calculating true obliquity. */
++/*  * */
++/*  *  @todo Check if this code actually &lt;em&gt;does&lt;/em&gt; take aberration */
++/*  *  into account.  The original description says it does, but it */
++/*  *  doesn't seem to be apparent in the actual code.  I &lt;em&gt;think&lt;/em&gt; */
++/*  *  the act of moving the Earth as well as moving the body accounts */
++/*  *  for abberation, but am not entirely sure. */
++/*  * */
++/*  *  @todo Compare the loop in this code with the notes on pp224-226, */
++/*  *  and decide if the iteration is necessary.  It might be that the */
++/*  *  iteration and corrections for things really belong outside this */
++/*  *  function, as happens in elliptical_orbit_ecliptical. */
++/*  * */
++/*  *  @todo Adjust parameters so that r_earth gets passed back too. */
++/*  * */
++/*  *  @bug Doesn't work cleanly with new VSOP routines. */
++/*  * */
++/*  *  @author Bill McClain, Mike McGavin. */
++/*  *\/ */
++/* int geocentric_planet(double jd, */
++/* 		      enum vPlanets basePlanet, */
++/* 		      enum vPlanets targetPlanet, */
++/* 		      void (*heliocentic_f) (double, enum vPlanets, */
++/* 					     double *, double *, double *), */
++/* 		      double n_in_l, double epsilon, double delta, */
++/* 		      double *ra, double *dec) */
++/* { */
++/*     double t = jd; */
++/*     double l0 = -100.0;		/\* Impossible value. *\/ */
++
++/*     /\* We need to iterate to correct for light-time and aberration. */
++/*      * At most three passes through the loop always nails it. */
++/*      * Note that we move both the Earth and the other planet during */
++/*      *    the iteration. */
++/*      *\/ */
++/*     double l, b; */
++/*     bool ok = false; */
++/*     int bailout = 0; */
++/*     for (bailout = 0; bailout &lt; 20; bailout++) { */
++/* 	/\* Heliocentric geometric ecliptic coordinates of the Earth. *\/ */
++/* 	double L0, B0, R0; */
++/* 	heliocentic_f(t, basePlanet, &amp;L0, &amp;B0, &amp;R0); */
++
++/* 	/\* Heliocentric geometric ecliptic coordinates of the planet. *\/ */
++/* 	double L, B, R; */
++/* 	heliocentic_f(t, targetPlanet, &amp;L, &amp;B, &amp;R); */
++
++/* 	/\* Rectangular offset. *\/ */
++/* 	const double cosB0 = cos(B0); */
++/* 	const double cosB = cos(B); */
++/* 	const double x = R * cosB * cos(L) - R0 * cosB0 * cos(L0); */
++/* 	const double y = R * cosB * sin(L) - R0 * cosB0 * sin(L0); */
++/* 	const double z = R * sin(B) - R0 * sin(B0); */
++
++/* 	/\* Geocentric geometric ecliptic coordinates of the planet. *\/ */
++/* 	const double x2 = x * x; */
++/* 	const double y2 = y * y; */
++/* 	l = atan2(y, x); */
++/* 	b = atan2(z, sqrt(x2 + y2)); */
++
++/* 	/\* At this point, l and b respectively represent the */
++/* 	   geocentric longitude and geocentric latitude, but it hasn't */
++/* 	   been adjusted for the time it takes for light to travel to */
++/* 	   Earth (if it's the first loop iteration), or for */
++/* 	   aberration. *\/ */
++
++/* 	/\* Distance to planet in AU. *\/ */
++/* 	const double dist = sqrt(x2 + y2 + z * z); */
++
++/* 	/\* Light time in days. *\/ */
++/* 	const double tau = 0.0057755183 * dist; */
++
++/* 	if (fabs(diff_angle(l, l0)) &lt; pi2 * delta) { */
++/* 	    ok = true; */
++/* 	    break; */
++/* 	} */
++
++/* 	/\* Adjust for light travel time and try again. *\/ */
++/* 	l0 = l; */
++/* 	t = jd - tau; */
++/*     } */
++
++/*     if (!ok) { */
++/* 	/\* Bail out. *\/ */
++/* 	return -1; */
++/*     } */
++
++/*     /\* Nutation in longitude. *\/ */
++/*     l += n_in_l; */
++
++/*     /\* Equatorial coordinates. *\/ */
++/*     ecl_to_equ(l, b, epsilon, ra, dec); */
++
++/*     /\* Return success. *\/ */
++/*     return 0; */
++/* } */
++
++
++/*! @brief Calculates the ecliptical coordinates of a planet.
+  *
+- *  The results will be geocentric, corrected for light-time and
+- *  aberration.
++ *  The results will be ecliptical, corrected for light-time and
++ *  aberration.  They can be converted to equatorial coordinates with
++ *  the ecl_to_equ function.
+  *
+  *  @param[in]  jd        Julian Day of an approximate time of the event
+  *                        in dynamical time.
+- *  @param[in]  basePlanet        The planet from which the observation takes
+- *                                place.  This is likely to always be Earth, and hasn't been
+- *                                seriously tested from any other planets.
+- *  @param[in]  targetPlanet      The planet for which the position should be calculated.
+- *  @param[in]  (*heliocentic_f)  A function to calculate three heliocentric dimensions, returning the results in fk5 coordinates.
+- *  @param[in]  n_in_l    Nutation in longitude, in radians.
+- *  @param[in]  epsilon   True obliquity (corrected for nutation), in radians.
++ *  @param[in]  planet    The planet for which the position should be calculated.
++ *  @param[in]  (*heliocentic_f)  A function to calculate the planet's spherical coordinates according to the ecliptic and equinox of the date, returning the results in the fk5 system.
+  *  @param[in]  delta     Desired accuracy, in days.
+  *
+- *  @param[out] ra        Right ascension, in radians.
+- *  @param[out] dec       Declination, in radians.
++ *  @param[out] longitude Right ascension, in radians.
++ *  @param[out] latitude  Declination, in radians.
+  *
+- *  @returns             Returns  0 if successful.
+- *                       Returns -1 if bailing out as desired accuracy was unreachable within a preset number of iterations.
++ *  @returns A value indicating if the calculation was successful.
++ *    The function may return any value that could have been returned
++ *    by the heliocentric_f function that was passed to it.  It may
++ *    also return bailout, or ok.  If bailout is returned, the
++ *    ecliptical coordinates are still returned, but may not be as
++ *    accurate as what was requested.
+  *
+  *  @sa deltaT_seconds for calculating %dynamical time offset.
+  *  @sa nut_in_lon for calculating %nutation in longitude.
+@@ -73,101 +195,13 @@
+  *  the act of moving the Earth as well as moving the body accounts
+  *  for abberation, but am not entirely sure.
+  *
+- *  @todo Compare the loop in this code with the notes on pp224-226,
+- *  and decide if the iteration is necessary.  It might be that the
+- *  iteration and corrections for things really belong outside this
+- *  function, as happens in elliptical_orbit_ecliptical.
+- *
+- *  @todo Adjust parameters so that r_earth gets passed back too.
+- *
+- *  @bug Doesn't work cleanly with new VSOP routines.
+- *
+  *  @author Bill McClain, Mike McGavin.
+  */
+-int geocentric_planet(double jd,
+-		      enum vPlanets basePlanet,
+-		      enum vPlanets targetPlanet,
+-		      void (*heliocentic_f) (double, enum vPlanets,
+-					     double *, double *, double *),
+-		      double n_in_l, double epsilon, double delta,
+-		      double *ra, double *dec)
+-{
+-    double t = jd;
+-    double l0 = -100.0;		/* Impossible value. */
+-
+-    /* We need to iterate to correct for light-time and aberration.
+-     * At most three passes through the loop always nails it.
+-     * Note that we move both the Earth and the other planet during
+-     *    the iteration.
+-     */
+-    double l, b;
+-    bool ok = false;
+-    int bailout = 0;
+-    for (bailout = 0; bailout &lt; 20; bailout++) {
+-	/* Heliocentric geometric ecliptic coordinates of the Earth. */
+-	double L0, B0, R0;
+-	heliocentic_f(t, basePlanet, &amp;L0, &amp;B0, &amp;R0);
+-
+-	/* Heliocentric geometric ecliptic coordinates of the planet. */
+-	double L, B, R;
+-	heliocentic_f(t, targetPlanet, &amp;L, &amp;B, &amp;R);
+-
+-	/* Rectangular offset. */
+-	const double cosB0 = cos(B0);
+-	const double cosB = cos(B);
+-	const double x = R * cosB * cos(L) - R0 * cosB0 * cos(L0);
+-	const double y = R * cosB * sin(L) - R0 * cosB0 * sin(L0);
+-	const double z = R * sin(B) - R0 * sin(B0);
+-
+-	/* Geocentric geometric ecliptic coordinates of the planet. */
+-	const double x2 = x * x;
+-	const double y2 = y * y;
+-	l = atan2(y, x);
+-	b = atan2(z, sqrt(x2 + y2));
+-
+-	/* At this point, l and b respectively represent the
+-	   geocentric longitude and geocentric latitude, but it hasn't
+-	   been adjusted for the time it takes for light to travel to
+-	   Earth (if it's the first loop iteration), or for
+-	   aberration. */
+-
+-	/* Distance to planet in AU. */
+-	const double dist = sqrt(x2 + y2 + z * z);
+-
+-	/* Light time in days. */
+-	const double tau = 0.0057755183 * dist;
+-
+-	if (fabs(diff_angle(l, l0)) &lt; pi2 * delta) {
+-	    ok = true;
+-	    break;
+-	}
+-
+-	/* Adjust for light travel time and try again. */
+-	l0 = l;
+-	t = jd - tau;
+-    }
+-
+-    if (!ok) {
+-	/* Bail out. */
+-	return -1;
+-    }
+-
+-    /* Nutation in longitude. */
+-    l += n_in_l;
+-
+-    /* Equatorial coordinates. */
+-    ecl_to_equ(l, b, epsilon, ra, dec);
+-
+-    /* Return success. */
+-    return 0;
+-}
+-
+-
+ vsop_error_state ecliptic_planet(double jd,
+-				   vsop_body planet,
+-				   vsop_error_state (*heliocentic_f) (double, vsop_body, sph_coords *),
+-				   double delta,
+-				   double *longitude, double *latitude)
++				 vsop_body planet,
++				 vsop_error_state (*heliocentic_f) (double, vsop_body, sph_coords *),
++				 double delta,
++				 double *longitude, double *latitude)
+ {
+     double t = jd;
+     double l0 = -100.0;		/* Impossible value. */
+@@ -178,7 +212,7 @@
+      *    the iteration.
+      */
+     double l, b;
+-    bool ok = false;
++    bool worked = false;
+     int bailout = 0;
+     for (bailout = 0; bailout &lt; 20; bailout++) {
+ 	/* Heliocentric geometric ecliptic coordinates of the Earth. */
+@@ -221,7 +255,7 @@
+ 	const double tau = 0.0057755183 * dist;
+ 
+ 	if (fabs(diff_angle(l, l0)) &lt; pi2 * delta) {
+-	    ok = true;
++	    worked = true;
+ 	    break;
+ 	}
+ 
+@@ -230,13 +264,13 @@
+ 	t = jd - tau;
+     }
+ 
+-    if (!ok) {
++    *longitude = l;
++    *latitude = b;
++
++    if (!worked) {
+ 	/* Bail out. */
+-	return -1;
++	return bailout;
+     }
+-
+-    *longitude = l;
+-    *latitude = b;
+     return ok;
+ }
+ 
+
+Modified: branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h
+===================================================================
+--- branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-02-03 09:51:45 UTC (rev 240)
++++ branches/new-vsop-prepare/src/c/libephemeritis/ephemeritis.h	2006-02-03 10:23:39 UTC (rev 241)
+@@ -369,6 +369,10 @@
+                         (vsop_simple_heliocentric_spherical_date) A
+                         VSOP handle couldn't be loaded for some
+                         reason. */
++  bailout,           /*!&lt; @brief (ecliptic_planet) Indicates that the
++                        calculation bailed out, because the desired
++                        accuracy couldn't be reached within a
++                        pre-programmed number of iterations. */
+   vh_access_error,   /*!&lt; @brief (vsop_get_rectangular,
+ 		        vsop_get_spherical) indicates a vsop_handle
+ 		        error.  (Data referenced by this handle wasn't
+@@ -547,6 +551,7 @@
+ 
+ double eccentricity_anomoly(double M, double e, int iterations);
+ 
++/*
+ int geocentric_planet(double jd,
+ 		      enum vPlanets basePlanet,
+ 		      enum vPlanets targetPlanet,
+@@ -554,12 +559,13 @@
+ 					     double *, double *, double *),
+ 		      double n_in_l, double epsilon, double delta,
+ 		      double *ra, double *dec);
++*/
+ 
+ vsop_error_state ecliptic_planet(double jd,
+-				   vsop_body planet,
+-				   vsop_error_state (*heliocentic_f) (double, vsop_body, sph_coords *),
+-				   double delta,
+-				   double *longitude, double *latitude);
++				 vsop_body planet,
++				 vsop_error_state (*heliocentic_f) (double, vsop_body, sph_coords *),
++				 double delta,
++				 double *longitude, double *latitude);
+ 
+ 
+ 
+
+Modified: branches/new-vsop-prepare/src/c/tests/validate_meeus.c
+===================================================================
+--- branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-02-03 09:51:45 UTC (rev 240)
++++ branches/new-vsop-prepare/src/c/tests/validate_meeus.c	2006-02-03 10:23:39 UTC (rev 241)
+@@ -952,21 +952,46 @@
+ 
+     printf(&quot;33.a Apparent position (vsop)\n&quot;);
+     {
+-	double ra, dec;
++      double ra, dec, longitude, latitude;
++      double jd = 2448976.5;
+ 	/*
+-	   geocentric_planet(2448976.5, vEarth, vVenus, vsop_dimension3_fk5,
++	   geocentric_planet(jd, vEarth, vVenus, vsop_dimension3_fk5,
+ 	   d_to_r(dms_to_d(0, 0, 16.749)),
+ 	   d_to_r(23.439669), days_per_second, &amp;ra, &amp;dec);
+ 	 */
+-	geocentric_planet(2448976.5, vsop_earth, vsop_venus,
++      /*
++	geocentric_planet(jd, vsop_earth, vsop_venus,
+ 			  vsop_dimension3_fk5_new,
+ 			  d_to_r(dms_to_d(0, 0, 16.749)),
+ 			  d_to_r(23.439669), days_per_second, &amp;ra, &amp;dec);
++      */
++	vsop_error_state result = ecliptic_planet(
++						  jd,
++						  vsop_venus,
++						  vsop_simple_heliocentric_spherical_date_fk5,
++						  days_per_second,
++						  &amp;longitude,
++						  &amp;latitude);
+ 
+-	report(&quot;ra&quot;, r_to_d(ra), r_to_d(hms_to_fday(21, 4, 41.454) * pi2),
+-	       1e-5, &quot;degrees&quot;);
+-	report(&quot;dec&quot;, r_to_d(dec), dms_to_d(-18, 53, 16.84), 1e-5,
+-	       &quot;degrees&quot;);
++	if(ok != result) {
++	  printf(&quot;\tThere was a problem calculating the ecliptical position for Venus: %d.\n&quot;, result);
++	} else {
++
++	  /* Add nutation in longitude. */
++	  /*
++	    longitude += d_to_r(dms_to_d(0, 0, 16.749));
++	  */
++	  longitude += nut_in_lon(jd);
++	  
++	  /* Get equatorial coordinates. */
++	  ecl_to_equ(longitude, latitude, obliquity_hi(jd) + nut_in_obl(jd), &amp;ra, &amp;dec);
++	  
++	  
++	  report(&quot;ra&quot;, r_to_d(ra), r_to_d(hms_to_fday(21, 4, 41.454) * pi2),
++		 1e-5, &quot;degrees&quot;);
++	  report(&quot;dec&quot;, r_to_d(dec), dms_to_d(-18, 53, 16.84), 1e-5,
++		 &quot;degrees&quot;);
++	}
+     }
+ 
+     printf(&quot;33.b Apparent position (elements)\n&quot;);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000093.html">[Ephemeritis-svn] r240 - branches/new-vsop-prepare/src/c/libephemeritis
+</A></li>
+	<LI>Next message: <A HREF="000095.html">[Ephemeritis-svn] r242 - in branches/new-vsop-prepare/src/c: libephemeritis tests
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#94">[ date ]</a>
+              <a href="thread.html#94">[ thread ]</a>
+              <a href="subject.html#94">[ subject ]</a>
+              <a href="author.html#94">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/ephemeritis-svn">More information about the Ephemeritis-svn
+mailing list</a><br>
+</body></html>
